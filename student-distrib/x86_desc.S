@@ -35,6 +35,8 @@ _tss:
 tss_bottom:
 
     .align  16
+
+
 gdt:
 _gdt:
 
@@ -90,6 +92,7 @@ gdt_desc:                       # define value to be loaded into gdtr
     .word (gdt_bottom-gdt-1)
     .long gdt
     .word 0                     # pad so address takes up 48 bits
+
 ldt:
     .rept 4
     .quad 0
