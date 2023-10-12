@@ -89,7 +89,7 @@ gdt_bottom:
 gdt_desc:                       # define value to be loaded into gdtr
     .word (gdt_bottom-gdt-1)
     .long gdt
-    .align 16                   # align so address takes up 48 bits
+    .word 0                     # pad so address takes up 48 bits
 ldt:
     .rept 4
     .quad 0
