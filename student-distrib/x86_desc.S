@@ -85,6 +85,11 @@ ldt_desc_ptr:
 gdt_bottom:
 
     .align 16
+
+gdt_desc:                       # define value to be loaded into gdtr
+    .word (gdt_bottom-gdt-1)
+    .long gdt
+    .align 16                   # align so address takes up 48 bits
 ldt:
     .rept 4
     .quad 0
