@@ -1,7 +1,8 @@
-
+#ifndef _EXCEPTS_H
+#define _EXCEPTS_H
 /* handlers for each exception */
 
-void divide_error();
+extern void divide_error();
 // void nmi_interrupt();
 // void breakpoint();
 // void overflow();
@@ -19,4 +20,6 @@ void divide_error();
 // void mach_check();
 // void simd_fp();
 
-void setup_exceptions();
+extern void setup_exceptions();
+
+#endif
