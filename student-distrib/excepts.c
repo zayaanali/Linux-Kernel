@@ -4,31 +4,14 @@
 
 #include "x86_desc.h"
 #include "excepts.h"
-
-idt_desc_t de;
-idt_desc_t nmi;
-idt_desc_t bp; 
-idt_desc_t of; 
-idt_desc_t br;
-idt_desc_t ud; 
-idt_desc_t nm;
-idt_desc_t df;
-idt_desc_t ts;
-idt_desc_t np;
-idt_desc_t ss; 
-idt_desc_t gp;
-idt_desc_t pf;
-idt_desc_t mf;
-idt_desc_t ac;
-idt_desc_t mc;
-idt_desc_t xf; 
-
+#include "lib.h"
 
 void setup_exceptions(){
     
     int i;                                        // loop variable 
     uint16_t lower_bits;                          // 16 lower bits for long 1 of trap gate
     uint32_t seg_off = (KERNEL_CS<<16);           // 32 bits of segment selector and offset for long 0 of trap gate
+
 
     // use trap gate for exceptions
     // format of lower bits: P|DPL|0 D 1 1 1 | 0 0 0 | reserved
@@ -57,6 +40,6 @@ void setup_exceptions(){
 
 void divide_error(){
 
-    printf("ERR Trying to divide by 0");
+   printf("ERR Trying to divide by 0");
 }
 

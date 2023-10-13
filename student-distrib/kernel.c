@@ -9,6 +9,8 @@
 #include "debug.h"
 #include "tests.h"
 
+#include "excepts.h"
+
 #define RUN_TESTS
 
 /* Macros. */
@@ -136,8 +138,11 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
+    /* load idtr */
+    lidt(idt_desc_ptr);
+
     /* Construct 20 exception entries in IDT */
-    
+    setup_exceptions();
 
     /* Init the PIC */
     i8259_init();
@@ -154,7 +159,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
 #ifdef RUN_TESTS
     /* Run tests */
-   // launch_tests();
+   launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
 
