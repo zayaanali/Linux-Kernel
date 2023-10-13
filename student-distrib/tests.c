@@ -4,6 +4,7 @@
 
 #define PASS 1
 #define FAIL 0
+#define LLONG_MAX 9223372036854775807
 
 /* format these macros as you see fit */
 #define TEST_HEADER 	\
@@ -51,6 +52,47 @@ int idt_test(){
 
 // add more tests here
 
+void exceptions_test(){
+
+	/* dived by 0 exception*/
+	//asm volatile("int $0");
+	// OR
+	int i = 5/0; 
+
+	/* db exception */
+	//asm volatile("int $1");
+
+	/* NMI */
+	// test NMI somehow??
+
+	/* breakpoint */
+	//asm volatile("int $3");
+
+	/* overflow */
+	// how to test?
+
+
+
+
+	//asm volatile("int $5");
+	//asm volatile("int $6");
+	//asm volatile("int $7");
+	//asm volatile("int $8");
+	//asm volatile("int $9");
+	//asm volatile("int $10");
+	//asm volatile("int $11");
+	//asm volatile("int $12");
+	//asm volatile("int $13");
+	//asm volatile("int $14");
+
+	//asm volatile("int $16");
+	//asm volatile("int $17");
+	//asm volatile("int $18");
+	//asm volatile("int $19");
+
+
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -62,6 +104,7 @@ void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
 	
-	int i = 5/0; 
+	exceptions_test();
+	
 	//asm volatile("int $0");
 }

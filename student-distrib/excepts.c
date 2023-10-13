@@ -6,6 +6,8 @@
 #include "excepts.h"
 #include "lib.h"
 
+extern void divide_error_link(); 
+
 void setup_exceptions(){
     
     int i;                                // loop variable 
@@ -37,7 +39,7 @@ void setup_exceptions(){
 
     /* set all offsets to correct exception handler */
     SET_IDT_ENTRY(idt[0], divide_error);
-    SET_IDT_ENTRY(idt[1], debug);
+    /*SET_IDT_ENTRY(idt[1], debug);
     SET_IDT_ENTRY(idt[2], nmi_interrupt);
     SET_IDT_ENTRY(idt[3], breakpoint);
     SET_IDT_ENTRY(idt[4], overflow);
@@ -55,7 +57,7 @@ void setup_exceptions(){
     SET_IDT_ENTRY(idt[16], fp_error);
     SET_IDT_ENTRY(idt[17], align_check);
     SET_IDT_ENTRY(idt[18], mach_check);
-    SET_IDT_ENTRY(idt[19], simd_fp);
+    SET_IDT_ENTRY(idt[19], simd_fp);*/
 
 }
 
@@ -69,6 +71,7 @@ void divide_error(){
     }
 }
 
+/*
 extern void debug(){
 
     clear(); 
@@ -236,4 +239,4 @@ extern void simd_fp(){
     while(1){
         ;
     }
-}
+}*/
