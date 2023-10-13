@@ -136,6 +136,9 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
+    /* Construct 20 exception entries in IDT */
+    
+
     /* Init the PIC */
     i8259_init();
 
