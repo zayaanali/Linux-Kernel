@@ -147,10 +147,12 @@ void entry(unsigned long magic, unsigned long addr) {
     
 
     /* Init the PIC */
-    //i8259_init();
+    i8259_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+    keyboard_init();
+
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
