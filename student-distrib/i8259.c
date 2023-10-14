@@ -51,7 +51,7 @@ void enable_irq(uint32_t irq_num) {
         return;
 
     /* Get IRQ line to enable on PIC */
-    int irq_line_num = irq_num % 8;
+    irq_line_num = irq_num % 8;
     
     /* Send OCW1 command (set IRQ_num bit to 0 to enable) */
     if (irq_num < 8) { // enable on master
@@ -77,7 +77,7 @@ void disable_irq(uint32_t irq_num) {
         return;
 
     /* Get IRQ line to disable on PIC */
-    int irq_line_num = irq_num % 8;
+    irq_line_num = irq_num % 8;
     
     /* Send OCW1 command (set IRQ_num bit to 1 to disable) */
     if (irq_num < 8) { // mask on master
@@ -104,7 +104,7 @@ void send_eoi(uint32_t irq_num) {
         return;
 
     /* Get IRQ line to on PIC (master/secondary) */
-    int irq_line_num = irq_num % 8;
+    irq_line_num = irq_num % 8;
     
     /* Calculate and send EOI */
     if (irq_num < 8) { // EOI on master

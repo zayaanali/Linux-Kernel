@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 
 #define MAKE_LINKAGE(linker, handler) \
 .GLOBL linker   ;\
@@ -44,5 +45,41 @@ MAKE_LINKAGE(fp_error_link, fp_error)
 MAKE_LINKAGE(align_check_link, align_check)
 MAKE_LINKAGE(mach_check_link, mach_check)
 MAKE_LINKAGE(simd_fp_link, simd_fp)
+=======
+.text
+
+.global divide_error_link
+
+
+divide_error_link: 
+
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %eax
+    pushl %ebx
+    pushl %ecx
+    pushl %edx
+    pushl %esi
+    pushl %edi
+    pushf
+    
+    call divide_error
+    
+    popf
+    popl %edi
+    popl %esi
+    popl %edx
+    popl %ecx
+    popl %ebx
+    popl %eax
+    
+    leave
+    iret 
+
+
+
+# MAKE_LINKAGE(divide_error_link, divide_error) 
+>>>>>>> Stashed changes
 
 
