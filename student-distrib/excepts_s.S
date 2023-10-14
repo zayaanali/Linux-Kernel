@@ -12,7 +12,6 @@ linker:     pushal ;\
 
 
 
-
 MAKE_LINKAGE(debug_link, debug)
 MAKE_LINKAGE(divide_error_link, divide_error)
 MAKE_LINKAGE(nmi_interrupt_link, nmi_interrupt)
@@ -33,7 +32,27 @@ MAKE_LINKAGE(align_check_link, align_check)
 MAKE_LINKAGE(mach_check_link, mach_check)
 MAKE_LINKAGE(simd_fp_link, simd_fp)
 
-MAKE_LINKAGE(rtc_link, rtc_handler)
+# MAKE_LINKAGE(rtc_link, rtc_handler)
+# MAKE_LINKAGE(keyboard_link, keyboard_handler)
 
 
+.GLOBL keyboard_link
+keyboard_link:
+            pushal 
+            pushfl 
+            call keyboard_handler    
+            popfl       
+            popal  
 
+            iret    
+
+
+.GLOBL rtc_link
+rtc_link:
+            pushal 
+            pushfl 
+            call rtc_handler    
+            popfl       
+            popal  
+
+            iret  

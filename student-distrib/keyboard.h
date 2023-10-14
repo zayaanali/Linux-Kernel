@@ -183,3 +183,5 @@ const unsigned char key_map_shifted[] = {
     0,  // F12 (Not a printable character)
     // Fill the rest of the array with zeros for unassigned indexes
 };
+
+#endif
