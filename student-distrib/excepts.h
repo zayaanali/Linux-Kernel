@@ -5,12 +5,6 @@
 extern void setup_exceptions();
 
 extern void divide_error();
-<<<<<<< Updated upstream
-=======
-
-
-
->>>>>>> Stashed changes
 extern void debug();
 extern void nmi_interrupt();
 extern void breakpoint();

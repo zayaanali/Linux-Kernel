@@ -55,7 +55,6 @@ int idt_test(){
 
 void exceptions_test(){
 
-<<<<<<< Updated upstream
 	// divide_error_link(); 
 	// debug_link();
  	// nmi_interrupt_link();
@@ -75,43 +74,6 @@ void exceptions_test(){
  	// align_check_link();
  	// mach_check_link();
  	// simd_fp_link();
-=======
-	/* dived by 0 exception*/
-	//asm volatile("int $0");
-	// OR
-	//int i = 5/0; 
-
-	/* db exception */
-	//asm volatile("int $1");
-
-	/* NMI */
-	// test NMI somehow??
-
-	/* breakpoint */
-	//asm volatile("int $3");
-
-	/* overflow */
-	// how to test?
-
-
-
-
-	//asm volatile("int $5");
-	//asm volatile("int $6");
-	//asm volatile("int $7");
-	//asm volatile("int $8");
-	//asm volatile("int $9");
-	//asm volatile("int $10");
-	//asm volatile("int $11");
-	//asm volatile("int $12");
-	//asm volatile("int $13");
-	//asm volatile("int $14");
-
-	//asm volatile("int $16");
-	//asm volatile("int $17");
-	//asm volatile("int $18");
-	//asm volatile("int $19");
->>>>>>> Stashed changes
 
 
 }

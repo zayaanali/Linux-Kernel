@@ -58,7 +58,6 @@ void setup_exceptions(){
     /* set Trap Gate offset fields to point to exception handler for each exception */
 
     /* set all offsets to correct exception handler */
-<<<<<<< Updated upstream
     SET_IDT_ENTRY(idt[0], divide_error_link);
     SET_IDT_ENTRY(idt[1], debug_link);
     SET_IDT_ENTRY(idt[2], nmi_interrupt_link);
@@ -79,35 +78,6 @@ void setup_exceptions(){
     SET_IDT_ENTRY(idt[17], align_check_link);
     SET_IDT_ENTRY(idt[18], mach_check_link);
     SET_IDT_ENTRY(idt[19], simd_fp_link);
-=======
-    SET_IDT_ENTRY(idt[0], divide_error);
-    SET_IDT_ENTRY(idt[1], debug);
-    SET_IDT_ENTRY(idt[2], nmi_interrupt);
-    SET_IDT_ENTRY(idt[3], breakpoint);
-    SET_IDT_ENTRY(idt[4], overflow);
-    SET_IDT_ENTRY(idt[5], bound_rng_ex);
-    SET_IDT_ENTRY(idt[6], invalid_op);
-    SET_IDT_ENTRY(idt[7], device_not_avail);
-    SET_IDT_ENTRY(idt[8], dbl_fault);
-    SET_IDT_ENTRY(idt[9], co_seg_overrun);
-    SET_IDT_ENTRY(idt[10], invalid_tss);
-    SET_IDT_ENTRY(idt[11], seg_not_present);
-    SET_IDT_ENTRY(idt[12], stack_seg_fault);
-    SET_IDT_ENTRY(idt[13], gen_prot);
-    SET_IDT_ENTRY(idt[14], page_fault);
-   
-    SET_IDT_ENTRY(idt[16], fp_error);
-    SET_IDT_ENTRY(idt[17], align_check);
-    SET_IDT_ENTRY(idt[18], mach_check);
-    SET_IDT_ENTRY(idt[19], simd_fp);
-
-    /* Set interrupt vectors */
-    
-    SET_IDT_ENTRY(idt[21], keyboard_handler);
-    SET_IDT_ENTRY(idt[28], rtc_handler); 
-    
-
->>>>>>> Stashed changes
 
 }
 
@@ -289,13 +259,4 @@ extern void simd_fp(){
     while(1){
         ;
     }
-<<<<<<< Updated upstream
 }
-=======
-}
-
-
-
-
-
->>>>>>> Stashed changes
