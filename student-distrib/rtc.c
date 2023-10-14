@@ -1,4 +1,9 @@
 #include "rtc.h"
+#include "x86_desc.h"
+#include "i8259.h"
+#include "lib.h"
+
+extern void rtc_link(); 
 
 /* rtc_init
  *   Inputs: none
@@ -7,14 +12,33 @@
 
 void rtc_init(){
 
-    cli();			// disable interrupts
+    //cli();			                // disable interrupts .. this function called within clearing of interrupts
     outb(RTC_B, RTC_CMD_PORT);		// select register B, and disable NMI
     char prev = inb(RTC_DATA_PORT);	// read the current value of register B
     outb(RTC_B, RTC_CMD_PORT);		// set the index again (a read will reset the index to register D)
     outb(prev | 0x40, RTC_DATA_PORT);	// write the previous value ORed with 0x40. This turns on bit 6 of register B
-    sti();
+
+    // put interrupt gate in idt
+    // set reserved0|D|reserved1|reserved2|reserved3|reserved4[8] to 0|1|1|1|0|0000 0000 for 32-bit interrupt gate
+    idt[40].present = 1;             // segment is present
+    idt[40].dpl = 0;                 // DPL = 00 (highest priority)
+    idt[40].reserved0 = 0;           
+    idt[40].size = 1;                // size (D) = 1 (32 bit gate)
+    idt[40].reserved1 = 1;
+    idt[40].reserved2 = 1;
+    idt[40].reserved3 = 0;
+    idt[40].reserved4 = 0;
+    idt[40].seg_selector = KERNEL_CS;
+
+    // link idt entry to rtc liner function
+    SET_IDT_ENTRY(idt[40], rtc_link);
+
+   
 
     enable_irq(RTC_IRQ);
+    printf("initialized rtc ");
+
+    // sti();
 }
 
 /* frequency_to_rate
@@ -46,7 +70,7 @@ uint8_t freq_to_rate(uint16_t freq) {
  *   Return Value: none
  *    Function: set frequency of RTC interrupts */
 void rtc_set_freq(uint16_t freq) {
-    uint8_t new_freq = rtc_freq_to_config(freq); 
+    uint8_t new_freq = freq_to_rate(freq); 
     uint8_t old_freq;
     cli(); 
     outb(RTC_A, RTC_CMD_PORT); 
@@ -56,12 +80,18 @@ void rtc_set_freq(uint16_t freq) {
     sti();  
 }
 
-/* rtc_interrupt
+/* rtc_handler
  *   Inputs: none
  *   Return Value: none
  *    Function: what to do during RTC interrupts */
-void rtc_interrupt(){
+void rtc_handler(){
+
+    printf("in rtc_handler \n");
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
+
+    test_interrupts(); 
     send_eoi(RTC_IRQ);
+
+    
 }

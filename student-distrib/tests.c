@@ -69,7 +69,7 @@ void exceptions_test(){
  	// seg_not_present_link();
  	// stack_seg_fault_link();
  	// gen_prot_link();
- 	// page_fault_link();
+ 	//page_fault_link();
  	// fp_error_link();
  	// align_check_link();
  	// mach_check_link();

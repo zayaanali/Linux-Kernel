@@ -13,7 +13,7 @@
 #include "rtc.h"
 
 
-#define RUN_TESTS
+//#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -149,10 +149,10 @@ void entry(unsigned long magic, unsigned long addr) {
     
 
     /* Init the PIC */
-    //i8259_init();
+    i8259_init();
 
     /* Init the RTC*/
-    //rtc_init();
+    rtc_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -161,13 +161,13 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    //printf("Enabling Interrupts\n");
-    //sti();
+   printf("Enabling Interrupts\n");
+   sti();
 
-#ifdef RUN_TESTS
-    /* Run tests */
-   launch_tests();
-#endif
+// #ifdef RUN_TESTS
+//     /* Run tests */
+//   // launch_tests();
+// #endif
     /* Execute the first program ("shell") ... */
 
     /* Spin (nicely, so we don't chew up cycles) */

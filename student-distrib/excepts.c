@@ -27,6 +27,7 @@ extern void align_check_link();
 extern void mach_check_link();
 extern void simd_fp_link();
 
+extern void timer_link(); 
 
 void setup_exceptions(){
     
@@ -79,184 +80,246 @@ void setup_exceptions(){
     SET_IDT_ENTRY(idt[18], mach_check_link);
     SET_IDT_ENTRY(idt[19], simd_fp_link);
 
+
+    // for(i=20; i<256; i++){
+
+
+        
+    //     idt[i].present = 0;             // segment is present
+    //     idt[i].dpl = 0;                 // DPL = 00 (highest priority)
+    //     idt[i].reserved0 = 0;           
+    //     idt[i].size = 1;                // size (D) = 1 (32 bit gate)
+    //     idt[i].reserved1 = 1;
+    //     idt[i].reserved2 = 1;
+    //     idt[i].reserved3 = 0;
+    //     idt[i].reserved4 = 0;
+    //     idt[i].seg_selector = KERNEL_CS;
+
+    // }
+
+
+
 }
 
 
 void divide_error(){
 
+    cli(); 
     clear(); 
     printf("ERR Trying to divide by 0 \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 
 extern void debug(){
 
+    cli();
     clear(); 
     printf("ERR DB exception \n");
     while(1){
         ;
     }
+    sti(); 
 
 }
 
 extern void nmi_interrupt(){
 
+    cli(); 
     clear(); 
     printf("ERR Non-Maskable Interrupt \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 extern void breakpoint(){
 
+    cli(); 
     clear(); 
     printf("ERR breakpoint \n");
     while(1){
         ;
     }
+    sti(); 
+
 }
 
 extern void overflow(){
 
+    cli(); 
     clear(); 
     printf("ERR overflow \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 extern void bound_rng_ex(){
 
+    cli();
     clear(); 
     printf("ERR bound range exceeded \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 extern void invalid_op(){
 
+    cli();
     clear(); 
     printf("ERR invalid opcode \n");
     while(1){
         ;
     }
+    sti(); 
 
 }
 
 extern void device_not_avail(){
 
+    cli();
     clear(); 
     printf("ERR device not available \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 extern void dbl_fault(){
 
+    cli(); 
     clear(); 
     printf("ERR Double Fault \n");
     while(1){
         ;
     }
+    sti(); 
 }
 
 extern void co_seg_overrun(){
     
+    cli(); 
     clear(); 
     printf("ERR Coprocessor Segment Overrun \n");
     while(1){
         ;
     }
+    sti(); 
 }
 extern void invalid_tss(){
 
+    cli(); 
     clear(); 
     printf("ERR Invalid TSS \n");
     while(1){
         ;
     }
+    sti();
+
 }
 
 extern void seg_not_present(){
        
+    cli();
     clear(); 
     printf("ERR Segment Not Present \n");
     while(1){
         ;
     }
+    sti();
 }
 
 extern void stack_seg_fault(){
 
+    cli();
     clear(); 
     printf("ERR Stack-Segment Fault \n");
     while(1){
         ;
     }
-
+    sti();
 }
 
 
 extern void gen_prot(){
 
+    cli(); 
     clear(); 
     printf("ERR General Protection Fault \n");
     while(1){
         ;
     }
+    sti();
+
 }
 
 
 extern void page_fault(){
 
+    cli();
     clear(); 
     printf("ERR Page Fault \n");
     while(1){
         ;
     }
+    sti(); 
+
 }
 
 
 extern void fp_error(){
 
+    cli(); 
     clear(); 
     printf("ERR Floating-Point Error \n");
     while(1){
         ;
     }
+    sti(); 
+
 }
 
 
 extern void align_check(){
 
+    cli();
     clear(); 
     printf("ERR Alignment Check Fault \n");
     while(1){
         ;
     }
+    sti();
 }
 
 extern void mach_check(){
 
+    cli(); 
     clear(); 
     printf("ERR Machine Check \n");
     while(1){
         ;
     }
+    sti();
 }
 
 
 extern void simd_fp(){
 
+    cli(); 
     clear(); 
     printf("ERR SIMD Floating-Point Exception \n");
     while(1){
         ;
     }
+    sti(); 
+    
 }

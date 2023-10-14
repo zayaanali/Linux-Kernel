@@ -22,4 +22,7 @@ extern void align_check_link();
 extern void mach_check_link();
 extern void simd_fp_link();
 
+extern void rtc_link(); 
+extern void timer_link(); 
+
 #endif
