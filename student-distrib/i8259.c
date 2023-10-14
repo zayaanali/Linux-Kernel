@@ -4,7 +4,6 @@
 
 #include "i8259.h"
 #include "lib.h"
-#include "spinlock.h"
 
 
 /* Interrupt masks to determine which interrupts are enabled and disabled */
