@@ -109,13 +109,13 @@ void send_eoi(uint32_t irq_num) {
     /* Calculate and send EOI */
     if (irq_num < 8) { // EOI on master
         master_eoi = EOI | irq_line_num;
-        outb(master_mask, MASTER_8259_DATA);
+        outb(master_eoi, MASTER_8259_PORT);
     } else { // EOI on slave. Must send master EOI as well
         slave_eoi = EOI | irq_line_num;
         master_eoi = EOI | IRQ_SLAVE;
         
-        outb(slave_mask, SLAVE_8259_DATA);
-        outb(master_mask, MASTER_8259_DATA);
+        outb(slave_eoi, SLAVE_8259_PORT);
+        outb(master_eoi, MASTER_8259_PORT);
         
     }
 
