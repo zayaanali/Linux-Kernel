@@ -20,6 +20,94 @@ volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_pressed;
 
+char key_map[] = {
+    'z',   // Not a valid character for index 0
+    'z',  // Escape
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '0',
+    '-',
+    '=',
+    'z',   // Backspace
+    'z',   // Tab
+    'q',
+    'w',
+    'e',
+    'r',
+    't',
+    'y',
+    'u',
+    'i',
+    'o',
+    'p',
+    '[',
+    ']',
+    'z',  // Enter
+    'z',  // Left Control
+    'a',
+    's',
+    'd',
+    'f',
+    'g',
+    'h',
+    'j',
+    'k',
+    'l',
+    ';',
+    '\'',
+    '`',
+    'z',  // Left Shift
+    '\\',
+    'z',
+    'x',
+    'c',
+    'v',
+    'b',
+    'n',
+    'm',
+    ',',
+    '.',
+    '/',
+    'z',  // Right Shift
+    '*',
+    'z',  // Left Alt
+    ' ',
+    'z',  // Caps Lock
+    'z', // f0 through f10
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',
+    'z',   // Num Lock
+    'z',   // Scroll Lock
+    '7', // Home (7 on the numpad)
+    '8', // Up Arrow (8 on the numpad)
+    '9', // Page Up (9 on the numpad)
+    '-', // Keypad -
+    '4', // Left Arrow (4 on the numpad)
+    '5', // Keypad 5
+    '6', // Right Arrow (6 on the numpad)
+    '+', // Keypad +
+    '1', // End (1 on the numpad)
+    '2', // Down Arrow (2 on the numpad)
+    '3', // Page Down (3 on the numpad)
+    '0', // Insert (0 on the numpad)
+    '.', // Delete (Del on the numpad)
+    'z',   // Not a valid character for indexes beyond 82
+};
+
 // enable the keyboard interrupt line
 extern void keyboard_init() {
 
@@ -49,7 +137,7 @@ extern void keyboard_handler() {
     /* Read from keyboard */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
-    printf("%d \n", scan_key);
+    printf("%c \n", key_map[scan_key]);
 
 
     /* Send EOI */
@@ -64,12 +152,13 @@ extern void keyboard_handler() {
 
 // check if modifiers held
 void check_modifiers(uint8_t scan_key) {
-    switch (scan_key) {
-        case 0x12: // Left Shift
-        case 0x59: // Right Shift
-        case 0x3A: // Caps Lock
-            return 1;
-        default:
-            return 0;
-    }
+    // switch (scan_key) {
+    //     case 0x12: // Left Shift
+    //     case 0x59: // Right Shift
+    //     case 0x3A: // Caps Lock
+    //         return 1;
+    //     default:
+    //         return 0;
+    // }
 }
+
