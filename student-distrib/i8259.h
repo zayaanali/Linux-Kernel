@@ -11,16 +11,23 @@
 /* Ports that each PIC sits on */
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
+#define MASTER_8259_DATA    0x21
+#define SLAVE_8259_DATA     0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
-#define ICW1                0x11
+#define ICW1                0x11 
 #define ICW2_MASTER         0x20
 #define ICW2_SLAVE          0x28
 #define ICW3_MASTER         0x04
 #define ICW3_SLAVE          0x02
 #define ICW4                0x01
+
+/* Some definitions */
+
+#define NUM_IRQS            16
+#define IRQ_SLAVE           2
 
 /* End-of-interrupt byte.  This gets OR'd with
  * the interrupt number and sent out to the PIC
@@ -37,5 +44,6 @@ void enable_irq(uint32_t irq_num);
 void disable_irq(uint32_t irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num);
+void get_mask(uint32_t irq_num, int mode);
 
 #endif /* _I8259_H */
