@@ -5,10 +5,7 @@
 extern void setup_exceptions();
 
 extern void divide_error();
-
-
-
-/*extern void debug();
+extern void debug();
 extern void nmi_interrupt();
 extern void breakpoint();
 extern void overflow();
@@ -25,7 +22,7 @@ extern void page_fault();
 extern void fp_error();
 extern void align_check();
 extern void mach_check();
-extern void simd_fp();*/
+extern void simd_fp();
 
 
 
