@@ -8,7 +8,6 @@
 
 #define PASS 1
 #define FAIL 0
-#define LLONG_MAX 9223372036854775807
 
 /* format these macros as you see fit */
 #define TEST_HEADER 	\
@@ -60,7 +59,7 @@ void exceptions_test(){
 
 	// divide_error_link(); 
 	// OR 
-	// int i=5/0; 
+	//int i=5/0; 
 
 	// debug_link();
  	// nmi_interrupt_link();
@@ -92,8 +91,9 @@ void rtc_test(){
 }
 
 void syscall_idt_test(){
+	//printf("in syscall test");
+	asm volatile("int $128");
 
-	systemcall_link();
 }
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */

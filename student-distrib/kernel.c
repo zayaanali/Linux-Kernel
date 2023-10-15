@@ -145,6 +145,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Construct 20 exception entries in IDT */
     setup_exceptions();
+    init_syscall_idt();
 
     /* load idtr */
     lidt(idt_desc_ptr);

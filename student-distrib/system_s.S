@@ -1,4 +1,3 @@
-
 .GLOBL systemcall_link
 systemcall_link:
             pushal 
@@ -7,7 +6,7 @@ systemcall_link:
             popfl       
             popal  
 
-            ret  
+            iret  
 
 
             
