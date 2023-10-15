@@ -87,11 +87,9 @@ void rtc_set_freq(uint16_t freq) {
  *    Function: what to do during RTC interrupts */
 void rtc_handler(){
 
-    printf("in rtc_handler \n");
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
-
-    //test_interrupts(); 
+    test_interrupts(); 
     send_eoi(RTC_IRQ);
 
     
