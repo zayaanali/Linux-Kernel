@@ -4,6 +4,7 @@
 #include "excepts_s.h"
 #include "i8259.h"
 #include "rtc.h"
+#include "system_s.h"
 
 #define PASS 1
 #define FAIL 0
@@ -88,7 +89,11 @@ void rtc_test(){
 
 	enable_irq(RTC_IRQ);
 
-	//disable_irq(RTC_IRQ);
+}
+
+void syscall_idt_test(){
+
+	systemcall_link();
 }
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -102,7 +107,12 @@ void launch_tests(){
 	// launch your tests here
 	
 	//TEST_OUTPUT("idt_test", idt_test());
+
 	//exceptions_test();
+
+	//rtc_test(); 
+
+	//syscall_idt_test(); 
 
 
 }

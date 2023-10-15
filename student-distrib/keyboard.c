@@ -19,6 +19,7 @@ extern void keyboard_link();
 volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_pressed;
+int pressed; 
 
 char key_map[] = {
     'z',   // Not a valid character for index 0
@@ -126,27 +127,28 @@ extern void keyboard_init() {
     // link idt entry to rtc liner function
     SET_IDT_ENTRY(idt[33], keyboard_link);
 
+    pressed = 0; 
+
     enable_irq(KEYBOARD_IRQ);
 }
 
 // If receive interrupt, then read from keyboard port
 extern void keyboard_handler() {
-    /* Start Protected Segment */
-//    cli(); //interrupt gate protects for us
 
-    /* Read from keyboard */
+    pressed++; 
+
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
-    printf("%c \n", key_map[scan_key]);
+    /* Read from keyboard */
+    if(pressed%2==1){
+        printf("%c ", key_map[scan_key]);
+    }
 
 
     /* Send EOI */
     send_eoi(KEYBOARD_IRQ);
 
-    
-    
-    /* End Protected Segment */
-//    sti();
+
 }
 
 
