@@ -4,8 +4,10 @@
 #define NUM_PAGES 1024
 
 #include "types.h"
+#include "paging.h"
 
-extern void loadPageDirectory(unsigned int*);
+extern void loadPageDirectory(page_dir_entry_t*);
 extern void enablePaging();
 
 #endif
+
