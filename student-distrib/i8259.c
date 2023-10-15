@@ -37,8 +37,8 @@ void i8259_init(void) {
     master_mask = 0xff;
     slave_mask = 0xff; 
 
-    outb(master_mask, MASTER_8259_DATA);
-    outb(slave_mask, SLAVE_8259_DATA);
+   // outb(master_mask, MASTER_8259_DATA);
+    //outb(slave_mask, SLAVE_8259_DATA);
 
     /* enable the slave port */
     enable_irq(IRQ_SLAVE);

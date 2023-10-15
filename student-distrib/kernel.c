@@ -11,6 +11,7 @@
 
 #include "excepts.h"
 #include "rtc.h"
+#include "keyboard.h"
 
 
 //#define RUN_TESTS
