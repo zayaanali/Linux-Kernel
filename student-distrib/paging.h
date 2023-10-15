@@ -37,8 +37,6 @@ page_dir_entry_t page_dir[PAGE_ENTRIES] __attribute__((aligned(4096)));
 page_table_entry_t page_table[PAGE_ENTRIES] __attribute__((aligned(4096)));
 
 extern void page_init();
-extern void loadPageDirectory();
-extern void enablePaging();
 
 #endif
 
