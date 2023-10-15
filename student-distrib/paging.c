@@ -1,26 +1,44 @@
 #include "paging.h"
+#include "page.h"
 
 void page_init() {
     int i; 
 
-    for (i = 0; i < 1024; i++) {
-        page_table[i].present = 1;
-        page_table[i].read_write = 1;
-        page_table[i].user_supervisor = 0;
-        page_table[i].page_base_address = i * 0x1000; // 4 KiB per page
-    }
-    for (i = 0; i < 1024; i++) {
-        page_dir[i].present = 1;
+    /* Initalize page directory */
+    for (i = 0; i < NUM_PAGES; i++) {
+        page_dir[i].present = 0;
         page_dir[i].read_write = 1;
         page_dir[i].user_supervisor = 0;
-        page_dir[i].page_table_base_address = ((uint32_t)page_table) >> 12;
+        page_dir[i].page_write_through = 0;
+        page_dir[i].page_cache_disable = 0;
+        page_dir[i].accessed = 0;
+        page_dir[i].reserved = 0;
+        page_dir[i].page_size = 0;
+        page_dir[i].ignored = 0;
+        page_dir[i].page_table_base_address = 0;
+    }
+    
+    /* Initalize page directory */
+    for (i = 0; i < NUM_PAGES; i++) {
+        page_table[i].present = 1;
+        page_table[i].read_write = 1;
+        page_table[i].user_supervisor = 1;
+        page_table[i].page_write_through = 0;
+        page_table[i].page_cache_disable = 0;
+        page_table[i].accessed = 0;
+        page_table[i].reserved = 0;
+        page_table[i].page_size = 0;
+        page_table[i].ignored = 0;
+        page_table[i].page_table_base_address = 0;
     }
 
-    asm volatile ("mov %0, %%cr3":: "r"(page_dir));
+    /* Set first page dir entry as the page table we created */
+    page_dir[0].present = 1;
+    page_dir[0].read_write = 1;
+    page_dir[0].user_supervisor = 1;
+    page_dir[0].page_table_base_address = ((unsigned int) page_table) >> 12;
 
-    uint32_t cr0;
-    asm volatile ("mov %%cr0, %0": "=r"(cr0));
-    cr0 |= 0x80000000; // Enable paging
-    asm volatile ("mov %0, %%cr0":: "r"(cr0));
-    
+
+    loadPageDirectory(page_dir);
+    enablePaging();
 }

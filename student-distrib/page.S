@@ -1,3 +1,28 @@
+#define ASM     1
+#include "page.h"
+
+.text
+
+.globl page_dir, page_table
+   
+   
+   .align  4096
+page_dir:
+_page_dir:
+    .rept NUM_PAGES
+    .word 0
+    .endr
+page_dir_bottom:
+
+   .align  4096
+page_table:
+_page_table:
+    .rept NUM_PAGES
+    .word 0
+    .endr
+page_table_bottom:
+
+
 .text
 .globl loadPageDirectory
 loadPageDirectory:
@@ -9,7 +34,7 @@ mov %ebp, %esp
 pop %ebp
 ret
 
-
+.text
 .globl enablePaging
 enablePaging:
 push %ebp

@@ -12,6 +12,8 @@
 #include "excepts.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "page.h"
+#include "paging.h"
 
 
 #define RUN_TESTS
@@ -157,6 +159,16 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+    
+    /* Initialize paging */
+    page_init();
+    
+    
+    
+    // is this correct, how to test
+    
+    
+    
     keyboard_init();
 
 
