@@ -2,6 +2,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "excepts_s.h"
+#include "i8259.h"
+#include "rtc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -56,20 +58,23 @@ int idt_test(){
 void exceptions_test(){
 
 	// divide_error_link(); 
+	// OR 
+	// int i=5/0; 
+
 	// debug_link();
  	// nmi_interrupt_link();
  	// breakpoint_link();
  	// overflow_link();
   	// bound_rng_ex_link();
   	// invalid_op_link();
-  	//device_not_avail_link();
+  	// device_not_avail_link();
  	// dbl_fault_link();
  	// co_seg_overrun_link();
  	// invalid_tss_link();
  	// seg_not_present_link();
  	// stack_seg_fault_link();
  	// gen_prot_link();
- 	//page_fault_link();
+ 	// page_fault_link();
  	// fp_error_link();
  	// align_check_link();
  	// mach_check_link();
@@ -78,6 +83,13 @@ void exceptions_test(){
 
 }
 
+
+void rtc_test(){
+
+	enable_irq(RTC_IRQ);
+
+	//disable_irq(RTC_IRQ);
+}
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -86,9 +98,11 @@ void exceptions_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	//TEST_OUTPUT("idt_test", idt_test());
+	
 	// launch your tests here
 	
+	//TEST_OUTPUT("idt_test", idt_test());
 	//exceptions_test();
+
 
 }

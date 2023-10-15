@@ -35,7 +35,8 @@ void rtc_init(){
 
    
 
-    enable_irq(RTC_IRQ);
+   // enable_irq(RTC_IRQ);
+   
     printf("initialized rtc ");
 
     // sti();
@@ -90,7 +91,7 @@ void rtc_handler(){
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
 
-    test_interrupts(); 
+    //test_interrupts(); 
     send_eoi(RTC_IRQ);
 
     

@@ -36,22 +36,21 @@ MAKE_LINKAGE(simd_fp_link, simd_fp)
 # MAKE_LINKAGE(keyboard_link, keyboard_handler)
 
 
-.GLOBL keyboard_link
-keyboard_link:
-            pushal 
-            pushfl 
-            call keyboard_handler    
-            popfl       
-            popal  
-
-            iret    
-
-
 .GLOBL rtc_link
 rtc_link:
             pushal 
             pushfl 
             call rtc_handler    
+            popfl       
+            popal  
+
+            iret  
+
+.GLOBL keyboard_link
+keyboard_link:
+            pushal 
+            pushfl 
+            call keyboard_handler   
             popfl       
             popal  
 

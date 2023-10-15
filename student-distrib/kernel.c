@@ -11,9 +11,10 @@
 
 #include "excepts.h"
 #include "rtc.h"
+#include "keyboard.h"
 
 
-//#define RUN_TESTS
+#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -166,10 +167,10 @@ void entry(unsigned long magic, unsigned long addr) {
    printf("Enabling Interrupts\n");
    sti();
 
-// #ifdef RUN_TESTS
-//     /* Run tests */
-//   // launch_tests();
-// #endif
+#ifdef RUN_TESTS
+     /* Run tests */
+   // launch_tests();
+ #endif
     /* Execute the first program ("shell") ... */
 
     /* Spin (nicely, so we don't chew up cycles) */

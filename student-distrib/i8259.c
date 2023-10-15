@@ -34,25 +34,16 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_8259_DATA);
 
 
-    master_mask = 0xff;
-    slave_mask = 0xff; 
 
-   // outb(master_mask, MASTER_8259_DATA);
-    //outb(slave_mask, SLAVE_8259_DATA);
+    int i;
+
+
+    for(i=0; i<16; i++){
+        disable_irq(i);
+    }
 
     /* enable the slave port */
     enable_irq(IRQ_SLAVE);
-
-    //int i;
-
-
-    /*for(i=0; i<16; i++){
-        if(i==IRQ_SLAVE){
-            continue; 
-        }
-
-        disable_irq(i);
-    }*/
 
 
 }
