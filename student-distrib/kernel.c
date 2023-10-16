@@ -144,14 +144,19 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
+
+    /* Initialize devices, memory, filesystem, enable device interrupts on the
+    * PIC, any other initialization stuff... */
+    
     /* Construct 20 exception entries in IDT */
     setup_exceptions();
+
+    /* add system call entry to idt */
     init_syscall_idt();
 
     /* load idtr */
     lidt(idt_desc_ptr);
 
-    
 
     /* Init the PIC */
     i8259_init();
@@ -159,14 +164,10 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the RTC*/
     rtc_init();
 
-    /* Initialize devices, memory, filesystem, enable device interrupts on the
-     * PIC, any other initialization stuff... */
-    
     /* Initialize paging */
     page_init();
     
-    
-    
+    /* Init the keyboard */
     keyboard_init();
 
 

@@ -1,9 +1,15 @@
 #ifndef _EXCEPTS_H
 #define _EXCEPTS_H
-/* handlers for each exception */
 
+/*
+    This is the header file for excepts.c, see excepts.c for more details. 
+*/
+
+/* call this function to set up exceptions in idt */
 extern void setup_exceptions();
 
+
+/* handlers for each exception */
 extern void divide_error();
 extern void debug();
 extern void nmi_interrupt();

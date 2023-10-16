@@ -1,7 +1,13 @@
 #ifndef _EXCEPTS_S_H
 #define _EXCEPTS_S_H
 
+/*
+    Title of the file is slightly misleading. This is the header file for the .S file that creates the assembly linkage for the exception handlers and keyboard and RTC
+    interrupt handlers. 
 
+*/
+
+/* assembly-linked functions for exception handlers */
 extern void divide_error_link();
 extern void debug_link();
 extern void nmi_interrupt_link();
@@ -22,6 +28,7 @@ extern void align_check_link();
 extern void mach_check_link();
 extern void simd_fp_link();
 
+/* assembly-linked functions for interrupt handlers */
 extern void rtc_link(); 
 extern void keyboard_link(); 
 
