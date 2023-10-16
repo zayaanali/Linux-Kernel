@@ -6,7 +6,7 @@
 #include "types.h"
 #include "paging.h"
 
-extern void loadPageDirectory(page_dir_entry_t*);
+extern void loadPageDirectory(page_dir_entry_t* p_d);
 extern void enablePaging();
 
 #endif

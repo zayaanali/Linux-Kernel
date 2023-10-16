@@ -4,7 +4,7 @@
 #include "types.h"
 
 #define PAGE_ENTRIES 1024
-#define KERNEL_START   0x400000
+#define KERNEL_START 0x400000
 
 
 typedef union page_table_entry_t {

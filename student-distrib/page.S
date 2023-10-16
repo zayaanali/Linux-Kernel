@@ -30,12 +30,10 @@ page_table_bottom:
 loadPageDirectory:
 pushl %ebp
 movl %esp, %ebp
-pushal
-pushfl
+movl %cr3, %eax
+movl %eax, %cr3
 movl 8(%esp), %eax
 movl %eax, %cr3
-popfl
-popal
 leave
 ret
 
