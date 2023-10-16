@@ -144,19 +144,19 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Construct 20 exception entries in IDT */
-    setup_exceptions();
-    init_syscall_idt();
+    //setup_exceptions();
+    //init_syscall_idt();
 
     /* load idtr */
-    lidt(idt_desc_ptr);
+    //lidt(idt_desc_ptr);
 
     
 
     /* Init the PIC */
-    i8259_init();
+    //i8259_init();
 
     /* Init the RTC*/
-    rtc_init();
+    //rtc_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -170,15 +170,15 @@ void entry(unsigned long magic, unsigned long addr) {
     
     
     
-    keyboard_init();
+    //keyboard_init();
 
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-   printf("Enabling Interrupts\n");
-   sti();
+   //printf("Enabling Interrupts\n");
+   //sti();
 
 #ifdef RUN_TESTS
      /* Run tests */

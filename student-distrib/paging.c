@@ -23,9 +23,14 @@ void page_init() {
         page_dir[i].page_table_base_address = 0;
     }
     
-    /* Initalize page directory */
+    /* Initalize page table 0 */
     for (i = 0; i < NUM_PAGES; i++) {
-        page_table[i].present = 1;
+        if(i==184){
+            page_table[i].present = 1;
+        }else{
+            page_table[i].present = 0;
+        }
+        
         page_table[i].read_write = 1;
         page_table[i].user_supervisor = 1;
         page_table[i].page_write_through = 0;
@@ -36,8 +41,9 @@ void page_init() {
         page_table[i].global = 0;
         page_table[i].avail = 0;
         page_table[i].page_base_address = (i * 0x1000) ; // 4KB page size - 0x1000 = 4096
-
+        
     }
+
     
     /* Set virtual memory 0-4MB (broken down into 4KB pages) */
     page_dir[0].present = 1;

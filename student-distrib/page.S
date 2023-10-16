@@ -28,22 +28,36 @@ page_table_bottom:
 .text
 
 loadPageDirectory:
-push %ebp
-mov %esp, %ebp
-mov 8(%esp), %eax
-mov %eax, %cr3
-mov %ebp, %esp
-pop %ebp
+pushl %ebp
+movl %esp, %ebp
+pushal
+pushfl
+movl 8(%esp), %eax
+movl %eax, %cr3
+popfl
+popal
+leave
 ret
 
 enablePaging:
-push %ebp
-mov %esp, %ebp
-mov %cr0, %eax
-or $0x80000000, %eax
-mov %eax, %cr0
-mov %ebp, %esp
-pop %ebp
+pushl %ebp
+movl %esp, %ebp
+pushal
+pushfl
+
+# enable page size extensions to allow 4MB pages
+movl %cr4, %eax
+orl $0x00000010, %eax
+movl %eax, %cr4
+
+# set PG flag in cr0
+movl %cr0, %eax
+orl $0x80000000, %eax
+movl %eax, %cr0
+
+popfl
+popal
+leave
 ret
 
 
