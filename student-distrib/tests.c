@@ -106,12 +106,13 @@ void syscall_idt_test(){
 
 void test_paging_inaccess(){
 
-	// check null ptr; 
-	// int* p = 0x00;
+	// //check null ptr; 
+	// int* p = (int*)0x00;
 	// int i = *p;
+	// printf("passed dereferencing null \n");
 
-	// read a byte before video mem location
-	// int* p = (VIDEO-1);
+	// //read a byte before video mem location
+	// int* p = (int*)(VIDEO-1);
 	// int i = *p; 
 	// printf("dereferencing video mem byte -1, read: %c \n", i);
 
@@ -124,17 +125,18 @@ void test_paging_access(){
 	int i = *p; 
 	printf("dereferencing video mem byte 0, read: %c \n", i);
 
-	// p = (VIDEO+4093);
-	// i = *p; 
-	// printf("dereferencing video mem byte 4094, read: %c \n", i);
+	p = (VIDEO+4093);
+	i = *p; 
+	printf("dereferencing video mem byte 4094, read: %c \n", i);
 
 	p = (int*)0x400000;
 	i = *p;
 	printf("dereferencing kernel byte 0, read: %x \n", i);
 
-	p = (int*)(0x400000+4194301);
-	i = *p;
-	printf("dereferencing kernel byte 4,194,302 read: %x \n", i);
+	// //p = (int*)(0x400000+4194301);
+	// p = (int*)(0x7fffff);
+	// i = *p;
+	// printf("dereferencing kernel byte 4,194,304 read: %x \n", i);
 
 	// printf("dereferencing kernel byte 0, read: %x \n", i);
 
@@ -161,6 +163,6 @@ void launch_tests(){
 
 	//test_paging_inaccess(); 
 
-	test_paging_access(); 
+	//test_paging_access(); 
 
 }
