@@ -1,4 +1,10 @@
+# this code creates the assembly linkage for the exception handlers and keyboard and RTC interrupt handlers. 
 
+#  MAKE_LINKAGE
+#    Inputs: none
+#    Return Value: none
+#    Function: macro that defines assembly wrapper handlers for each exception handler. Stack is setup, then control 
+#               is passed to the handler defined in .c 
 #define MAKE_LINKAGE(linker, handler) \
 .GLOBL linker   ;\
 linker:     pushal ;\
@@ -11,7 +17,7 @@ linker:     pushal ;\
 
 
 
-
+#  use MAKE_LINKAGE macro to define an assembly wrapper handler for every exception handler
 MAKE_LINKAGE(debug_link, debug)
 MAKE_LINKAGE(divide_error_link, divide_error)
 MAKE_LINKAGE(nmi_interrupt_link, nmi_interrupt)
@@ -32,10 +38,11 @@ MAKE_LINKAGE(align_check_link, align_check)
 MAKE_LINKAGE(mach_check_link, mach_check)
 MAKE_LINKAGE(simd_fp_link, simd_fp)
 
-# MAKE_LINKAGE(rtc_link, rtc_handler)
-# MAKE_LINKAGE(keyboard_link, keyboard_handler)
 
-
+#  rtc_link
+#    Inputs: none
+#    Return Value: none
+#    Function: assembly wrapper for rtc_handler. sets up the stack, calls rtc_handler, then does iret
 .GLOBL rtc_link
 rtc_link:
             pushal 
@@ -46,6 +53,11 @@ rtc_link:
 
             iret  
 
+
+#  keyboard_link
+#    Inputs: none
+#    Return Value: none
+#    Function: assembly wrapper for keyboard_handler. sets up the stack, calls keyboard_handler, then does iret
 .GLOBL keyboard_link
 keyboard_link:
             pushal 

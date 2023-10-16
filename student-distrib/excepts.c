@@ -1,5 +1,5 @@
 /*
-    Store entries for the 20 exceptions needed in IDT. 
+    This file holds the function to set up the 20 exception IDT entries as well as the unlinked, c handler code for each exception.
 */
 
 #include "x86_desc.h"
@@ -27,22 +27,23 @@ extern void align_check_link();
 extern void mach_check_link();
 extern void simd_fp_link();
 
-extern void timer_link(); 
-
+/* setup_exceptions
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Initialize top 20 IDT entries to handle all 20 exceptions except exception 15 which is reserved by Intel */
 void setup_exceptions(){
     
-    int i;                                // loop variable 
+    int i;                               // loop variable 
 
 
-    // trap gates for all 20 exceptions have all the same bits except for the offsets
-    // set reserved0|D|reserved1|reserved2|reserved3|reserved4[8] to 0 1111 0000 0000 for 32-bit trap gate
+    /* trap gates for all 20 exceptions have all the same bits except for the offsets, so set all concurrently */ 
     for(i=0; i<20; i++){
 
         if(i == 15){
-            continue;   // intel reserved, skip
+            continue;                   // intel reserved, skip
         } 
 
-        
+        /* set reserved0|size|reserved1|reserved2|reserved3|reserved4[8] to 0 1111 0000 0000 for 32-bit trap gate */ 
         idt[i].present = 1;             // segment is present
         idt[i].dpl = 0;                 // DPL = 00 (highest priority)
         idt[i].reserved0 = 0;           
@@ -56,9 +57,8 @@ void setup_exceptions(){
     }
     
 
-    /* set Trap Gate offset fields to point to exception handler for each exception */
-
-    /* set all offsets to correct exception handler */
+    /* set Trap Gate offset fields to point to exception handler for each exception. This is the assembly linkage handler defined in */
+    /*    excepts_s.S. It sets up the stack and then calls the corresponding c handler defined below */ 
     SET_IDT_ENTRY(idt[0], divide_error_link);
     SET_IDT_ENTRY(idt[1], debug_link);
     SET_IDT_ENTRY(idt[2], nmi_interrupt_link);
@@ -80,28 +80,13 @@ void setup_exceptions(){
     SET_IDT_ENTRY(idt[18], mach_check_link);
     SET_IDT_ENTRY(idt[19], simd_fp_link);
 
-
-    // for(i=20; i<256; i++){
-
-
-        
-    //     idt[i].present = 0;             // segment is present
-    //     idt[i].dpl = 0;                 // DPL = 00 (highest priority)
-    //     idt[i].reserved0 = 0;           
-    //     idt[i].size = 1;                // size (D) = 1 (32 bit gate)
-    //     idt[i].reserved1 = 1;
-    //     idt[i].reserved2 = 1;
-    //     idt[i].reserved3 = 0;
-    //     idt[i].reserved4 = 0;
-    //     idt[i].seg_selector = KERNEL_CS;
-
-    // }
-
-
-
 }
 
 
+/* divide_error
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for divide exception.  */
 void divide_error(){
 
     cli(); 
@@ -113,7 +98,10 @@ void divide_error(){
     sti(); 
 }
 
-
+/* debug
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for debug exception.  */
 extern void debug(){
 
     cli();
@@ -126,6 +114,10 @@ extern void debug(){
 
 }
 
+/* nmi_interrupt
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for nmi interrupt.  */
 extern void nmi_interrupt(){
 
     cli(); 
@@ -137,6 +129,10 @@ extern void nmi_interrupt(){
     sti(); 
 }
 
+/* breakpoint
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for breakpoint exception.  */
 extern void breakpoint(){
 
     cli(); 
@@ -149,6 +145,10 @@ extern void breakpoint(){
 
 }
 
+/* overflow
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for overflow exception.  */
 extern void overflow(){
 
     cli(); 
@@ -160,6 +160,11 @@ extern void overflow(){
     sti(); 
 }
 
+
+/* bound_rng_ex
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for bound range exceeded exception.  */
 extern void bound_rng_ex(){
 
     cli();
@@ -171,6 +176,11 @@ extern void bound_rng_ex(){
     sti(); 
 }
 
+
+/* invalid_op
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for invalid opcode exception.  */
 extern void invalid_op(){
 
     cli();
@@ -183,6 +193,11 @@ extern void invalid_op(){
 
 }
 
+
+/* device_not_avail
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for device not available exception.  */
 extern void device_not_avail(){
 
     cli();
@@ -194,6 +209,11 @@ extern void device_not_avail(){
     sti(); 
 }
 
+
+/* dbl_fault
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for double fault exception.  */
 extern void dbl_fault(){
 
     cli(); 
@@ -205,6 +225,11 @@ extern void dbl_fault(){
     sti(); 
 }
 
+
+/* co_seg_overrun
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for Coprocessor Segment Overrun exception.  */
 extern void co_seg_overrun(){
     
     cli(); 
@@ -215,6 +240,11 @@ extern void co_seg_overrun(){
     }
     sti(); 
 }
+
+/* invalid_tss
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for invalid tss exception.  */
 extern void invalid_tss(){
 
     cli(); 
@@ -227,6 +257,11 @@ extern void invalid_tss(){
 
 }
 
+
+/* seg_not_present
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for Segment Not Present exception.  */
 extern void seg_not_present(){
        
     cli();
@@ -238,6 +273,11 @@ extern void seg_not_present(){
     sti();
 }
 
+
+/* stack_seg_fault
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for Stack Segment Fault.  */
 extern void stack_seg_fault(){
 
     cli();
@@ -250,6 +290,10 @@ extern void stack_seg_fault(){
 }
 
 
+/* gen_prot
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for General Protection Fault.  */
 extern void gen_prot(){
 
     cli(); 
@@ -263,6 +307,10 @@ extern void gen_prot(){
 }
 
 
+/* page_fault
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for Page Fault.  */
 extern void page_fault(){
 
     cli();
@@ -276,6 +324,10 @@ extern void page_fault(){
 }
 
 
+/* fp_error
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for Floating-Point error.  */
 extern void fp_error(){
 
     cli(); 
@@ -289,6 +341,10 @@ extern void fp_error(){
 }
 
 
+/* align_check
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for alignment check fault.  */
 extern void align_check(){
 
     cli();
@@ -300,6 +356,11 @@ extern void align_check(){
     sti();
 }
 
+
+/* mach_check
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for machine check fault.  */
 extern void mach_check(){
 
     cli(); 
@@ -312,6 +373,10 @@ extern void mach_check(){
 }
 
 
+/* simd_fp
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: Exception handler for SIMD floating-point exception.  */
 extern void simd_fp(){
 
     cli(); 
