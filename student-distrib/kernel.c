@@ -14,6 +14,7 @@
 #include "keyboard.h"
 #include "page.h"
 #include "paging.h"
+#include "systemcall.h"
 
 
 #define RUN_TESTS

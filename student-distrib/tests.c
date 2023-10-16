@@ -9,6 +9,8 @@
 #define PASS 1
 #define FAIL 0
 
+#define VIDEO       0xB8000
+
 /* format these macros as you see fit */
 #define TEST_HEADER 	\
 	printf("[TEST %s] Running %s at %s:%d\n", __FUNCTION__, __FUNCTION__, __FILE__, __LINE__)
@@ -74,7 +76,13 @@ void exceptions_test(){
  	// seg_not_present_link();
  	// stack_seg_fault_link();
  	// gen_prot_link();
+
  	// page_fault_link();
+	// OR
+	// int* p = 0x00;
+	// int i = *p;
+
+
  	// fp_error_link();
  	// align_check_link();
  	// mach_check_link();
@@ -93,6 +101,43 @@ void rtc_test(){
 void syscall_idt_test(){
 	//printf("in syscall test");
 	asm volatile("int $128");
+
+}
+
+void test_paging_inaccess(){
+
+	// check null ptr; 
+	// int* p = 0x00;
+	// int i = *p;
+
+	// read a byte before video mem location
+	// int* p = (VIDEO-1);
+	// int i = *p; 
+	// printf("dereferencing video mem byte -1, read: %c \n", i);
+
+}
+
+void test_paging_access(){
+
+	int* p = (int*)VIDEO;
+
+	int i = *p; 
+	printf("dereferencing video mem byte 0, read: %c \n", i);
+
+	// p = (VIDEO+4093);
+	// i = *p; 
+	// printf("dereferencing video mem byte 4094, read: %c \n", i);
+
+	p = (int*)0x400000;
+	i = *p;
+	printf("dereferencing kernel byte 0, read: %x \n", i);
+
+	p = (int*)(0x400000+4194301);
+	i = *p;
+	printf("dereferencing kernel byte 4,194,302 read: %x \n", i);
+
+	// printf("dereferencing kernel byte 0, read: %x \n", i);
+
 
 }
 /* Checkpoint 2 tests */
@@ -114,5 +159,8 @@ void launch_tests(){
 
 	//syscall_idt_test(); 
 
+	//test_paging_inaccess(); 
+
+	test_paging_access(); 
 
 }

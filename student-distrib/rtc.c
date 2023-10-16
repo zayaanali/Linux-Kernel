@@ -37,7 +37,6 @@ void rtc_init(){
 
    // enable_irq(RTC_IRQ);
    
-    printf("initialized rtc ");
 
     // sti();
 }
