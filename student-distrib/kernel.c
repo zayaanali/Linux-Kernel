@@ -9,6 +9,14 @@
 #include "debug.h"
 #include "tests.h"
 
+#include "excepts.h"
+#include "rtc.h"
+#include "keyboard.h"
+#include "page.h"
+#include "paging.h"
+#include "systemcall.h"
+
+
 #define RUN_TESTS
 
 /* Macros. */
@@ -136,23 +144,43 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
+    /* Construct 20 exception entries in IDT */
+    setup_exceptions();
+    init_syscall_idt();
+
+    /* load idtr */
+    lidt(idt_desc_ptr);
+
+    
+
     /* Init the PIC */
     i8259_init();
 
+    /* Init the RTC*/
+    rtc_init();
+
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+    
+    /* Initialize paging */
+    page_init();
+    
+    
+    
+    keyboard_init();
+
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    /*printf("Enabling Interrupts\n");
-    sti();*/
+   printf("Enabling Interrupts\n");
+   sti();
 
 #ifdef RUN_TESTS
-    /* Run tests */
-   // launch_tests();
-#endif
+     /* Run tests */
+   launch_tests();
+ #endif
     /* Execute the first program ("shell") ... */
 
     /* Spin (nicely, so we don't chew up cycles) */
