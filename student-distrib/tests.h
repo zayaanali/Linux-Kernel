@@ -4,8 +4,8 @@
 
 
 // test launcher
-void launch_tests();
-void rtc_test();
+extern void launch_tests();
+
 
 
 #endif /* TESTS_H */
