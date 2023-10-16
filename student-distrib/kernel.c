@@ -167,10 +167,6 @@ void entry(unsigned long magic, unsigned long addr) {
     
     
     
-    // is this correct, how to test
-    
-    
-    
     keyboard_init();
 
 

@@ -5,11 +5,13 @@
 #include "i8259.h"
 #include "rtc.h"
 #include "system_s.h"
+#include "types.h"
 
 #define PASS 1
 #define FAIL 0
 
-#define VIDEO       0xB8000
+#define VIDEO        0xB8000
+#define KERNEL_START 0x400000
 
 /* format these macros as you see fit */
 #define TEST_HEADER 	\
@@ -79,8 +81,8 @@ void exceptions_test(){
 
  	// page_fault_link();
 	// OR
-	// int* p = 0x00;
-	// int i = *p;
+	// char* p = 0x00;
+	// char i = *p;
 
 
  	// fp_error_link();
@@ -105,40 +107,76 @@ void syscall_idt_test(){
 }
 
 void test_paging_inaccess(){
-
+	/* running any of these sections should cause a page fault*/
+	
 	// //check null ptr; 
-	// int* p = (int*)0x00;
-	// int i = *p;
+	// char* p = (char*)0x00;
+	// char i = *p;
 	// printf("passed dereferencing null \n");
 
-	// //read a byte before video mem location
-	// int* p = (int*)(VIDEO-1);
-	// int i = *p; 
+	// //read a byte right before video mem location
+	// char* p = (char*)(VIDEO-1);
+	// char i = *p; 
 	// printf("dereferencing video mem byte -1, read: %c \n", i);
+
+	// // read a byte right after video mem location
+	// char* p = (char*)(VIDEO+4096);
+	// char i = *p; 
+	// printf("dereferencing mem physcial address 0xb9000, read: %c \n", i);
+
+	// //read a byte right before kernel mem location
+	// char* p = (char*)(KERNEL_START-1);
+	// char i = *p; 
+	// printf("dereferencing kernel mem byte -1, read: %c \n", i);
+
+	// // read a byte right after video mem location
+	// char* p = (char*)(KERNEL_START+4194304);
+	// char i = *p; 
+	// printf("dereferencing kernel physcial address 0x500000, read: %c \n", i);
 
 }
 
 void test_paging_access(){
 
-	int* p = (int*)VIDEO;
+	/* UNCOMMENT for testing*/
+	// int j; 
 
-	int i = *p; 
-	printf("dereferencing video mem byte 0, read: %c \n", i);
+	// char* p = (char*)VIDEO;
+	// char i = *p; 
 
-	p = (VIDEO+4093);
-	i = *p; 
-	printf("dereferencing video mem byte 4094, read: %c \n", i);
+	// // test reading from every video mem location
+	// for(j=VIDEO; j<(VIDEO+4096); j++){
+	//  	p = (char*)(j);
+	//  	i = *p; 
+	//  	printf("dereferencing video mem byte %x, read: %c \n", j, i);
+	// }
 
-	p = (int*)0x400000;
-	i = *p;
-	printf("dereferencing kernel byte 0, read: %x \n", i);
+	// // test reading from every kernel code location
+	// for(j=KERNEL_START; j<(KERNEL_START+4194304); j++){
+	//   	p = (char*)(j);
+	//   	i = *p; 
+	//   	printf("dereferencing kernel mem byte %x, read: %c \n", j, i);
+	// }
 
-	// //p = (int*)(0x400000+4194301);
-	// p = (int*)(0x7fffff);
+	// // test reading byte 0 of kernel code
+	// p = (char*)(KERNEL_START);
 	// i = *p;
-	// printf("dereferencing kernel byte 4,194,304 read: %x \n", i);
+	// printf("dereferencing kernel address %x, read: %x \n", p, i);
 
-	// printf("dereferencing kernel byte 0, read: %x \n", i);
+	// // test reading last byte of kernel code
+	// p = (char*)(KERNEL_START+4194303);
+	// i = *p;
+	// printf("dereferencing kernel address %x, read: %x \n", p, i);
+
+	// // test reading byte 0 of video mem
+	// p = (char*)(VIDEO);
+	// i = *p;
+	// printf("dereferencing video address %x, read: %x \n", p, i);
+
+	// // test reading last byte of video mem
+	// p = (char*)(VIDEO+4095);
+	// i = *p;
+	// printf("dereferencing video address %x, read: %x \n", p, i);
 
 
 }
