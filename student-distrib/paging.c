@@ -10,17 +10,17 @@ void page_init() {
 
     /* Initalize page directory */
     for (i = 0; i < NUM_PAGES; i++) {
-        page_dir[i].present = 0;
-        page_dir[i].read_write = 1;
-        page_dir[i].user_supervisor = 0;
-        page_dir[i].page_write_through = 0;
-        page_dir[i].page_cache_disable = 0;
-        page_dir[i].accessed = 0;
-        page_dir[i].ignore = 0;
-        page_dir[i].page_size = 0;
-        page_dir[i].global = 0;
-        page_dir[i].avail = 0;
-        page_dir[i].page_table_base_address = 0;
+        page_dir[i].page_dir_entry_4kb_t.present = 0;
+        page_dir[i].page_dir_entry_4kb_t.read_write = 1;
+        page_dir[i].page_dir_entry_4kb_t.user_supervisor = 0;
+        page_dir[i].page_dir_entry_4kb_t.page_write_through = 0;
+        page_dir[i].page_dir_entry_4kb_t.page_cache_disable = 0;
+        page_dir[i].page_dir_entry_4kb_t.accessed = 0;
+        page_dir[i].page_dir_entry_4kb_t.ignore = 0;
+        page_dir[i].page_dir_entry_4kb_t.page_size = 0;
+        page_dir[i].page_dir_entry_4kb_t.global = 0;
+        page_dir[i].page_dir_entry_4kb_t.avail = 0;
+        page_dir[i].page_dir_entry_4kb_t.page_table_base_address = 0;
     }
     
     /* Initalize page table 0 */
@@ -46,18 +46,18 @@ void page_init() {
 
     
     /* Set virtual memory 0-4MB (broken down into 4KB pages) */
-    page_dir[0].present = 1;
-    page_dir[0].read_write = 1;
-    page_dir[0].user_supervisor = 1;
-    page_dir[0].page_size = 0; // 4KB page size
-    page_dir[0].page_table_base_address = ((unsigned int) page_table) >> 12; // align the page_table address to 4KB boundary
+    page_dir[0].page_dir_entry_4kb_t.present = 1;
+    page_dir[0].page_dir_entry_4kb_t.read_write = 1;
+    page_dir[0].page_dir_entry_4kb_t.user_supervisor = 1;
+    page_dir[0].page_dir_entry_4kb_t.page_size = 0; // 4KB page size
+    page_dir[0].page_dir_entry_4kb_t.page_table_base_address = ((unsigned int) page_table) >> 12; // align the page_table address to 4KB boundary
 
     /* Set Kernel Memory 4-8MB (single 4MB page) */
-    page_dir[1].present = 1;
-    page_dir[1].read_write = 1;
-    page_dir[1].user_supervisor = 1;
-    page_dir[1].page_size = 1; // 4MB page
-    page_dir[1].page_table_base_address = (KERNEL_START >> 12); // align the page_table address to 4KB boundary
+    page_dir[1].page_dir_entry_4mb_t.present = 1;
+    page_dir[1].page_dir_entry_4mb_t.read_write = 1;
+    page_dir[1].page_dir_entry_4mb_t.user_supervisor = 1;
+    page_dir[1].page_dir_entry_4mb_t.page_size = 1; // 4MB page
+    page_dir[1].page_dir_entry_4mb_t.page_base_address = (KERNEL_START >> 12); // align the page_table address to 4KB boundary
 
 
     /* load directory and enable */

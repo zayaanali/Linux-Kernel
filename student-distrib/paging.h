@@ -40,13 +40,9 @@ typedef union page_dir_entry_t {
         unsigned int global:1;              // Bit 8
         unsigned int avail:3;              // Bit 9-11
         unsigned int page_table_base_address:20; // Bit 12-31
-    } __attribute__ ((packed));
-} page_dir_entry_t;
+    } __attribute__ ((packed))page_dir_entry_4kb_t;
 
 
-typedef union page_dir_entry_4mb_t {
-    
-    uint32_t val;
     struct {
         unsigned int present:1;             // Bit 0
         unsigned int read_write:1;          // Bit 1
@@ -60,9 +56,12 @@ typedef union page_dir_entry_4mb_t {
         unsigned int avail:3;              // Bit 9-11
         unsigned int PAT:1;                 // Bit 12
         unsigned int reserved:9;              // Bit 13-21
-        unsigned int page_base_address:20; // Bit 22-31
-    } __attribute__ ((packed));
-} page_dir_entry_4mb_t;
+        unsigned int page_base_address:10; // Bit 22-31
+    } __attribute__ ((packed))page_dir_entry_4mb_t;
+} page_dir_entry_t;
+
+
+
 
 extern page_dir_entry_t page_dir[PAGE_ENTRIES] __attribute__((aligned(4096)));
 extern page_table_entry_t page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // new page table
