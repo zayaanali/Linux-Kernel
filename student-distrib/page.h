@@ -1,3 +1,6 @@
+/* page.h - Defines used to enable paging
+ */
+
 #ifndef _PAGE_H
 #define _PAGE_H
 

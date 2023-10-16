@@ -1,3 +1,6 @@
+/* keyboard.c - functions to interact with the keyboard */
+
+
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
@@ -12,10 +15,9 @@
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
 
-
-
 extern void keyboard_link(); 
 
+/* Keyboard variables */
 volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_pressed;
@@ -109,7 +111,10 @@ char key_map[] = {
     'z',   // Not a valid character for indexes beyond 82
 };
 
-// enable the keyboard interrupt line
+/* keyboard_init
+ *   Inputs: none
+ *   Return Value: none
+ *    Function: Initialize keyboard */
 extern void keyboard_init() {
 
     // put interrupt gate in idt
@@ -127,19 +132,21 @@ extern void keyboard_init() {
     // link idt entry to rtc liner function
     SET_IDT_ENTRY(idt[33], keyboard_link);
 
+    /* Init keyboard variables */
     pressed = 0; 
 
+    /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
 }
 
 // If receive interrupt, then read from keyboard port
 extern void keyboard_handler() {
-
     pressed++; 
 
+    /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
-    /* Read from keyboard */
+    /* Print keyboard output */
     if(pressed%2==1){
         printf("%c ", key_map[scan_key]);
     }
@@ -152,7 +159,10 @@ extern void keyboard_handler() {
 }
 
 
-// check if modifiers held
+/* check_modifiers
+ *   Inputs: none
+ *   Return Value: none
+ *    Function: check which modifiers are held and update keyboard vars */
 void check_modifiers(uint8_t scan_key) {
     // switch (scan_key) {
     //     case 0x12: // Left Shift

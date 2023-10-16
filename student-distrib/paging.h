@@ -1,3 +1,6 @@
+/* paging.h - Defines used to enable paging
+ */
+
 #ifndef _PAGING_H
 #define _PAGING_H
 
@@ -6,7 +9,7 @@
 #define PAGE_ENTRIES 1024
 #define KERNEL_START 0x400000
 
-
+/* Page table struct */
 typedef union page_table_entry_t {
     
     uint32_t val;
@@ -25,6 +28,7 @@ typedef union page_table_entry_t {
     } __attribute__ ((packed));
 } page_table_entry_t;
 
+/* Page Directory Struct */
 typedef union page_dir_entry_t {
     
     uint32_t val;

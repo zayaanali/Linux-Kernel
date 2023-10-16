@@ -1,12 +1,21 @@
+
+
 #include "paging.h"
 #include "page.h"
 
+/* Page directory/table init */
 page_dir_entry_t page_dir[PAGE_ENTRIES] __attribute__((aligned(4096)));
 page_table_entry_t page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // new page table
 
 extern void loadPageDirectory(page_dir_entry_t* p_d); 
 extern void enablePaging(); 
 
+
+/* page_init
+ *   Inputs: none
+ *   Return Value: none
+ *   Function:  Initialize paging for first 8MB of memory. 0-4 is made of 4kb pages,
+ *              4-8mb is a single page of size 4MB */
 void page_init() {
     int i; 
 
