@@ -7,6 +7,7 @@
 
 #include "types.h"
 
+
 extern void keyboard_init();
 extern void keyboard_handler();
 int check_modifiers(uint8_t scan_key);
