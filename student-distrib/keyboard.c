@@ -25,11 +25,12 @@ volatile int shift_pressed;
 volatile int caps_enabled;
 volatile int ctrl_pressed;
 
+/* Buffer */
 char keyboard_buffer[BUFFER_SIZE];
 volatile int buf_ptr;
 
 /*
-    * 
+    * IGNORE
     * what to do on receive keyboard interrupt - simply write to buffer? do i also print to screen?
     * how is buffer printed to screen
     * 
@@ -46,63 +47,21 @@ volatile int buf_ptr;
     * 
 */
 
-int pressed; 
-
+/* Keyboard map */
 char key_map[] = {
     'z',   // Not a valid character for index 0
     'z',  // Escape
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '0',
-    '-',
-    '=',
+    '1','2','3','4','5','6','7','8','9','0','-','=',
     '\b \b',   // Backspace
     '    ',   // Tab
-    'q',
-    'w',
-    'e',
-    'r',
-    't',
-    'y',
-    'u',
-    'i',
-    'o',
-    'p',
-    '[',
-    ']',
+    'q', 'w','e','r','t','y','u','i','o','p','[',']',
     '\n',  // Enter
     ' ',  // Left Control
-    'a',
-    's',
-    'd',
-    'f',
-    'g',
-    'h',
-    'j',
-    'k',
-    'l',
-    ';',
-    '\'',
+    'a','s','d','f','g','h','j','k','l',';','\'',
     '`',
     ' ',  // Left Shift
     '\\',
-    'z',
-    'x',
-    'c',
-    'v',
-    'b',
-    'n',
-    'm',
-    ',',
-    '.',
-    '/',
+    'z','x','c','v','b','n','m',',','.','/',
     ' ',  // Right Shift
     '*',
     ' ',  // Left Alt
@@ -110,61 +69,21 @@ char key_map[] = {
     ' ',  // Caps Lock
 };
 
+/* Shifted keyboard map. Also used for caps */
 char shifted_key_map[] = {
     'z',   // Not a valid character for index 0
-    'z',  // Escape
-    '!',  // Shifted '1'
-    '@',  // Shifted '2'
-    '#',  // Shifted '3'
-    '$',  // Shifted '4'
-    '%',  // Shifted '5'
-    '^',  // Shifted '6'
-    '&',  // Shifted '7'
-    '*',  // Shifted '8'
-    '(',  // Shifted '9'
-    ')',  // Shifted '0'
-    '_',  // Shifted '-'
-    '+',  // Shifted '='
+    'z',   // escape
+    '!', '@','#','$','%','^','&','*','(',')','_','+',
     'z',   // Backspace
     'z',   // Tab
-    'Q',
-    'W',
-    'E',
-    'R',
-    'T',
-    'Y',
-    'U',
-    'I',
-    'O',
-    'P',
-    '{',  // Shifted '['
-    '}',  // Shifted ']'
+    'Q','W','E','R','T','Y','U','I','O','P','{', '}',  
     'z',   // Enter
     'z',   // Left Control
-    'A',
-    'S',
-    'D',
-    'F',
-    'G',
-    'H',
-    'J',
-    'K',
-    'L',
-    ':',  // Shifted ';'
-    '"',  // Shifted '\''
+    'A','S','D','F','G','H','J','K','L',':','"',
     '~',  // Shifted '`'
     'z',   // Left Shift
     '|',  // Shifted '\'
-    'Z',
-    'X',
-    'C',
-    'V',
-    'B',
-    'N',
-    'M',
-    '<',  // Shifted ','
-    '>',  // Shifted '.'
-    '?',  // Shifted '/'
+    'Z','X','C','V','B','N','M','<','>','?',
     'z',   // Right Shift
     '*',  // Keypad *
     'z',   // Left Alt
@@ -206,7 +125,10 @@ extern void keyboard_init() {
     enable_irq(KEYBOARD_IRQ);
 }
 
-// If receive interrupt, then read from keyboard port
+/* keyboard_handler
+ *   Inputs: none
+ *   Return Value: none
+ *    Function: Get scankey from keyboard and print to screen */
 extern void keyboard_handler() {
     /* start critical section */
     cli();
@@ -215,30 +137,40 @@ extern void keyboard_handler() {
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
-    if (check_modifiers(scan_key)) {
-        send_eoi(KEYBOARD_IRQ);
-        sti();
-        return;
-    }
+    if (check_modifiers(scan_key))
+        { send_eoi(KEYBOARD_IRQ); sti(); return; }
  
     
-    /* Print keyboard output */
+    /* Check if invalid scan key */
     if (scan_key > 57) // invalid scan_key
         { sti(); send_eoi(KEYBOARD_IRQ); return; }
-    if (shift_pressed && caps_enabled && is_letter(scan_key)) // shift + caps negate each other
-        printf("%c", key_map[scan_key]);
-    else if (!shift_pressed && caps_enabled && is_letter(scan_key)) // caps lock pressed, so print shifted letter
-        printf("%c", shifted_key_map[scan_key]);
-    else if (shift_pressed && !caps_enabled && is_letter(scan_key)) // shift pressed, so print shifted letter
-        printf("%c", shifted_key_map[scan_key]);
-    else if (!shift_pressed && !caps_enabled && is_letter(scan_key)) // no shift or caps, so print normal letter
-        printf("%c", key_map[scan_key]);
-    else if (shift_pressed)      
-        printf("%c", shifted_key_map[scan_key]);
-    else if (caps_enabled)
-        printf("%c", key_map[scan_key]);    
-    else 
-        printf("%c", key_map[scan_key]);                            
+    
+    /* Is letter (check caps + shift) */
+    if (is_letter(scan_key)) {
+        
+        if (shift_pressed && caps_enabled) // shift + caps negate each other
+            printf("%c", key_map[scan_key]);
+        else if (!shift_pressed && caps_enabled) // caps lock pressed, so print shifted letter
+            printf("%c", shifted_key_map[scan_key]);
+        else if (shift_pressed && !caps_enabled) // shift pressed, so print shifted letter
+            printf("%c", shifted_key_map[scan_key]);
+        else if (!shift_pressed && !caps_enabled) // no shift or caps, so print normal letter
+            printf("%c", key_map[scan_key]);
+    
+    } else { // not a letter (caps does not affect)
+        
+        if (shift_pressed)      
+            printf("%c", shifted_key_map[scan_key]);
+        if (caps_enabled)
+            printf("%c", key_map[scan_key]);    
+        else 
+            printf("%c", key_map[scan_key]);                            
+    
+    }
+    
+    
+    
+   
     //target remote 10.0.2.2:1234
 
     /* End critical section and send EOI */
@@ -261,7 +193,7 @@ extern void syscall_write() {
 
 
 /* check_modifiers
- *   Inputs: none
+ *   Inputs: scan key
  *   Return Value: 1 if modifier key pressed, 0 otherwise
  *   Function: check if modifier key is pressed, and if so update the corresponding flag */
 int check_modifiers(uint8_t scan_key) {
@@ -289,6 +221,12 @@ int check_modifiers(uint8_t scan_key) {
     }
 }
 
+
+
+/* is_letter
+ *   Inputs: scan key
+ *   Return Value: 1 if scan key is letter, 0 otherwise
+ *   Function: check if the input scan key is a letter  */
 int is_letter(uint8_t scan_key) {
     if (    
             (scan_key>=0x10 && scan_key<=0x19) ||       // q-p
