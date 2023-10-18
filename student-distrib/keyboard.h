@@ -9,6 +9,7 @@
 
 extern void keyboard_init();
 extern void keyboard_handler();
-void check_modifiers(uint8_t scan_key);
+int check_modifiers(uint8_t scan_key);
+int is_letter(uint8_t scan_key);
 
 #endif

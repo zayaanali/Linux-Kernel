@@ -15,12 +15,37 @@
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
 
+#define BUFFER_SIZE 128
+
 extern void keyboard_link(); 
 
 /* Keyboard variables */
 volatile int key_pressed;
 volatile int shift_pressed;
-volatile int caps_pressed;
+volatile int caps_enabled;
+volatile int ctrl_pressed;
+
+char keyboard_buffer[BUFFER_SIZE];
+volatile int buf_ptr;
+
+/*
+    * 
+    * what to do on receive keyboard interrupt - simply write to buffer? do i also print to screen?
+    * how is buffer printed to screen
+    * 
+    * keyboard inputs add to buffer
+    * ctrl-c sends halt signal (?)
+    * ctrl-l clears buffer and clears screen
+    * enter prints newline, stores old buffer, clears buffer
+    * 
+    * read (store previous buffer), prints previous buffer?
+    * write (command) directly modifies buffer (?)
+    * 
+    * normally just print directly to buffer, if read then write to buffer
+    * write when you want to print contents of the buffer
+    * 
+*/
+
 int pressed; 
 
 char key_map[] = {
@@ -38,8 +63,8 @@ char key_map[] = {
     '0',
     '-',
     '=',
-    'z',   // Backspace
-    'z',   // Tab
+    '\b \b',   // Backspace
+    '    ',   // Tab
     'q',
     'w',
     'e',
@@ -52,8 +77,8 @@ char key_map[] = {
     'p',
     '[',
     ']',
-    'z',  // Enter
-    'z',  // Left Control
+    '\n',  // Enter
+    ' ',  // Left Control
     'a',
     's',
     'd',
@@ -66,7 +91,7 @@ char key_map[] = {
     ';',
     '\'',
     '`',
-    'z',  // Left Shift
+    ' ',  // Left Shift
     '\\',
     'z',
     'x',
@@ -78,38 +103,77 @@ char key_map[] = {
     ',',
     '.',
     '/',
-    'z',  // Right Shift
+    ' ',  // Right Shift
     '*',
-    'z',  // Left Alt
-    ' ',
-    'z',  // Caps Lock
-    'z', // f0 through f10
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',
-    'z',   // Num Lock
-    'z',   // Scroll Lock
-    '7', // Home (7 on the numpad)
-    '8', // Up Arrow (8 on the numpad)
-    '9', // Page Up (9 on the numpad)
-    '-', // Keypad -
-    '4', // Left Arrow (4 on the numpad)
-    '5', // Keypad 5
-    '6', // Right Arrow (6 on the numpad)
-    '+', // Keypad +
-    '1', // End (1 on the numpad)
-    '2', // Down Arrow (2 on the numpad)
-    '3', // Page Down (3 on the numpad)
-    '0', // Insert (0 on the numpad)
-    '.', // Delete (Del on the numpad)
-    'z',   // Not a valid character for indexes beyond 82
+    ' ',  // Left Alt
+    ' ', // Space
+    ' ',  // Caps Lock
 };
+
+char shifted_key_map[] = {
+    'z',   // Not a valid character for index 0
+    'z',  // Escape
+    '!',  // Shifted '1'
+    '@',  // Shifted '2'
+    '#',  // Shifted '3'
+    '$',  // Shifted '4'
+    '%',  // Shifted '5'
+    '^',  // Shifted '6'
+    '&',  // Shifted '7'
+    '*',  // Shifted '8'
+    '(',  // Shifted '9'
+    ')',  // Shifted '0'
+    '_',  // Shifted '-'
+    '+',  // Shifted '='
+    'z',   // Backspace
+    'z',   // Tab
+    'Q',
+    'W',
+    'E',
+    'R',
+    'T',
+    'Y',
+    'U',
+    'I',
+    'O',
+    'P',
+    '{',  // Shifted '['
+    '}',  // Shifted ']'
+    'z',   // Enter
+    'z',   // Left Control
+    'A',
+    'S',
+    'D',
+    'F',
+    'G',
+    'H',
+    'J',
+    'K',
+    'L',
+    ':',  // Shifted ';'
+    '"',  // Shifted '\''
+    '~',  // Shifted '`'
+    'z',   // Left Shift
+    '|',  // Shifted '\'
+    'Z',
+    'X',
+    'C',
+    'V',
+    'B',
+    'N',
+    'M',
+    '<',  // Shifted ','
+    '>',  // Shifted '.'
+    '?',  // Shifted '/'
+    'z',   // Right Shift
+    '*',  // Keypad *
+    'z',   // Left Alt
+    ' ',
+    'z',   // Caps Lock
+};
+
+
+
 
 /* keyboard_init
  *   Inputs: none
@@ -133,7 +197,10 @@ extern void keyboard_init() {
     SET_IDT_ENTRY(idt[33], keyboard_link);
 
     /* Init keyboard variables */
-    pressed = 0; 
+    key_pressed = 0;
+    shift_pressed = 0;
+    caps_enabled = 0;
+    ctrl_pressed = 0;
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
@@ -141,36 +208,95 @@ extern void keyboard_init() {
 
 // If receive interrupt, then read from keyboard port
 extern void keyboard_handler() {
-    pressed++; 
+    /* start critical section */
+    cli();
 
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
-    /* Print keyboard output */
-    if(pressed%2==1){
-        printf("%c ", key_map[scan_key]);
+    /* Check if modifier is pressed. If so update modifier flag and return */
+    if (check_modifiers(scan_key)) {
+        send_eoi(KEYBOARD_IRQ);
+        sti();
+        return;
     }
+ 
+    
+    /* Print keyboard output */
+    if (scan_key > 57) // invalid scan_key
+        { sti(); send_eoi(KEYBOARD_IRQ); return; }
+    if (shift_pressed && caps_enabled && is_letter(scan_key)) // shift + caps negate each other
+        printf("%c", key_map[scan_key]);
+    else if (!shift_pressed && caps_enabled && is_letter(scan_key)) // caps lock pressed, so print shifted letter
+        printf("%c", shifted_key_map[scan_key]);
+    else if (shift_pressed && !caps_enabled && is_letter(scan_key)) // shift pressed, so print shifted letter
+        printf("%c", shifted_key_map[scan_key]);
+    else if (!shift_pressed && !caps_enabled && is_letter(scan_key)) // no shift or caps, so print normal letter
+        printf("%c", key_map[scan_key]);
+    else if (shift_pressed)      
+        printf("%c", shifted_key_map[scan_key]);
+    else if (caps_enabled)
+        printf("%c", key_map[scan_key]);    
+    else 
+        printf("%c", key_map[scan_key]);                            
+    //target remote 10.0.2.2:1234
 
-
-    /* Send EOI */
+    /* End critical section and send EOI */
+    sti();
     send_eoi(KEYBOARD_IRQ);
 
+
+}
+
+// start writing to buffer
+extern void syscall_read() {
+
+}
+
+
+// prints the buffer
+extern void syscall_write() {
 
 }
 
 
 /* check_modifiers
  *   Inputs: none
- *   Return Value: none
- *    Function: check which modifiers are held and update keyboard vars */
-void check_modifiers(uint8_t scan_key) {
-    // switch (scan_key) {
-    //     case 0x12: // Left Shift
-    //     case 0x59: // Right Shift
-    //     case 0x3A: // Caps Lock
-    //         return 1;
-    //     default:
-    //         return 0;
-    // }
+ *   Return Value: 1 if modifier key pressed, 0 otherwise
+ *   Function: check if modifier key is pressed, and if so update the corresponding flag */
+int check_modifiers(uint8_t scan_key) {
+    
+    /* Set modifier flags based on scankeys*/
+    switch (scan_key) {
+        case 0x2A: // Left Shift
+            shift_pressed = 1; return 1;
+        case 0xAA: // left shift released
+            shift_pressed = 0; return 1;
+        case 0x36: // right shift pressed
+            shift_pressed = 1; return 1;
+        case 0xB6: // right shift released
+            shift_pressed = 0; return 1;
+        case 0x3A: // Caps Lock set
+            caps_enabled = (caps_enabled==0) ? 1 : 0; return 1;
+        case 0xBA: // caps lock released (do nothing)
+            return 1;
+        case 0x1D: // control pressed
+            ctrl_pressed = 1; return 1;
+        case 0x9D: // lcontrol released
+            ctrl_pressed = 0; return 1;
+        default:
+            return 0;
+    }
 }
 
+int is_letter(uint8_t scan_key) {
+    if (    
+            (scan_key>=0x10 && scan_key<=0x19) ||       // q-p
+            (scan_key>=0x1E && scan_key <= 0x26) ||     // a-l
+            (scan_key>=0x2C && scan_key<=0x32)          // z-m
+    ) {    
+        return 1;
+    } else {
+        return 0;
+    }
+}
