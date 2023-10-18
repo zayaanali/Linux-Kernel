@@ -148,6 +148,13 @@ extern void keyboard_handler() {
     /* Is letter (check caps + shift) */
     if (is_letter(scan_key)) {
         
+        if(ctrl_pressed && (scan_key == 0x26))  // ctrl-l and ctrl-L clear screen and puts cursor at top
+            clear();    //clears screen/videomem
+            clear_buffer(); //clears buffer (not implemented yet)
+            //set_cursor();   //put cursor at the top (not implemented yet)
+        //if(ctrl_pressed && 'c pressed' ) // ctrl-c halts
+            //return;
+
         if (shift_pressed && caps_enabled) // shift + caps negate each other
             printf("%c", key_map[scan_key]);
         else if (!shift_pressed && caps_enabled) // caps lock pressed, so print shifted letter
@@ -162,7 +169,7 @@ extern void keyboard_handler() {
         if (shift_pressed)      
             printf("%c", shifted_key_map[scan_key]);
         if (caps_enabled)
-            printf("%c", key_map[scan_key]);    
+            printf("%c", key_map[scan_key]);
         else 
             printf("%c", key_map[scan_key]);                            
     
@@ -182,13 +189,21 @@ extern void keyboard_handler() {
 
 // start writing to buffer
 extern void syscall_read() {
-
+    
 }
 
 
 // prints the buffer
 extern void syscall_write() {
 
+}
+
+// clears the keyboard buffer
+extern void clear_buffer() {
+    uint8_t i;
+    for (i=0; i < BUFFER_SIZE; i++){
+        keyboard_buffer[i] = '\0';
+    }
 }
 
 
@@ -238,3 +253,4 @@ int is_letter(uint8_t scan_key) {
         return 0;
     }
 }
+
