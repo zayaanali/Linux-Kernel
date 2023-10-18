@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "filesystem.h"
 
 #include "excepts.h"
 #include "rtc.h"
@@ -60,47 +61,48 @@ void entry(unsigned long magic, unsigned long addr) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
+        filesys_init(mod);
         while (mod_count < mbi->mods_count) {
-            printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
-            printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
-            printf("First few bytes of module:\n");
-            for (i = 0; i < 16; i++) {
-                printf("0x%x ", *((char*)(mod->mod_start+i)));
-            }
-            printf("\n");
+            //printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
+            //printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
+            //printf("First few bytes of module:\n");
+            //for (i = 0; i < 16; i++) {
+                //printf("0x%x ", *((char*)(mod->mod_start+i)));
+            //}
+            //printf("\n");
             mod_count++;
             mod++;
         }
     }
     /* Bits 4 and 5 are mutually exclusive! */
     if (CHECK_FLAG(mbi->flags, 4) && CHECK_FLAG(mbi->flags, 5)) {
-        printf("Both bits 4 and 5 are set.\n");
+        //printf("Both bits 4 and 5 are set.\n");
         return;
     }
 
     /* Is the section header table of ELF valid? */
     if (CHECK_FLAG(mbi->flags, 5)) {
         elf_section_header_table_t *elf_sec = &(mbi->elf_sec);
-        printf("elf_sec: num = %u, size = 0x%#x, addr = 0x%#x, shndx = 0x%#x\n",
-                (unsigned)elf_sec->num, (unsigned)elf_sec->size,
-                (unsigned)elf_sec->addr, (unsigned)elf_sec->shndx);
+        // printf("elf_sec: num = %u, size = 0x%#x, addr = 0x%#x, shndx = 0x%#x\n",
+        //         (unsigned)elf_sec->num, (unsigned)elf_sec->size,
+        //         (unsigned)elf_sec->addr, (unsigned)elf_sec->shndx);
     }
 
     /* Are mmap_* valid? */
     if (CHECK_FLAG(mbi->flags, 6)) {
         memory_map_t *mmap;
-        printf("mmap_addr = 0x%#x, mmap_length = 0x%x\n",
-                (unsigned)mbi->mmap_addr, (unsigned)mbi->mmap_length);
-        for (mmap = (memory_map_t *)mbi->mmap_addr;
-                (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length;
-                mmap = (memory_map_t *)((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
-            printf("    size = 0x%x, base_addr = 0x%#x%#x\n    type = 0x%x,  length    = 0x%#x%#x\n",
-                    (unsigned)mmap->size,
-                    (unsigned)mmap->base_addr_high,
-                    (unsigned)mmap->base_addr_low,
-                    (unsigned)mmap->type,
-                    (unsigned)mmap->length_high,
-                    (unsigned)mmap->length_low);
+        // printf("mmap_addr = 0x%#x, mmap_length = 0x%x\n",
+        //         (unsigned)mbi->mmap_addr, (unsigned)mbi->mmap_length);
+        // for (mmap = (memory_map_t *)mbi->mmap_addr;
+        //         (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length;
+        //         mmap = (memory_map_t *)((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
+        //     printf("    size = 0x%x, base_addr = 0x%#x%#x\n    type = 0x%x,  length    = 0x%#x%#x\n",
+        //             (unsigned)mmap->size,
+        //             (unsigned)mmap->base_addr_high,
+        //             (unsigned)mmap->base_addr_low,
+        //             (unsigned)mmap->type,
+        //             (unsigned)mmap->length_high,
+        //             (unsigned)mmap->length_low);
     }
 
     /* Construct an LDT entry in the GDT */
@@ -171,11 +173,17 @@ void entry(unsigned long magic, unsigned long addr) {
     keyboard_init();
 
 
+    /* Init filesystem */
+     
+     
+
+
+
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-   printf("Enabling Interrupts\n");
+   //printf("Enabling Interrupts\n");
    sti();
 
 #ifdef RUN_TESTS

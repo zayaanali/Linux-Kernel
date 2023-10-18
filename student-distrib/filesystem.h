@@ -2,9 +2,10 @@
 #define _FILESYSTEM_H
 
 #include "types.h"
+#include "multiboot.h"
 
 #define BLOCK_SIZE 4096     
-#define MAX_NUM_FILES 62
+#define MAX_NUM_FILES 64
 #define MAX_NUM_DATA_BLOCKS_PER_FILE 1023
 
 
@@ -13,7 +14,7 @@ typedef union inode_t {
 
     struct {
         uint32_t length; 
-        uint32_t dbi [1095];        // dbi = data block indices. 0th data block is at data block index of dbi[0]
+        uint32_t dbi [1023];        // dbi = data block indices. 0th data block is at data block index of dbi[0]
     };
 } inode_t; 
 
@@ -47,12 +48,13 @@ typedef struct data_block_t{
 
 } data_block_t; 
 
-extern int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
-extern int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
-extern int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+// extern int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
+// extern int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
+// extern int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+extern void filesys_init(module_t* mod);
 
-boot_block_t boot_block; 
-inode_t inodes[MAX_NUM_FILES];
-data_block_t data_blocks[MAX_NUM_FILES*MAX_NUM_DATA_BLOCKS_PER_FILE];
+boot_block_t* boot_block; 
+inode_t* inodes;
+data_block_t* data_blocks;
 
 #endif
