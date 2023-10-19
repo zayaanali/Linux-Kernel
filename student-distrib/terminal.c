@@ -41,3 +41,4 @@ uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     /* Return number of bytes written */
     return bytes_written;
 }
+

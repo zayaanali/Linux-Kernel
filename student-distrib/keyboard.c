@@ -15,8 +15,6 @@
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
 
-#define TERM_WIDTH 80
-
 extern void keyboard_link(); 
 
 /* Keyboard variables */
