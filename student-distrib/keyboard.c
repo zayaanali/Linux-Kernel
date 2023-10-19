@@ -176,7 +176,7 @@ extern void keyboard_handler() {
             out = key_map[scan_key];            
     
     }
-
+// target remote 10.0.2.2:1234
     /* Push character to line buffer and print to screen */
     buf_push(out);
     putc(out);
