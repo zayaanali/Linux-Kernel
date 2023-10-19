@@ -18,8 +18,10 @@ extern void keyboard_init();
 extern void keyboard_handler();
 int check_modifiers(uint8_t scan_key);
 int is_letter(uint8_t scan_key);
-extern void read_line_buffer(char terminal_buffer[], int num_bytes);
+extern int read_line_buffer(char terminal_buffer[], int num_bytes);
 extern void clear_line_buffer();
+void buf_push(char val);
+void buf_pop();
 
 
 #endif

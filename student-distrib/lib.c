@@ -167,18 +167,71 @@ int32_t puts(int8_t* s) {
  * Inputs: uint_8* c = character to print
  * Return Value: void
  *  Function: Output a character to the console MODIFY FOR VERTICAL SCROLLING */
+// void putc(uint8_t c) {
+//     if(c == '\n' || c == '\r') {
+//         screen_y++;
+//         screen_x = 0;
+//     } else {
+//         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+//         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+//         screen_x++;
+//         screen_x %= NUM_COLS;
+//         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+//     }
+// }
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
+    } else if (c == '\b') { // backspace
+        if (screen_x > 0) {
+            screen_x--;
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        }
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        if (screen_x == NUM_COLS) // if reach end of line, go to next line
+            { screen_x = 0; screen_y++; }
+        
+        if (screen_y == NUM_ROWS) // if reach end of screen, scroll
+            scroll();
     }
 }
+
+/*
+*   Func: scroll
+*   Desc: Adds scrolling support to terminal. Shifts video memory and adds new line at 
+*         bottom when writing a new line, in the case that the screen is already full
+*   Input:
+*   Output:
+*/
+extern void scroll(void) {
+    int i, j, k;
+
+    /* scrolls up video screen aside from the bottom line */
+    for ( i = 1; i < NUM_ROWS; i++) {
+        for (int j = 0; j < NUM_COLS; j++) {
+            *(uint8_t *)(video_mem + ((NUM_COLS * (i-1) + j) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1));
+            *(uint8_t *)(video_mem + ((NUM_COLS * (i-1) + j) << 1) + 1) = ATTRIB;
+        }
+    }
+
+    /* clears the bottom line */
+    for (k = 0; k < NUM_COLS; k++) {
+        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1) + 1) = ATTRIB;
+    }
+
+    /* set position to bottom row */
+    screen_y = NUM_ROWS - 1; 
+    screen_x = 0;
+
+}
+
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert

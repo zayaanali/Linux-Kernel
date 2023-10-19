@@ -20,7 +20,7 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     num_bytes_read = read_line_buffer(char_buf, nbytes);
 
     /* Clear the keyboard buffer */
-    clear_buffer();
+    clear_line_buffer();
 
     /* return number of bytes read */
     return num_bytes_read;
@@ -33,11 +33,15 @@ uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     
     /* Print each character in the buffer */
     for (i=0; i < nbytes; i++) {
-        if (char_buf[i] == '\n') break; // if reach end of buffer then break 
-        putc("%c", char_buf[i]);
-        bytes_written++;
+        if (char_buf[i] == '\n')  // check if reached end of buffer
+            { putc('\n'); break; } 
+        else 
+            { putc(char_buf[i]); bytes_written++; }
+        
     }
     
     /* Return number of bytes written */
     return bytes_written;
 }
+
+

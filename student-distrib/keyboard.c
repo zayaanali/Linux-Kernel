@@ -29,29 +29,9 @@ volatile int enter_pressed;
 
 
 /*
-    * IGNORE
-    * what to do on receive keyboard interrupt - simply write to buffer? do i also print to screen?
-    * how is buffer printed to screen
-    * 
-    * keyboard inputs add to buffer
-    * ctrl-c sends halt signal (?)
-    * ctrl-l clears buffer and clears screen
-    * enter prints newline, stores old buffer, clears buffer
-    * 
-    * read (store previous buffer), prints previous buffer?
-    * write (command) directly modifies buffer (?)
-    * 
-    * normally just print directly to buffer, if read then write to buffer
-    * write when you want to print contents of the buffer
-    * 
-    * 
-    * 
-    * line buffer - 128 bytes - any time user presses a key (char/symbol) it is added to buffer
-    * when user presses enter, buffer is copied to a user buffer and printed to screen
-    * 
-    * null termination. Is this part of the 128 size buffer?
-    * how to do backspace
-    * 
+    * TO DO
+    * Add backspace function
+    * fix tab functionality
     *  
 */
 
@@ -60,8 +40,8 @@ char key_map[] = {
     'z',   // Not a valid character for index 0
     'z',  // Escape
     '1','2','3','4','5','6','7','8','9','0','-','=',
-    '\b \b',   // Backspace
-    '    ',   // Tab
+    '\b',   // Backspace
+    ' ',   // Tab
     'q', 'w','e','r','t','y','u','i','o','p','[',']',
     '\n',  // Enter
     ' ',  // Left Control
@@ -138,6 +118,7 @@ extern void keyboard_init() {
  *    Function: Get scankey from keyboard and print to screen */
 extern void keyboard_handler() {
     char out;
+    int i;
     
     /* start critical section */
     cli();
@@ -153,8 +134,22 @@ extern void keyboard_handler() {
     if (scan_key > 57) // invalid scan_key
         { sti(); send_eoi(KEYBOARD_IRQ); return; }
             
+    /* Check for tab */
+    if (scan_key == 0x0F) {
+        for (i=0; i<4; i++)
+            { putc(' '); buf_push(' '); }
+        sti(); send_eoi(KEYBOARD_IRQ); return;
+    } 
+    
+    /* Backspace */
+    else if (scan_key == 0x0E) {
+        buf_pop();
+        putc('\b');
+        sti(); send_eoi(KEYBOARD_IRQ); return;
+    }
+    
     /* CTRL functions */
-    if (ctrl_pressed) {
+    else if (ctrl_pressed) {
         if (scan_key == 0x26) // CTRL + L
             { clear(); clear_line_buffer(); /* set_cursor(); */ }
         
@@ -162,7 +157,7 @@ extern void keyboard_handler() {
             { /* HALT */ }
     }    
         
-    if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
+    else if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
         
         if (shift_pressed && caps_enabled) // shift + caps negate each other
             out = key_map[scan_key];
@@ -256,7 +251,7 @@ extern void clear_line_buffer() {
 }
 
 // get keyboard buffer, copy into passed array
-extern void read_line_buffer(char terminal_buffer[], int num_bytes) {
+extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
     
     /* Wait for enter keypress */
@@ -276,18 +271,17 @@ extern void read_line_buffer(char terminal_buffer[], int num_bytes) {
         num_bytes_read++;
     }
     sti();
+
+    /* Return number of bytes read */
+    return num_bytes_read;
 }
 
 void buf_push(char val) {
-
     if (buf_ptr+1 < MAX_BUFFER_SIZE)
-        { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\0'; }
-
+        { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\n'; }
 }
 
 void buf_pop() {
-
     if (buf_ptr-1 > -1)
-        { line_buffer[buf_ptr]='\0'; buf_ptr--; }
-
+        { line_buffer[buf_ptr]='\n'; buf_ptr--; }
 }

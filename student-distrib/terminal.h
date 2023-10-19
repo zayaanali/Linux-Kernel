@@ -3,14 +3,16 @@
 
 
 #include "types.h"
-#include <stdint.h>
 #include "keyboard.h"
+#include "lib.h"
 
 
 char terminal_buffer[MAX_BUFFER_SIZE];
 
 
 #endif
+
+
 
 
 
