@@ -44,4 +44,3 @@ uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     return bytes_written;
 }
 
-

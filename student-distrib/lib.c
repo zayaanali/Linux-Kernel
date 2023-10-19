@@ -199,6 +199,43 @@ void putc(uint8_t c) {
         if (screen_y == NUM_ROWS) // if reach end of screen, scroll
             scroll();
     }
+
+    /* scrolling */
+    if(screen_y >= NUM_ROWS){
+        scroll();
+    }
+
+}
+
+/*
+*   Func: scroll
+*   Desc: Adds scrolling support to terminal. Shifts video memory and adds new line at 
+*         bottom when writing a new line, in the case that the screen is already full
+*   Input:
+*   Output:
+*/
+extern void scroll(void) {
+    int i;
+    int j;
+    int k;
+
+    /* scrolls up video screen aside from the bottom line */
+    for ( i = 1; i < NUM_ROWS; i++) {
+        for (int j = 0; j < NUM_COLS; j++) {
+            *(uint8_t *)(video_mem + ((NUM_COLS * (i-1) + j) << 1)) = *(uint8_t *)(video_mem + ((NUM_COLS * i + j) << 1));
+            *(uint8_t *)(video_mem + ((NUM_COLS * (i-1) + j) << 1) + 1) = ATTRIB;
+        }
+    }
+
+    /* clears the bottom line */
+    for (k = 0; k < NUM_COLS; k++) {
+        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS * (NUM_ROWS - 1) + k) << 1) + 1) = ATTRIB;
+    }
+
+    /* set position to bottom row */
+    screen_y = NUM_ROWS - 1; 
+
 }
 
 /*

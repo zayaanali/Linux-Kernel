@@ -15,8 +15,6 @@
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
 
-
-
 extern void keyboard_link(); 
 
 /* Keyboard variables */
@@ -151,7 +149,7 @@ extern void keyboard_handler() {
     /* CTRL functions */
     else if (ctrl_pressed) {
         if (scan_key == 0x26) // CTRL + L
-            { clear(); clear_line_buffer(); /* set_cursor(); */ }
+            { clear(); clear_line_buffer(); set_cursor(0,0); }
         
         if (scan_key == 0x2E) // CTRL + C
             { /* HALT */ }
@@ -284,4 +282,49 @@ void buf_push(char val) {
 void buf_pop() {
     if (buf_ptr-1 > -1)
         { line_buffer[buf_ptr]='\n'; buf_ptr--; }
+}
+
+/*
+*   Function: set_cursor
+*   Desc: update the cursor's location 
+*   Input: x, y positions
+*   Output: None
+*/
+extern void set_cursor(int x, int y)
+{
+	uint16_t pos = y * TERM_WIDTH + x;
+ 
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+/*
+*   Function: enable_cursor
+*   Desc: Enabling the cursor also allows you to set the start and end scanlines, 
+*         the rows where the cursor starts and ends. The highest scanline is 0 and 
+*         the lowest scanline is the maximum scanline (usually 15).
+*           (Will most likely be using this for different terminals in CP3)
+*   Input: cursor_start, cursor_end
+*   Output: None
+*/
+extern void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
+/*
+*   Function: disable_cursor
+*   Desc: disables the cursor
+*   Input: None
+*   Output: None
+*/
+extern void disable_cursor()
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
 }
