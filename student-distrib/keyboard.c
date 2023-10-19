@@ -15,7 +15,7 @@
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
 
-#define BUFFER_SIZE 128
+
 
 extern void keyboard_link(); 
 
@@ -24,10 +24,9 @@ volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_enabled;
 volatile int ctrl_pressed;
+volatile int enter_pressed;
 
-/* Buffer */
-char keyboard_buffer[BUFFER_SIZE];
-volatile int buf_ptr;
+
 
 /*
     * IGNORE
@@ -45,6 +44,11 @@ volatile int buf_ptr;
     * normally just print directly to buffer, if read then write to buffer
     * write when you want to print contents of the buffer
     * 
+    * 
+    * 
+    * line buffer - 128 bytes - any time user presses a key (char/symbol) it is added to buffer
+    * when user presses enter, buffer is copied to a user buffer and printed to screen
+    *  
 */
 
 /* Keyboard map */
@@ -91,7 +95,7 @@ char shifted_key_map[] = {
     'z',   // Caps Lock
 };
 
-
+/* Buffer */
 
 
 /* keyboard_init
@@ -168,16 +172,13 @@ extern void keyboard_handler() {
         
         if (shift_pressed)      
             printf("%c", shifted_key_map[scan_key]);
-        if (caps_enabled)
-            printf("%c", key_map[scan_key]);
+        else if (caps_enabled)
+            printf("%c", key_map[scan_key]);       
         else 
             printf("%c", key_map[scan_key]);                            
     
     }
     
-    
-    
-   
     //target remote 10.0.2.2:1234
 
     /* End critical section and send EOI */
@@ -196,14 +197,6 @@ extern void syscall_read() {
 // prints the buffer
 extern void syscall_write() {
 
-}
-
-// clears the keyboard buffer
-extern void clear_buffer() {
-    uint8_t i;
-    for (i=0; i < BUFFER_SIZE; i++){
-        keyboard_buffer[i] = '\0';
-    }
 }
 
 
@@ -231,6 +224,10 @@ int check_modifiers(uint8_t scan_key) {
             ctrl_pressed = 1; return 1;
         case 0x9D: // lcontrol released
             ctrl_pressed = 0; return 1;
+        case 0x1C: // enter pressed
+            enter_pressed = 1; return 0;
+        case 0x9C: // enter released
+            enter_pressed = 0; return 0;
         default:
             return 0;
     }
@@ -254,3 +251,34 @@ int is_letter(uint8_t scan_key) {
     }
 }
 
+// clears the line buffer
+extern void clear_line_buffer() {
+    int i;
+    /* Set all elements of line buffer to null*/
+    for (i=0; i < MAX_BUFFER_SIZE; i++) {
+        line_buffer[i] = '\0';
+    }
+}
+
+// get keyboard buffer, copy into passed array
+extern void read_line_buffer(char terminal_buffer[], int num_bytes) {
+    int i, num_bytes_read = 0;
+    
+    /* Wait for enter keypress */
+    while (enter_pressed==0);
+    
+    /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
+    cli();
+    for (i=0; i < num_bytes; i++) {
+        /* Check if reach null termination */
+        if (line_buffer[i] == '\0') 
+            { terminal_buffer[i] = '\0'; return; }
+        
+        /* Copy from line buffer to terminal buffer */
+        terminal_buffer[i] = line_buffer[i];
+        
+        /* Increment number of bytes read */
+        num_bytes_read++;
+    }
+    sti();
+}

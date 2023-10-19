@@ -1,18 +1,42 @@
 #include "terminal.h"
 
 
-uint32_t terminal_open() {
-
+uint32_t terminal_open(const uint8_t* filename) {
+    return 0;
 }
 
-uint32_t terminal_close() {
-
+uint32_t terminal_close(int32_t fd) {
+    return 0;
 }
 
-uint32_t terminal_read() {
+// read from keyboard buffer into buf, return number of bytes read
+uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
+    int num_bytes_read;
+    
+    /* Cast the void* pointer to char* (pointer to head of array) */
+    char *char_buf = (char*)buf;
+        
+    /* Copy the keyboard buffer into the terminal buffer and get number of bytes read */
+    num_bytes_read = read_line_buffer(char_buf, nbytes);
 
+    /* Clear the keyboard buffer */
+    clear_buffer();
+
+    /* return number of bytes read */
+    return num_bytes_read;
 }
 
-uint32_t terminal_write() {
-
+uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
+    int i;
+    char *char_buf = (char*)buf;
+    
+    /* Print each character in the buffer */
+    for (i=0; i < nbytes; i++) {
+        if (char_buf[i] == '\0') 
+            break;
+        printf("%c", char_buf[i]);
+    }
+    
+    /* Return number of bytes written */
+    return nbytes;
 }
