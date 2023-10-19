@@ -20,7 +20,7 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     num_bytes_read = read_line_buffer(char_buf, nbytes);
 
     /* Clear the keyboard buffer */
-    clear_buffer();
+    clear_line_buffer();
 
     /* return number of bytes read */
     return num_bytes_read;

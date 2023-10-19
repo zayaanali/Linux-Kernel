@@ -20,6 +20,9 @@ int check_modifiers(uint8_t scan_key);
 int is_letter(uint8_t scan_key);
 extern void read_line_buffer(char terminal_buffer[], int num_bytes);
 extern void clear_line_buffer();
+extern void set_cursor(int x, int y);
+extern void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+extern void disable_cursor();
 
 
 #endif
