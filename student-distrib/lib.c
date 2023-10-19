@@ -166,7 +166,7 @@ int32_t puts(int8_t* s) {
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
- *  Function: Output a character to the console */
+ *  Function: Output a character to the console MODIFY FOR VERTICAL SCROLLING */
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;

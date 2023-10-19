@@ -48,6 +48,10 @@ volatile int enter_pressed;
     * 
     * line buffer - 128 bytes - any time user presses a key (char/symbol) it is added to buffer
     * when user presses enter, buffer is copied to a user buffer and printed to screen
+    * 
+    * null termination. Is this part of the 128 size buffer?
+    * how to do backspace
+    * 
     *  
 */
 
@@ -95,8 +99,6 @@ char shifted_key_map[] = {
     'z',   // Caps Lock
 };
 
-/* Buffer */
-
 
 /* keyboard_init
  *   Inputs: none
@@ -124,6 +126,7 @@ extern void keyboard_init() {
     shift_pressed = 0;
     caps_enabled = 0;
     ctrl_pressed = 0;
+    buf_ptr = 0;
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
@@ -134,6 +137,8 @@ extern void keyboard_init() {
  *   Return Value: none
  *    Function: Get scankey from keyboard and print to screen */
 extern void keyboard_handler() {
+    char out;
+    
     /* start critical section */
     cli();
 
@@ -144,59 +149,49 @@ extern void keyboard_handler() {
     if (check_modifiers(scan_key))
         { send_eoi(KEYBOARD_IRQ); sti(); return; }
  
-    
     /* Check if invalid scan key */
     if (scan_key > 57) // invalid scan_key
         { sti(); send_eoi(KEYBOARD_IRQ); return; }
-    
-    /* Is letter (check caps + shift) */
-    if (is_letter(scan_key)) {
+            
+    /* CTRL functions */
+    if (ctrl_pressed) {
+        if (scan_key == 0x26) // CTRL + L
+            { clear(); clear_line_buffer(); /* set_cursor(); */ }
         
-        if(ctrl_pressed && (scan_key == 0x26))  // ctrl-l and ctrl-L clear screen and puts cursor at top
-            clear();    //clears screen/videomem
-            clear_buffer(); //clears buffer (not implemented yet)
-            //set_cursor();   //put cursor at the top (not implemented yet)
-        //if(ctrl_pressed && 'c pressed' ) // ctrl-c halts
-            //return;
-
+        if (scan_key == 0x2E) // CTRL + C
+            { /* HALT */ }
+    }    
+        
+    if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
+        
         if (shift_pressed && caps_enabled) // shift + caps negate each other
-            printf("%c", key_map[scan_key]);
+            out = key_map[scan_key];
         else if (!shift_pressed && caps_enabled) // caps lock pressed, so print shifted letter
-            printf("%c", shifted_key_map[scan_key]);
+            out = shifted_key_map[scan_key];
         else if (shift_pressed && !caps_enabled) // shift pressed, so print shifted letter
-            printf("%c", shifted_key_map[scan_key]);
+            out = shifted_key_map[scan_key];
         else if (!shift_pressed && !caps_enabled) // no shift or caps, so print normal letter
-            printf("%c", key_map[scan_key]);
+            out = key_map[scan_key];
     
-    } else { // not a letter (caps does not affect)
+    } else { // not a letter (shift affects output, caps does not)
         
         if (shift_pressed)      
-            printf("%c", shifted_key_map[scan_key]);
+            out = shifted_key_map[scan_key];
         else if (caps_enabled)
-            printf("%c", key_map[scan_key]);       
+            out = key_map[scan_key];
         else 
-            printf("%c", key_map[scan_key]);                            
+            out = key_map[scan_key];            
     
     }
-    
-    //target remote 10.0.2.2:1234
+
+    /* Push character to line buffer and print to screen */
+    buf_push(out);
+    putc(out);
+
 
     /* End critical section and send EOI */
     sti();
     send_eoi(KEYBOARD_IRQ);
-
-
-}
-
-// start writing to buffer
-extern void syscall_read() {
-    
-}
-
-
-// prints the buffer
-extern void syscall_write() {
-
 }
 
 
@@ -281,4 +276,18 @@ extern void read_line_buffer(char terminal_buffer[], int num_bytes) {
         num_bytes_read++;
     }
     sti();
+}
+
+void buf_push(char val) {
+
+    if (buf_ptr+1 < MAX_BUFFER_SIZE)
+        { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\0'; }
+
+}
+
+void buf_pop() {
+
+    if (buf_ptr-1 > -1)
+        { line_buffer[buf_ptr]='\0'; buf_ptr--; }
+
 }

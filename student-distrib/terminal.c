@@ -28,15 +28,16 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 
 uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     int i;
+    int bytes_written;
     char *char_buf = (char*)buf;
     
     /* Print each character in the buffer */
     for (i=0; i < nbytes; i++) {
-        if (char_buf[i] == '\0') 
-            break;
-        printf("%c", char_buf[i]);
+        if (char_buf[i] == '\n') break; // if reach end of buffer then break 
+        putc("%c", char_buf[i]);
+        bytes_written++;
     }
     
     /* Return number of bytes written */
-    return nbytes;
+    return bytes_written;
 }

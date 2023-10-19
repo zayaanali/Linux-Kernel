@@ -9,8 +9,9 @@
 
 #define MAX_BUFFER_SIZE 128
 
-/* Buffer */
+/* Buffer (extra character for null termination) */
 char line_buffer[MAX_BUFFER_SIZE];
+int buf_ptr;
 
 
 extern void keyboard_init();
