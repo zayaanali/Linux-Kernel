@@ -3,6 +3,8 @@
 #include "i8259.h"
 #include "lib.h"
 
+volatile int INT_FLAG;
+
 extern void rtc_link(); 
 
 /* rtc_init
@@ -78,6 +80,26 @@ void rtc_set_freq(uint16_t freq) {
     outb(RTC_A, RTC_CMD_PORT);
     outb((old_freq & 0xF0) | new_freq, RTC_DATA_PORT);
     sti();  
+}
+
+int32_t rtc_open(const uint8_t* filename){
+    rtc_set_freq(2);
+    return 0;
+}
+int32_t rtc_close(int32_t fd){
+    return 0;
+}
+int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
+    INT_FLAG = 0;
+    while(INT_FLAG == 0){
+        ;
+    }
+    return 0;
+}
+int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
+    uint16_t buf_freq = (uint16_t)* (uint16_t*)buf;
+    rtc_set_freq(buf_freq);
+    return 0;
 }
 
 /* rtc_handler

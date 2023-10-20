@@ -132,6 +132,13 @@ void exceptions_test(){
  *   Function: Tests the RTC by enabling its IRQ line */
 void rtc_test(){
 
+	rtc_open("Hi");
+
+	uint16_t freq_buf[1];
+	freq_buf[0] = 1024;
+
+	rtc_write(0, freq_buf, 0);
+
 	enable_irq(RTC_IRQ);
 
 }
@@ -272,7 +279,7 @@ void launch_tests(){
 
 	//exceptions_test();
 
-	//rtc_test(); 
+	rtc_test(); 
 
 	//syscall_idt_test(); 
 
@@ -280,6 +287,6 @@ void launch_tests(){
 
 	//test_paging_inaccess(); 
 
-	test_filesys(); 
+	//test_filesys(); 
 
 }
