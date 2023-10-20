@@ -6,6 +6,7 @@
 #include "rtc.h"
 #include "system_s.h"
 #include "types.h"
+#include "file.h"
 
 #define PASS 1
 #define FAIL 0
@@ -242,6 +243,21 @@ void test_paging_access(){
 
 }
 /* Checkpoint 2 tests */
+
+void test_filesys(){
+
+	uint8_t buf[33]; 
+	int i;
+	file_open("ls");
+	i = file_read("ls", buf, 32);
+
+	buf[32]='\0';
+	clear(); 
+	
+	test_paging_access(); 
+	printf("attempting to print buf \n");
+	printf("reading from ls: %s", (buf+1));
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -260,8 +276,10 @@ void launch_tests(){
 
 	//syscall_idt_test(); 
 
+	//test_paging_access(); 
+
 	//test_paging_inaccess(); 
 
-	//test_paging_access(); 
+	test_filesys(); 
 
 }

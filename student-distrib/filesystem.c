@@ -13,9 +13,20 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     int i;     // loop variable
     int fname_length = strlen(fname); 
+    uint8_t fname_ext[32];
+    
+    for(i=0; i<fname_length; i++){
+        fname_ext[i]=fname[i];
+    }
+    // extend argument fname in cases when less than 32 bytes
+    for(i=fname_length; i<32; i++){
+        fname_ext[i]='\0'; 
+    }
 
-    // parameter check. function only works if fname is 32 bytes
-    if(fname_length!=32){
+    fname_length = strlen(fname_ext);
+
+    // parameter check. function only works if fname is <=32 bytes and zero-padded when <32
+    if(fname_length>32){
         return -1; 
     }
 
@@ -72,7 +83,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     inode_t* inode_ptr = &inodes[inode];
 
     // Calculate number of data blocks and block size
-    uint32_t num_blocks = (inode_ptr->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    uint32_t num_blocks = (inode_ptr->length) / BLOCK_SIZE;
 
     // Initialize variables for reading data
     uint32_t read_length = 0;
@@ -117,6 +128,11 @@ void filesys_init(module_t* mod){
     int i;
     boot_block = (boot_block_t*)mod->mod_start;
     printf("Number of Dir Entries: %d \n", boot_block->num_dir_entries);
+
+    int* ptr = boot_block; 
+    for(i=0; i<boot_block->num_dir_entries; i++){
+        printf("%s at inode %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id);
+    }
     // printf("Number of Inodes: %d \n", boot_block->num_inodes);
     // printf("Number of Data Blocks: %d \n", boot_block->num_dbs);
 
