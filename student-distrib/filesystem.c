@@ -3,7 +3,12 @@
 #include "lib.h"
 
 
-
+/* read_dentry_by_name
+ *   Inputs: fname  : name of file corresponding to directory entry to read from
+ *           dentry : pointer to dentry struct to store read dentry data
+ *   Return Value: 0 for success, -1 for failure
+ *   Function: read dentry elements from dentry corresponding to file indicated by fname into dentry arg 
+ */
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     int i;     // loop variable
@@ -29,6 +34,12 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 }
 
 
+/* read_dentry_by_index
+ *   Inputs: index  : index of directory entry to read from
+ *           dentry : pointer to dentry struct to store read dentry data
+ *   Return Value: 0 for success, -1 for failure
+ *   Function: read dentry elements for dentry at index "index" into dentry arg 
+ */
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
 
     // check validity of index
@@ -42,6 +53,15 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     return 0; 
 }
 
+
+/* read_data
+ *   Inputs: inode  : inode corresponding to file to read data from
+ *           offset : byte-offset to start reading from
+ *           buf    : location to store data read
+ *           length : length in bytes to read
+ *   Return Value: number of bytes successfully read
+ *   Function: read "length"  bytes of data from file indicated by inode into buf starting at byte "offset"
+ */
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     // Check if inode number is valid
     if (inode >= MAX_NUM_FILES) {
@@ -87,22 +107,26 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     return read_length;
 }
 
-
+/* filesys_init
+ *   Inputs: mod  : pointer to module that holds starting address of filesys_img
+ *   Return Value: nothing
+ *   Function: create mapping between file system struct and filesys_img 
+ */
 void filesys_init(module_t* mod){
     clear();
     int i;
     boot_block = (boot_block_t*)mod->mod_start;
     printf("Number of Dir Entries: %d \n", boot_block->num_dir_entries);
-    printf("Number of Inodes: %d \n", boot_block->num_inodes);
-    printf("Number of Data Blocks: %d \n", boot_block->num_dbs);
+    // printf("Number of Inodes: %d \n", boot_block->num_inodes);
+    // printf("Number of Data Blocks: %d \n", boot_block->num_dbs);
 
     inodes = (inode_t*)(boot_block + 1);
-    for(i = 0; i < 20; i++){
-        printf("Length of Inodes %d : %d \n", i, inodes[i].length);
-    }
+    // for(i = 0; i < 20; i++){
+    //     printf("Length of Inodes %d : %d \n", i, inodes[i].length);
+    // }
 
     data_blocks = (data_block_t*)(inodes + MAX_NUM_FILES);
-    printf("Data at position 0: %d \n", data_blocks[7].data[7]);
+   // printf("Data at position 0: %d \n", data_blocks[7].data[7]);
 
 
 }

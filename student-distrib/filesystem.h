@@ -41,16 +41,15 @@ typedef struct boot_block_t{
 } boot_block_t; 
 
 /* data block struct */
-/* boot block struct */
 typedef struct data_block_t{
 
     uint8_t data[4096];
 
 } data_block_t; 
 
-// extern int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
-// extern int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
-// extern int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+extern int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
+extern int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
+extern int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 extern void filesys_init(module_t* mod);
 
 boot_block_t* boot_block; 
