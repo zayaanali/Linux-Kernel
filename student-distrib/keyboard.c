@@ -108,6 +108,9 @@ extern void keyboard_init() {
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
+
+    /* Enable cursor */
+    //enable_cursor(0,80);
 }
 
 /* keyboard_handler
@@ -119,43 +122,46 @@ extern void keyboard_handler() {
     int i;
     
     /* start critical section */
-    cli();
+    
 
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
     if (check_modifiers(scan_key))
-        { send_eoi(KEYBOARD_IRQ); sti(); return; }
+        { send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key */
     if (scan_key > 57) // invalid scan_key
-        { sti(); send_eoi(KEYBOARD_IRQ); return; }
+        { send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab */
     if (scan_key == 0x0F) {
         for (i=0; i<4; i++)
             { putc(' '); buf_push(' '); }
-        sti(); send_eoi(KEYBOARD_IRQ); return;
+        send_eoi(KEYBOARD_IRQ); return;
     } 
     
     /* Backspace */
-    else if (scan_key == 0x0E) {
+    if (scan_key == 0x0E) {
         buf_pop();
         putc('\b');
-        sti(); send_eoi(KEYBOARD_IRQ); return;
+        send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions */
-    else if (ctrl_pressed) {
-        if (scan_key == 0x26) // CTRL + L
-            { clear(); clear_line_buffer(); set_cursor(0,0); }
+    if (ctrl_pressed) {
+        if (scan_key == 0x26) { // CTRL + L
+            clear(); clear_line_buffer(); set_cursor(0,0); 
+            send_eoi(KEYBOARD_IRQ); return;    
+        }
         
         if (scan_key == 0x2E) // CTRL + C
-            { /* HALT */ }
+            { putc('^'); putc('c'); send_eoi(KEYBOARD_IRQ); return; }
     }    
-        
-    else if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
+
+    /* Set key to be printed hjhj*/    
+    if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
         
         if (shift_pressed && caps_enabled) // shift + caps negate each other
             out = key_map[scan_key];
@@ -183,10 +189,8 @@ extern void keyboard_handler() {
 
 
     /* End critical section and send EOI */
-    sti();
     send_eoi(KEYBOARD_IRQ);
 }
-
 
 /* check_modifiers
  *   Inputs: scan key
@@ -253,14 +257,15 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
     
     /* Wait for enter keypress */
+    //printf("enter_pressed=%d", enter_pressed);
+    enter_pressed=0;
     while (enter_pressed==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
-    cli();
     for (i=0; i < num_bytes; i++) {
-        /* Check if reach null termination */
-        if (line_buffer[i] == '\0') 
-            { terminal_buffer[i] = '\0'; return; }
+        /* Check if reached newline (end of string). If so then clear line buffer and return */
+        if (line_buffer[i] == '\n') 
+            { clear_line_buffer(); buf_ptr=0; return num_bytes_read; }
         
         /* Copy from line buffer to terminal buffer */
         terminal_buffer[i] = line_buffer[i];
@@ -268,8 +273,11 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
         /* Increment number of bytes read */
         num_bytes_read++;
     }
-    sti();
 
+    /* Clear the line buffer */
+    clear_line_buffer();
+    buf_ptr=0;
+    
     /* Return number of bytes read */
     return num_bytes_read;
 }
@@ -294,11 +302,12 @@ extern void set_cursor(int x, int y)
 {
 	uint16_t pos = y * TERM_WIDTH + x;
  
-	outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+	outb(0x0F, 0x3D4);
+	outb((uint8_t) (pos & 0xFF),0x3D5);
+	outb(0x0E,0x3D4);
+	outb((uint8_t) ((pos >> 8) & 0xFF), 0x3D5);
 }
+
 
 /*
 *   Function: enable_cursor
@@ -328,3 +337,4 @@ extern void disable_cursor()
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, 0x20);
 }
+

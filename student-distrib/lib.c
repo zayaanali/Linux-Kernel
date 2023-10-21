@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "terminal.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
@@ -205,7 +206,12 @@ void putc(uint8_t c) {
         scroll();
     }
 
-}
+    /* update cursor */
+    set_cursor(screen_x, screen_y);
+
+} // target remote 10.0.2.2:1234
+
+
 
 /*
 *   Func: scroll
