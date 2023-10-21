@@ -247,15 +247,17 @@ void test_paging_access(){
 
 int term_driver_test(){
     
-    // int nbytes;
-    // char buf[128];
+    int nbytes;
+    char buf[128];
     
-    // while (1) {
-    //     terminal_write(0, "Enter a string: \n", 17);
-    //     nbytes = terminal_read(0, buf, 10);
+    while (1) {
+        terminal_write(0, "Enter a string: \n", 17);
+        
+		nbytes = terminal_read(0, buf, 10);
 
-    //     terminal_write(0, buf, nbytes);
-    // }
+		printf("\n");
+        printf("Number of bytes written: %d\n", nbytes);
+    }
     
     
 }

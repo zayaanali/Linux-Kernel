@@ -122,42 +122,42 @@ extern void keyboard_handler() {
     int i;
     
     /* start critical section */
-    cli();
+    
 
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
     if (check_modifiers(scan_key))
-        { send_eoi(KEYBOARD_IRQ); sti(); return; }
+        { send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key */
     if (scan_key > 57) // invalid scan_key
-        { sti(); send_eoi(KEYBOARD_IRQ); return; }
+        { send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab */
     if (scan_key == 0x0F) {
         for (i=0; i<4; i++)
             { putc(' '); buf_push(' '); }
-        sti(); send_eoi(KEYBOARD_IRQ); return;
+        send_eoi(KEYBOARD_IRQ); return;
     } 
     
     /* Backspace */
     if (scan_key == 0x0E) {
         buf_pop();
         putc('\b');
-        sti(); send_eoi(KEYBOARD_IRQ); return;
+        send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions */
     if (ctrl_pressed) {
         if (scan_key == 0x26) { // CTRL + L
             clear(); clear_line_buffer(); set_cursor(0,0); 
-            sti(); send_eoi(KEYBOARD_IRQ); return;    
+            send_eoi(KEYBOARD_IRQ); return;    
         }
         
         if (scan_key == 0x2E) // CTRL + C
-            { /* HALT */ }
+            { putc('^'); putc('c'); send_eoi(KEYBOARD_IRQ); return; }
     }    
 
     /* Set key to be printed hjhj*/    
@@ -189,7 +189,6 @@ extern void keyboard_handler() {
 
 
     /* End critical section and send EOI */
-    sti();
     send_eoi(KEYBOARD_IRQ);
 }
 
@@ -218,9 +217,9 @@ int check_modifiers(uint8_t scan_key) {
         case 0x9D: // lcontrol released
             ctrl_pressed = 0; return 1;
         case 0x1C: // enter pressed
-            enter_pressed = 1; printf("enter=1"); return 0;
+            enter_pressed = 1; return 0;
         case 0x9C: // enter released
-            enter_pressed = 0; printf("enter=0"); return 0;
+            enter_pressed = 0; return 0;
         default:
             return 0;
     }
@@ -258,10 +257,12 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
     
     /* Wait for enter keypress */
+    //printf("enter_pressed=%d", enter_pressed);
+    enter_pressed=0;
     while (enter_pressed==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
-    cli();
+
     for (i=0; i < num_bytes; i++) {
         /* Check if reach null termination */
         if (line_buffer[i] == '\0') 
@@ -273,7 +274,10 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
         /* Increment number of bytes read */
         num_bytes_read++;
     }
-    sti();
+
+    clear_line_buffer();
+    buf_ptr=0;
+    
 
     /* Return number of bytes read */
     return num_bytes_read;
@@ -334,3 +338,4 @@ extern void disable_cursor()
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, 0x20);
 }
+
