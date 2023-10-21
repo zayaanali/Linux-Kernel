@@ -131,7 +131,7 @@ void exceptions_test(){
  *	 Outputs: the screen should print the current frequency the RTC is set to. The frequency of the printing should match the frequency indicated in the text printed.
  *				This test cycles through all the possible frequencies the RTC can be set to. 
  *   Return Value: none
- * 	 Coverage: RTC
+ * 	 Coverage: RTC (rtc_open, rtc_read, rtc_write)
  *   Function: Tests the RTC by enabling its IRQ line and changing the frequency to all possible frequencies*/
 void rtc_test(){
 

@@ -13,13 +13,13 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     int i;     // loop variable
     uint32_t fname_length = strlen((int8_t*)fname); 
-    int8_t fname_ext[33];
+    int8_t fname_ext[33];           // extend fname and fname of current dentry to 33 bytes so that even file names of max 32 bytes can be null-terminated
     int8_t o_fname_ext[33];
     
     for(i=0; i<fname_length; i++){
         fname_ext[i]=fname[i];
     }
-    // extend argument fname in cases when less than 32 bytes
+    // extend argument fname to always end in at least one null char and be 33 bytes total
     for(i=fname_length; i<33; i++){
         fname_ext[i]='\0'; 
     }
@@ -34,8 +34,10 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     // loop through directory entries until match is found
     for(i=0; i<boot_block->num_dir_entries; i++){
         strcpy(o_fname_ext, (int8_t*)boot_block->dir_entries[i].file_name);
-        o_fname_ext[32]='\0';
+        o_fname_ext[32]='\0';                                               // null-terminate so strncmp works as expected
+        
         if(strncmp(o_fname_ext,(int8_t*)fname,33)==0){
+            // found corresponding dentry. copy fields into dentry arg
             strcpy((int8_t*)dentry->file_name, (int8_t*)boot_block->dir_entries[i].file_name);
             dentry->file_type = boot_block->dir_entries[i].file_type;
             dentry->inode_id = boot_block->dir_entries[i].inode_id;
@@ -61,9 +63,11 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
         return -1; 
     }
 
+    // copy from corresponding dentry into dentry arg
     strcpy((int8_t*)dentry->file_name, (int8_t*)boot_block->dir_entries[index].file_name);
     dentry->file_type = boot_block->dir_entries[index].file_type;
     dentry->inode_id = boot_block->dir_entries[index].inode_id;
+
     return 0; 
 }
 
@@ -98,7 +102,10 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
         // Get block number
         uint32_t block_no = inode_ptr->dbi[block_index];
 
+        // calculate number of bytes to copy into buffer
         uint32_t to_read = BLOCK_SIZE - block_offset;
+
+        // ensure only reading max of "length" bytes
         if (to_read > length - read_length) {
             to_read = length - read_length;
         }
@@ -124,6 +131,6 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
  */
 void filesys_init(module_t* mod){
     boot_block = (boot_block_t*)mod->mod_start;
-    inodes = (inode_t*)(boot_block + 1);
-    data_blocks = (data_block_t*)(inodes + MAX_NUM_FILES);
+    inodes = (inode_t*)(boot_block + 1);                        // +1 so inodes struct begins after first 4kb boot block
+    data_blocks = (data_block_t*)(inodes + MAX_NUM_FILES);      // +MAX_NUM_FILES so data_blocks struct begins after all inodes
 }
