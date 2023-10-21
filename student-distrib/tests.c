@@ -135,12 +135,92 @@ void rtc_test(){
 
 	rtc_open("Hi");
 
-	uint16_t freq_buf[1];
-	freq_buf[0] = 1024;
-
-	rtc_write(0, freq_buf, 0);
-
 	enable_irq(RTC_IRQ);
+
+	uint16_t freq_buf[1];
+
+	freq_buf[0] = 1024;
+	rtc_write(0, freq_buf, 0);
+	int i;
+	clear();
+	for(i = 0; i < 2048; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 1024HZ\n");
+		}
+	}
+	clear();	
+	freq_buf[0] = 512;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 1024; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 512HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 256;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 512; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 256HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 128;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 256; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 128HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 64;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 128; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 64HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 32;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 64; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 32HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 16;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 32; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 16HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 8;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 16; i++){
+		if(rtc_read(0,0,0)){
+			printf(" 8HZ\n");
+		}
+	}
+	clear();
+	freq_buf[0] = 4;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 8; i++){
+		if(rtc_read(0,0,0)){
+			printf("4HZ\n");
+		}
+	}
+
+	clear();
+	freq_buf[0] = 2;
+	rtc_write(0, freq_buf, 0);
+	for(i = 0; i < 4; i++){
+		if(rtc_read(0,0,0)){
+			printf("2HZ\n");
+		}
+	}
 
 }
 
