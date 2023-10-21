@@ -3,7 +3,7 @@
 #include "i8259.h"
 #include "lib.h"
 
-volatile int INT_FLAG;
+static volatile int INT_FLAG;
 
 extern void rtc_link(); 
 
@@ -90,11 +90,11 @@ int32_t rtc_close(int32_t fd){
     return 0;
 }
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-    INT_FLAG = 0;
     while(INT_FLAG == 0){
         ;
     }
-    return 0;
+    INT_FLAG = 0; 
+    return 1;
 }
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     uint16_t buf_freq = (uint16_t)* (uint16_t*)buf;
@@ -107,10 +107,10 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
  *   Return Value: none
  *    Function: what to do during RTC interrupts */
 void rtc_handler(){
-
+    INT_FLAG = 1;
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
-    test_interrupts(); 
+    // test_interrupts(); 
     send_eoi(RTC_IRQ);
 
     
