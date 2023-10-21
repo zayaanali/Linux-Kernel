@@ -97,15 +97,6 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     while (read_length < length && block_index < num_blocks) {
         // Get block number
         uint32_t block_no = inode_ptr->dbi[block_index];
-        // if (block_no == 0) {
-        //     return -1; 
-        // }
-
-        // Calculate how much data to read from this block
-        // uint32_t to_read = length - read_length;
-        // if (to_read > BLOCK_SIZE - block_offset) {
-        //     to_read = BLOCK_SIZE - block_offset;
-        // }
 
         uint32_t to_read = BLOCK_SIZE - block_offset;
         if (to_read > length - read_length) {

@@ -128,10 +128,11 @@ void exceptions_test(){
 
 /* rtc_test
  *   Inputs: none
- *	 Outputs: the screen should flash between two different sets of characters to indicate the RTC is set up and running
+ *	 Outputs: the screen should print the current frequency the RTC is set to. The frequency of the printing should match the frequency indicated in the text printed.
+ *				This test cycles through all the possible frequencies the RTC can be set to. 
  *   Return Value: none
  * 	 Coverage: RTC
- *   Function: Tests the RTC by enabling its IRQ line */
+ *   Function: Tests the RTC by enabling its IRQ line and changing the frequency to all possible frequencies*/
 void rtc_test(){
 
 	uint8_t* fname = (uint8_t*)"Hi";
@@ -334,6 +335,14 @@ void test_paging_access(){
 }
 /* Checkpoint 2 tests */
 
+
+/* test_filesys_fails
+ *   Inputs: none
+ *	 Outputs: messages print to the screen indicating what the program is attempting to do and the result. Opening non-existant file and directory should fail. Opening
+ *				an existing file and directory should work, but writing to either should fail. 
+ *   Return Value: none
+ * 	 Coverage: filesystem. file_open, file_write, dir_open, dir_write
+ *   Function: Tests that things that should fail in regards to filesystem do fail */
 static void test_filesys_fails(){
 
 	uint8_t* buf[80];
@@ -390,6 +399,13 @@ static void test_filesys_fails(){
 
 }
 
+
+/* read_file
+ *   Inputs: fname:	name of file to read contents of and print to terminal
+ *	 Outputs: file contents print to screen (except null chars) and a line indicating the file read
+ *   Return Value: none
+ * 	 Coverage: filesystem. file_open, file_read
+ *   Function: Tests that files can be opened and read */
 static void read_file(const uint8_t* fname){
 
 	uint8_t buf[81]; 
@@ -420,6 +436,13 @@ static void read_file(const uint8_t* fname){
 
 }
 
+
+/* test_dir_read
+ *   Inputs: none
+ *	 Outputs: all the file names stored in the directory
+ *   Return Value: none
+ * 	 Coverage: filesystem. dir_open, dir_read
+ *   Function: Tests that directory can be opened and read */
 void test_dir_read(){
 	uint8_t buf[32]; 
 	uint8_t* fname=(uint8_t*)".";
