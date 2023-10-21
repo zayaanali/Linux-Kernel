@@ -27,6 +27,7 @@ static inline void assertion_failure(){
 	asm volatile("int $15");
 }
 
+static void read_file(const uint8_t* fname);
 
 /* Checkpoint 1 tests */
 
@@ -332,33 +333,70 @@ void test_paging_access(){
 }
 /* Checkpoint 2 tests */
 
-void test_filesys(){
+static void test_filesys(){
 
-	uint8_t buf[32]; 
-	int i;
-	// file_open("ls");
+	
+
+	//read_file("frame0.txt");
+
+	// if(-1==file_read("frame0.txt", buf, 80)){
+	// 	printf("file read failed \n");
+	// }
+	// printf(" %s \n", buf);
+
+	// if(-1==file_read("frame0.txt", buf, 80)){
+	// 	printf("file read failed \n");
+	// }
+	// printf(" %s \n", buf);
+
+
 	// i = file_read("ls", buf, 32);
 
 	// buf[32]='\0';
 	// clear(); 
 	
-	// test_paging_access(); 
+	
 	// printf("attempting to print buf \n");
 	// printf("reading from ls: %s", (buf+1));
 
-	clear(); 
 
-	dir_open(".");
+
+}
+
+static void read_file(const uint8_t* fname){
+
+	uint8_t buf[81]; 
+	int k; 
+
+	buf[80]='\n';
+	clear();
+
+	file_open(fname);
 
 	uint32_t cnt; 
-	while (0 != (cnt = dir_read(".", buf, 32))) {
+	while (0 != (cnt = file_read(fname, buf, 80))) {
         if (-1 == cnt) {
-			printf(" directory entry read failed\n");
+			printf(" file read failed\n");
 	        break; 
 	    }
 
-		printf(" %s \n", buf);
-    }
+		
+		//printf("%s", buf);
+		//puts(buf);
+		for(k=0; k<cnt; k++){
+			if(buf[k]!='\0'){
+				putc(buf[k]);
+			}
+			
+		}
+
+		//putc('\n');
+		//printf("\n");
+    
+	}
+
+	printf("file: %s \n", fname);
+
 
 }
 
@@ -395,8 +433,20 @@ void launch_tests(){
 	// launch your tests here
 
 	/* checkpoint 2 */
-	test_filesys(); 
+	//test_dir_read(); 
 
+	//rtc_test();
+
+	//test_filesys(); 
+
+	// test reading small files
+	//read_file("frame0.txt");
+	// read_file("frame1.txt");
+
+	// test reading executables
+	//read_file("verylargetextwithverylongname.tx");
+	//read_file("frame0.txt");
+	read_file("ls");
 
 	/* checkpoint 1 */
 	//TEST_OUTPUT("idt_test", idt_test());

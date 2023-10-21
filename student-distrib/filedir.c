@@ -55,11 +55,6 @@ int dir_read(const uint8_t* fname, uint8_t* buf, uint32_t nbytes){
     dentry_t dentry[1]; 
     uint32_t bytes_read = 0; 
 
-    // if(0!=read_dentry_by_name(fname, dentry)){                             // get directory entry for fname into dentry 
-    //     return -1;
-    // }                                 
-    // bytes_read = read_data(dentry->inode_id, file_pos, buf, nbytes);       // read data into buf, return number of bytes read
-
     // Initialize variables for reading data
     uint32_t dir_fname_offset = file_pos % FNAME_SIZE;              // offset into file name of current directory entry
     uint32_t dir_index = file_pos / FNAME_SIZE;

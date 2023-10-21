@@ -13,13 +13,14 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     int i;     // loop variable
     int fname_length = strlen(fname); 
-    uint8_t fname_ext[32];
+    uint8_t fname_ext[33];
+    uint8_t o_fname_ext[33];
     
     for(i=0; i<fname_length; i++){
         fname_ext[i]=fname[i];
     }
     // extend argument fname in cases when less than 32 bytes
-    for(i=fname_length; i<32; i++){
+    for(i=fname_length; i<33; i++){
         fname_ext[i]='\0'; 
     }
 
@@ -32,7 +33,9 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     // loop through directory entries until match is found
     for(i=0; i<boot_block->num_dir_entries; i++){
-        if(strncmp(boot_block->dir_entries[i].file_name,fname,32)==0){
+        strcpy(o_fname_ext, boot_block->dir_entries[i].file_name);
+        o_fname_ext[32]='\0';
+        if(strncmp(o_fname_ext,fname,33)==0){
             strcpy(dentry->file_name, boot_block->dir_entries[i].file_name);
             dentry->file_type = boot_block->dir_entries[i].file_type;
             dentry->inode_id = boot_block->dir_entries[i].inode_id;
@@ -83,7 +86,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     inode_t* inode_ptr = &inodes[inode];
 
     // Calculate number of data blocks and block size
-    uint32_t num_blocks = (inode_ptr->length) / BLOCK_SIZE;
+    uint32_t num_blocks = (inode_ptr->length + BLOCK_SIZE - 1) / BLOCK_SIZE;     //ceiling on number of blocks to read
 
     // Initialize variables for reading data
     uint32_t read_length = 0;
@@ -94,14 +97,19 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     while (read_length < length && block_index < num_blocks) {
         // Get block number
         uint32_t block_no = inode_ptr->dbi[block_index];
-        if (block_no == 0) {
-            return -1; 
-        }
+        // if (block_no == 0) {
+        //     return -1; 
+        // }
 
         // Calculate how much data to read from this block
-        uint32_t to_read = length - read_length;
-        if (to_read > BLOCK_SIZE - block_offset) {
-            to_read = BLOCK_SIZE - block_offset;
+        // uint32_t to_read = length - read_length;
+        // if (to_read > BLOCK_SIZE - block_offset) {
+        //     to_read = BLOCK_SIZE - block_offset;
+        // }
+
+        uint32_t to_read = BLOCK_SIZE - block_offset;
+        if (to_read > length - read_length) {
+            to_read = length - read_length;
         }
 
         // Read data from block
@@ -127,19 +135,21 @@ void filesys_init(module_t* mod){
     clear();
     int i;
     boot_block = (boot_block_t*)mod->mod_start;
-    printf("Number of Dir Entries: %d \n", boot_block->num_dir_entries);
+    //printf("Number of Dir Entries: %d \n", boot_block->num_dir_entries);
 
     int* ptr = boot_block; 
-    for(i=0; i<boot_block->num_dir_entries; i++){
-        printf("%s at inode %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id);
-    }
+    // for(i=0; i<boot_block->num_dir_entries; i++){
+    //     printf("%s at inode %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id);
+    // }
     // printf("Number of Inodes: %d \n", boot_block->num_inodes);
     // printf("Number of Data Blocks: %d \n", boot_block->num_dbs);
 
     inodes = (inode_t*)(boot_block + 1);
-    // for(i = 0; i < 20; i++){
-    //     printf("Length of Inodes %d : %d \n", i, inodes[i].length);
-    // }
+    
+    //printf("Length of verylarge file: %d \n", i, inodes[44].length);
+    for(i=0; i<boot_block->num_dir_entries; i++){
+        printf("%s at inode %d with length %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id, inodes[boot_block->dir_entries[i].inode_id].length);
+    }
 
     data_blocks = (data_block_t*)(inodes + MAX_NUM_FILES);
    // printf("Data at position 0: %d \n", data_blocks[7].data[7]);
