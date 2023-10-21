@@ -7,6 +7,7 @@
 #include "system_s.h"
 #include "types.h"
 #include "file.h"
+#include "filedir.h"
 
 #define PASS 1
 #define FAIL 0
@@ -253,18 +254,56 @@ void test_paging_access(){
 
 void test_filesys(){
 
-	uint8_t buf[33]; 
+	uint8_t buf[32]; 
 	int i;
-	file_open("ls");
-	i = file_read("ls", buf, 32);
+	// file_open("ls");
+	// i = file_read("ls", buf, 32);
 
-	buf[32]='\0';
-	clear(); 
+	// buf[32]='\0';
+	// clear(); 
 	
-	test_paging_access(); 
-	printf("attempting to print buf \n");
-	printf("reading from ls: %s", (buf+1));
+	// test_paging_access(); 
+	// printf("attempting to print buf \n");
+	// printf("reading from ls: %s", (buf+1));
+
+	clear(); 
+
+	dir_open(".");
+
+	uint32_t cnt; 
+	while (0 != (cnt = dir_read(".", buf, 32))) {
+        if (-1 == cnt) {
+			printf(" directory entry read failed\n");
+	        break; 
+	    }
+
+		printf(" %s \n", buf);
+    }
+
 }
+
+void test_dir_read(){
+	uint8_t buf[32]; 
+	int i;
+
+	clear(); 
+
+	dir_open(".");
+
+
+	// do an ls. that is, print all file names in directory 
+	uint32_t cnt; 
+	while (0 != (cnt = dir_read(".", buf, 32))) {
+        if (-1 == cnt) {
+			printf(" directory entry read failed\n");
+	        break; 
+	    }
+
+		printf(" %s \n", buf);
+    
+	}
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -274,12 +313,17 @@ void test_filesys(){
 void launch_tests(){
 	
 	// launch your tests here
-	
+
+	/* checkpoint 2 */
+	test_filesys(); 
+
+
+	/* checkpoint 1 */
 	//TEST_OUTPUT("idt_test", idt_test());
 
 	//exceptions_test();
 
-	rtc_test(); 
+	//rtc_test(); 
 
 	//syscall_idt_test(); 
 
@@ -287,6 +331,6 @@ void launch_tests(){
 
 	//test_paging_inaccess(); 
 
-	//test_filesys(); 
+	
 
 }
