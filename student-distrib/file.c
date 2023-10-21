@@ -10,14 +10,18 @@ uint32_t file_pos[64];      // store current file position by inode#
  */
 int file_open(const uint8_t* fname){
     // initialize file position to start reading from to beginning of file
+    int32_t i; 
     dentry_t dentry[1];
-    read_dentry_by_name(fname, dentry);
+    i=read_dentry_by_name(fname, dentry);
 
-    int inode_id = dentry->inode_id;
-    
-    file_pos[inode_id] = 0; 
+    if(i==-1){
+        return i; 
+    }else{
+        int inode_id = dentry->inode_id;
+        file_pos[inode_id] = 0; 
+    }
 
-    return 0; 
+    return i; 
 }
 
 
@@ -36,7 +40,7 @@ int file_close(int32_t fd){
  *   Return Value: -1 for failure, this always fails
  *   Function: signals failure to write to read-only files
  */
-int file_write(){
+int file_write(const uint8_t* fname, uint8_t* buf, uint32_t nbytes){
 
     //cannot write to read-only files
     return -1; 

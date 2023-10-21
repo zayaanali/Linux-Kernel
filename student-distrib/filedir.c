@@ -13,6 +13,9 @@ uint32_t file_pos;
  */
 int dir_open(const uint8_t* fname){
 
+    if(strncmp((int8_t*)fname, ".", 32)!=0){
+        return -1; 
+    }
     // initialize file_pos to 0 to start first read from beginning of directory file
     file_pos = 0; 
 

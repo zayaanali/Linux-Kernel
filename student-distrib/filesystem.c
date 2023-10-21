@@ -12,9 +12,9 @@
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     int i;     // loop variable
-    int fname_length = strlen(fname); 
-    uint8_t fname_ext[33];
-    uint8_t o_fname_ext[33];
+    uint32_t fname_length = strlen((int8_t*)fname); 
+    int8_t fname_ext[33];
+    int8_t o_fname_ext[33];
     
     for(i=0; i<fname_length; i++){
         fname_ext[i]=fname[i];
@@ -33,10 +33,10 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     // loop through directory entries until match is found
     for(i=0; i<boot_block->num_dir_entries; i++){
-        strcpy(o_fname_ext, boot_block->dir_entries[i].file_name);
+        strcpy(o_fname_ext, (int8_t*)boot_block->dir_entries[i].file_name);
         o_fname_ext[32]='\0';
-        if(strncmp(o_fname_ext,fname,33)==0){
-            strcpy(dentry->file_name, boot_block->dir_entries[i].file_name);
+        if(strncmp(o_fname_ext,(int8_t*)fname,33)==0){
+            strcpy((int8_t*)dentry->file_name, (int8_t*)boot_block->dir_entries[i].file_name);
             dentry->file_type = boot_block->dir_entries[i].file_type;
             dentry->inode_id = boot_block->dir_entries[i].inode_id;
             return 0; 
@@ -61,7 +61,7 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
         return -1; 
     }
 
-    strcpy(dentry->file_name, boot_block->dir_entries[index].file_name);
+    strcpy((int8_t*)dentry->file_name, (int8_t*)boot_block->dir_entries[index].file_name);
     dentry->file_type = boot_block->dir_entries[index].file_type;
     dentry->inode_id = boot_block->dir_entries[index].inode_id;
     return 0; 
@@ -132,27 +132,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
  *   Function: create mapping between file system struct and filesys_img 
  */
 void filesys_init(module_t* mod){
-    clear();
-    int i;
     boot_block = (boot_block_t*)mod->mod_start;
-    //printf("Number of Dir Entries: %d \n", boot_block->num_dir_entries);
-
-    int* ptr = boot_block; 
-    // for(i=0; i<boot_block->num_dir_entries; i++){
-    //     printf("%s at inode %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id);
-    // }
-    // printf("Number of Inodes: %d \n", boot_block->num_inodes);
-    // printf("Number of Data Blocks: %d \n", boot_block->num_dbs);
-
     inodes = (inode_t*)(boot_block + 1);
-    
-    //printf("Length of verylarge file: %d \n", i, inodes[44].length);
-    for(i=0; i<boot_block->num_dir_entries; i++){
-        printf("%s at inode %d with length %d \n", boot_block->dir_entries[i].file_name, boot_block->dir_entries[i].inode_id, inodes[boot_block->dir_entries[i].inode_id].length);
-    }
-
     data_blocks = (data_block_t*)(inodes + MAX_NUM_FILES);
-   // printf("Data at position 0: %d \n", data_blocks[7].data[7]);
-
-
 }

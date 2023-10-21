@@ -134,7 +134,8 @@ void exceptions_test(){
  *   Function: Tests the RTC by enabling its IRQ line */
 void rtc_test(){
 
-	rtc_open("Hi");
+	uint8_t* fname = (uint8_t*)"Hi";
+	rtc_open(fname);
 
 	enable_irq(RTC_IRQ);
 
@@ -143,13 +144,13 @@ void rtc_test(){
 	freq_buf[0] = 1024;
 	rtc_write(0, freq_buf, 0);
 	int i;
-	clear();
+
 	for(i = 0; i < 2048; i++){
 		if(rtc_read(0,0,0)){
 			printf(" 1024HZ\n");
 		}
 	}
-	clear();	
+
 	freq_buf[0] = 512;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 1024; i++){
@@ -157,7 +158,7 @@ void rtc_test(){
 			printf(" 512HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 256;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 512; i++){
@@ -165,7 +166,7 @@ void rtc_test(){
 			printf(" 256HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 128;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 256; i++){
@@ -173,7 +174,7 @@ void rtc_test(){
 			printf(" 128HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 64;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 128; i++){
@@ -181,7 +182,7 @@ void rtc_test(){
 			printf(" 64HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 32;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 64; i++){
@@ -189,7 +190,7 @@ void rtc_test(){
 			printf(" 32HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 16;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 32; i++){
@@ -197,7 +198,7 @@ void rtc_test(){
 			printf(" 16HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 8;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 16; i++){
@@ -205,7 +206,7 @@ void rtc_test(){
 			printf(" 8HZ\n");
 		}
 	}
-	clear();
+
 	freq_buf[0] = 4;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 8; i++){
@@ -214,7 +215,7 @@ void rtc_test(){
 		}
 	}
 
-	clear();
+
 	freq_buf[0] = 2;
 	rtc_write(0, freq_buf, 0);
 	for(i = 0; i < 4; i++){
@@ -333,33 +334,59 @@ void test_paging_access(){
 }
 /* Checkpoint 2 tests */
 
-static void test_filesys(){
+static void test_filesys_fails(){
 
+	uint8_t* buf[80];
+	uint8_t* fname; 
+
+	printf("attempting to open non-existant file: %s \n", "abcde");
+
+	fname = (uint8_t*)"abcde";
+	if(-1==file_open(fname)){
+		printf("file open failed \n");
+	}else{
+		printf("success?!?! \n");
+	}
+
+	printf("attempting to open non-existant directory: %s \n", "z");
+
+	fname = (uint8_t*)"z";
+	if(-1==dir_open(fname)){
+		printf("directory open failed \n");
+	}else{
+		printf("success?!?! \n");
+	}
+
+	printf("attempting to write to file: %s ", "frame0.txt");
+
+	fname = (uint8_t*)"frame0.txt";
+	if(-1==file_open(fname)){
+		printf("file open failed ?!?! \n");
+	}else{
+		printf("frame0.txt opened \n");
+	}
+
+	if(-1==file_write(fname, (void*)buf, 80)){
+		printf("writing to frame0.txt failed \n");
+	}else{
+		printf("success?!?!? \n");
+	}
+
+	printf("attempting to write to dir: %s ", ".");
+
+	fname = (uint8_t*)".";
+	if(-1==dir_open(fname)){
+		printf("dir open failed ?!?! \n");
+	}else{
+		printf("director '.' opened \n");
+	}
+
+	if(-1==dir_write(1, buf, 80)){
+		printf("writing to directory failed \n");
+	}else{
+		printf("success?!?!? \n");
+	}
 	
-
-	//read_file("frame0.txt");
-
-	// if(-1==file_read("frame0.txt", buf, 80)){
-	// 	printf("file read failed \n");
-	// }
-	// printf(" %s \n", buf);
-
-	// if(-1==file_read("frame0.txt", buf, 80)){
-	// 	printf("file read failed \n");
-	// }
-	// printf(" %s \n", buf);
-
-
-	// i = file_read("ls", buf, 32);
-
-	// buf[32]='\0';
-	// clear(); 
-	
-	
-	// printf("attempting to print buf \n");
-	// printf("reading from ls: %s", (buf+1));
-
-
 
 }
 
@@ -368,8 +395,6 @@ static void read_file(const uint8_t* fname){
 	uint8_t buf[81]; 
 	int k; 
 
-	//buf[80]='\n';
-	clear();
 
 	file_open(fname);
 
@@ -380,11 +405,6 @@ static void read_file(const uint8_t* fname){
 	        break; 
 	    }
 
-		// if(cnt<80){
-		// 	buf[cnt]='\n';
-		// }
-		//printf("%s", buf);
-		//puts(buf);
 		for(k=0; k<(cnt); k++){
 			if(buf[k]!='\0'){
 				putc(buf[k]);
@@ -392,34 +412,33 @@ static void read_file(const uint8_t* fname){
 			
 		}
 
-		//putc('\n');
-		//printf("\n");
     
 	}
 
-	printf("file: %s \n", fname);
+	printf(" \nfile: %s \n", fname);
 
 
 }
 
 void test_dir_read(){
 	uint8_t buf[32]; 
-	int i;
+	uint8_t* fname=(uint8_t*)".";
+
 
 	clear(); 
 
-	dir_open(".");
+	dir_open(fname);
 
 
 	// do an ls. that is, print all file names in directory 
 	uint32_t cnt; 
-	while (0 != (cnt = dir_read(".", buf, 32))) {
+	while (0 != (cnt = dir_read(fname, buf, 32))) {
         if (-1 == cnt) {
 			printf(" directory entry read failed\n");
 	        break; 
 	    }
 
-		printf(" %s \n", buf);
+		printf("%s \n", buf);
     
 	}
 }
@@ -439,16 +458,29 @@ void launch_tests(){
 
 	//rtc_test();
 
-	//test_filesys(); 
 
 	// test reading small files
-	//read_file("frame0.txt");
-	// read_file("frame1.txt");
+	//read_file((uint8_t*)"frame0.txt");
+	//read_file((uint8_t*)"frame1.txt");
+	//read_file((uint8_t*)"created.txt");
 
 	// test reading executables
-	//read_file("verylargetextwithverylongname.tx");
-	//read_file("frame0.txt");
-	read_file("ls");
+	//read_file((uint8_t*)"ls");
+	//read_file((uint8_t*)"grep");
+	//read_file((uint8_t*)"shell");
+	//read_file((uint8_t*)"syserr");
+	//read_file((uint8_t*)"sigtest");
+	//read_file((uint8_t*)"cat");
+	//read_file((uint8_t*)"pingpong");
+	//read_file((uint8_t*)"counter");
+	//read_file((uint8_t*)"hello");
+	//read_file((uint8_t*)"testprint");
+
+	// test large files
+	//read_file((uint8_t*)"verylargetextwithverylongname.tx");
+	//read_file((uint8_t*)"fish");
+
+	//test_filesys_fails();
 
 	/* checkpoint 1 */
 	//TEST_OUTPUT("idt_test", idt_test());
