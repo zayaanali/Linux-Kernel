@@ -9,6 +9,7 @@
 
 #define MAX_BUFFER_SIZE 128
 #define TERM_WIDTH 80
+#define TERM_HEIGHT 25
 
 /* Buffer (extra character for null termination) */
 char line_buffer[MAX_BUFFER_SIZE];
