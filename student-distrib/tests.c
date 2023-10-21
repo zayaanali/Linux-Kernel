@@ -368,7 +368,7 @@ static void read_file(const uint8_t* fname){
 	uint8_t buf[81]; 
 	int k; 
 
-	buf[80]='\n';
+	//buf[80]='\n';
 	clear();
 
 	file_open(fname);
@@ -380,10 +380,12 @@ static void read_file(const uint8_t* fname){
 	        break; 
 	    }
 
-		
+		// if(cnt<80){
+		// 	buf[cnt]='\n';
+		// }
 		//printf("%s", buf);
 		//puts(buf);
-		for(k=0; k<cnt; k++){
+		for(k=0; k<(cnt); k++){
 			if(buf[k]!='\0'){
 				putc(buf[k]);
 			}
