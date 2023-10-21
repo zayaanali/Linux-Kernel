@@ -253,10 +253,12 @@ int term_driver_test(){
     while (1) {
         terminal_write(0, "Enter a string: \n", 17);
         
-		nbytes = terminal_read(0, buf, 10);
-
+		nbytes = terminal_read(0, buf, 5);
+		
+		
 		printf("\n");
         printf("Number of bytes written: %d\n", nbytes);
+
     }
     
     

@@ -22,6 +22,9 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     /* Clear the keyboard buffer */
     clear_line_buffer();
 
+    /* Write contents of the buffer to the screen */
+    terminal_write(0, char_buf, num_bytes_read);
+
     /* return number of bytes read */
     return num_bytes_read;
 }

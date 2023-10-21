@@ -262,11 +262,10 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     while (enter_pressed==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
-
     for (i=0; i < num_bytes; i++) {
-        /* Check if reach null termination */
-        if (line_buffer[i] == '\0') 
-            { terminal_buffer[i] = '\0'; return num_bytes_read; }
+        /* Check if reached newline (end of string). If so then clear line buffer and return */
+        if (line_buffer[i] == '\n') 
+            { clear_line_buffer(); buf_ptr=0; return num_bytes_read; }
         
         /* Copy from line buffer to terminal buffer */
         terminal_buffer[i] = line_buffer[i];
@@ -275,10 +274,10 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
         num_bytes_read++;
     }
 
+    /* Clear the line buffer */
     clear_line_buffer();
     buf_ptr=0;
     
-
     /* Return number of bytes read */
     return num_bytes_read;
 }
