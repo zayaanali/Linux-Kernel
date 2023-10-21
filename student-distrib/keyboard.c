@@ -108,6 +108,9 @@ extern void keyboard_init() {
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
+
+    /* Enable cursor */
+    //enable_cursor(0,80);
 }
 
 /* keyboard_handler
@@ -140,22 +143,25 @@ extern void keyboard_handler() {
     } 
     
     /* Backspace */
-    else if (scan_key == 0x0E) {
+    if (scan_key == 0x0E) {
         buf_pop();
         putc('\b');
         sti(); send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions */
-    else if (ctrl_pressed) {
-        if (scan_key == 0x26) // CTRL + L
-            { clear(); clear_line_buffer(); set_cursor(0,0); }
+    if (ctrl_pressed) {
+        if (scan_key == 0x26) { // CTRL + L
+            clear(); clear_line_buffer(); set_cursor(0,0); 
+            sti(); send_eoi(KEYBOARD_IRQ); return;    
+        }
         
         if (scan_key == 0x2E) // CTRL + C
             { /* HALT */ }
     }    
-        
-    else if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
+
+    /* Set key to be printed hjhj*/    
+    if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
         
         if (shift_pressed && caps_enabled) // shift + caps negate each other
             out = key_map[scan_key];
@@ -187,7 +193,6 @@ extern void keyboard_handler() {
     send_eoi(KEYBOARD_IRQ);
 }
 
-
 /* check_modifiers
  *   Inputs: scan key
  *   Return Value: 1 if modifier key pressed, 0 otherwise
@@ -213,9 +218,9 @@ int check_modifiers(uint8_t scan_key) {
         case 0x9D: // lcontrol released
             ctrl_pressed = 0; return 1;
         case 0x1C: // enter pressed
-            enter_pressed = 1; return 0;
+            enter_pressed = 1; printf("enter=1"); return 0;
         case 0x9C: // enter released
-            enter_pressed = 0; return 0;
+            enter_pressed = 0; printf("enter=0"); return 0;
         default:
             return 0;
     }
@@ -260,7 +265,7 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     for (i=0; i < num_bytes; i++) {
         /* Check if reach null termination */
         if (line_buffer[i] == '\0') 
-            { terminal_buffer[i] = '\0'; return; }
+            { terminal_buffer[i] = '\0'; return num_bytes_read; }
         
         /* Copy from line buffer to terminal buffer */
         terminal_buffer[i] = line_buffer[i];
@@ -294,11 +299,12 @@ extern void set_cursor(int x, int y)
 {
 	uint16_t pos = y * TERM_WIDTH + x;
  
-	outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+	outb(0x0F, 0x3D4);
+	outb((uint8_t) (pos & 0xFF),0x3D5);
+	outb(0x0E,0x3D4);
+	outb((uint8_t) ((pos >> 8) & 0xFF), 0x3D5);
 }
+
 
 /*
 *   Function: enable_cursor

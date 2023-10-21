@@ -6,6 +6,7 @@
 #include "rtc.h"
 #include "system_s.h"
 #include "types.h"
+#include "terminal.h"
 
 #define PASS 1
 #define FAIL 0
@@ -242,6 +243,26 @@ void test_paging_access(){
 
 }
 /* Checkpoint 2 tests */
+
+
+int term_driver_test(){
+    
+    // int nbytes;
+    // char buf[128];
+    
+    // while (1) {
+    //     terminal_write(0, "Enter a string: \n", 17);
+    //     nbytes = terminal_read(0, buf, 10);
+
+    //     terminal_write(0, buf, nbytes);
+    // }
+    
+    
+}
+
+//target remote 10.0.2.2:1234
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -263,5 +284,7 @@ void launch_tests(){
 	//test_paging_inaccess(); 
 
 	//test_paging_access(); 
+
+    term_driver_test();
 
 }
