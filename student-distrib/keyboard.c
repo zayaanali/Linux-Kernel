@@ -6,6 +6,7 @@
 #include "i8259.h"
 #include "x86_desc.h"
 
+
 #define KEYBOARD_IRQ 1
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_CMD_PORT 0x64
@@ -23,6 +24,7 @@ volatile int shift_pressed;
 volatile int caps_enabled;
 volatile int ctrl_pressed;
 volatile int enter_pressed;
+volatile int alt_pressed;
 
 
 
@@ -104,6 +106,8 @@ extern void keyboard_init() {
     shift_pressed = 0;
     caps_enabled = 0;
     ctrl_pressed = 0;
+    enter_pressed = 0;
+    alt_pressed = 0;
     buf_ptr = 0;
 
     /* Enable keyboard interrupt line */
@@ -151,16 +155,21 @@ extern void keyboard_handler() {
     
     /* CTRL functions */
     if (ctrl_pressed) {
-        if (scan_key == 0x26) { // CTRL + L
-            clear(); clear_line_buffer(); set_cursor(0,0); 
+        if (scan_key == 0x26 || scan_key == 0xA6) { // CTRL + L
+            clear(); 
             send_eoi(KEYBOARD_IRQ); return;    
         }
         
         if (scan_key == 0x2E) // CTRL + C
             { putc('^'); putc('c'); send_eoi(KEYBOARD_IRQ); return; }
+    }
+
+    /* ALT Functions (print nothing) */
+    if (alt_pressed) {
+        send_eoi(KEYBOARD_IRQ); return;  
     }    
 
-    /* Set key to be printed hjhj*/    
+    /* Set key to be printed */    
     if (is_letter(scan_key)) { // is a letter (both caps and shift affect output)
         
         if (shift_pressed && caps_enabled) // shift + caps negate each other
@@ -220,6 +229,10 @@ int check_modifiers(uint8_t scan_key) {
             enter_pressed = 1; return 0;
         case 0x9C: // enter released
             enter_pressed = 0; return 0;
+        case 0x38: // alt pressed
+            alt_pressed = 1; return 1;
+        case 0xB8: // alt released
+            alt_pressed = 0; return 1;
         default:
             return 0;
     }
@@ -257,7 +270,6 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
     
     /* Wait for enter keypress */
-    //printf("enter_pressed=%d", enter_pressed);
     enter_pressed=0;
     while (enter_pressed==0);
     
@@ -272,6 +284,7 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
         
         /* Increment number of bytes read */
         num_bytes_read++;
+        
     }
 
     /* Clear the line buffer */

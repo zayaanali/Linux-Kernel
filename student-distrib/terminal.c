@@ -19,11 +19,14 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     /* Copy the keyboard buffer into the terminal buffer and get number of bytes read */
     num_bytes_read = read_line_buffer(char_buf, nbytes);
 
+    /* Set last character as newline */
+    char_buf[num_bytes_read] = '\n';
+    
     /* Clear the keyboard buffer */
     clear_line_buffer();
 
     /* Write contents of the buffer to the screen */
-    terminal_write(0, char_buf, num_bytes_read);
+    terminal_write(0, char_buf, num_bytes_read+1);
 
     /* return number of bytes read */
     return num_bytes_read;

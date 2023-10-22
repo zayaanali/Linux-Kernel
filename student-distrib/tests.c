@@ -452,20 +452,29 @@ int term_driver_test(){
     char buf[128];
     
     while (1) {
-        terminal_write(0, "Enter a string: \n", 17);
+        /* Test 1 */
+        printf("TEST 1: Max number of bytes = 10 \n");
+        terminal_write(0, "Enter a string: \n",  20);
         
-		nbytes = terminal_read(0, buf, 5);
-		
-		
-		printf("\n");
+		nbytes = terminal_read(0, buf, 10);
+        printf("Number of bytes written: %d\n", nbytes);
+
+        printf("TEST 2: Max number of bytes = 128 \n");
+        terminal_write(0, "Enter a string: \n",  20);
+
+        nbytes = terminal_read(0, buf, 128);
+        printf("Number of bytes written: %d\n", nbytes);
+
+        printf("TEST 3: Max number of bytes = 0 \n");
+        terminal_write(0, "Enter a string: \n",  20);
+
+        nbytes = terminal_read(0, buf, 0);
         printf("Number of bytes written: %d\n", nbytes);
 
     }
     
     
 }
-
-//target remote 10.0.2.2:1234
 
 
 /* Checkpoint 3 tests */
@@ -522,6 +531,7 @@ void launch_tests(){
 
 	//test_paging_access(); 
 
-    term_driver_test();
+    //term_driver_test();
 
+	term_driver_test();
 }

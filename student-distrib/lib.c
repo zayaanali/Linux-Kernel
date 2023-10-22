@@ -23,6 +23,9 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    screen_x=0;
+    screen_y=0;
+    set_cursor(screen_x, screen_y);
 }
 
 /* Standard printf().
@@ -164,22 +167,6 @@ int32_t puts(int8_t* s) {
     return index;
 }
 
-/* void putc(uint8_t c);
- * Inputs: uint_8* c = character to print
- * Return Value: void
- *  Function: Output a character to the console MODIFY FOR VERTICAL SCROLLING */
-// void putc(uint8_t c) {
-//     if(c == '\n' || c == '\r') {
-//         screen_y++;
-//         screen_x = 0;
-//     } else {
-//         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-//         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-//         screen_x++;
-//         screen_x %= NUM_COLS;
-//         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
-//     }
-// }
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;
@@ -187,6 +174,11 @@ void putc(uint8_t c) {
     } else if (c == '\b') { // backspace
         if (screen_x > 0) {
             screen_x--;
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        } else if (screen_x==0) {
+            screen_x = NUM_COLS-1;
+            screen_y--;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         }
@@ -209,7 +201,7 @@ void putc(uint8_t c) {
     /* update cursor */
     set_cursor(screen_x, screen_y);
 
-} // target remote 10.0.2.2:1234
+} 
 
 
 
