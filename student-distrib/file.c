@@ -1,7 +1,7 @@
 #include "file.h"
 #include "filesystem.h"
 
-uint32_t file_pos[64];      // store current file position by inode#
+uint32_t file_pos[64];      // store current file position for each file by inode#
 
 /* file_open
  *   Inputs: fname  : name of file to open
@@ -15,7 +15,7 @@ int file_open(const uint8_t* fname){
     i=read_dentry_by_name(fname, dentry);
 
     if(i==-1){
-        return i; 
+        return i;       // dentry not found
     }else{
         int inode_id = dentry->inode_id;
         file_pos[inode_id] = 0; 
@@ -56,12 +56,13 @@ int file_write(const uint8_t* fname, uint8_t* buf, uint32_t nbytes){
  */
 int file_read(const uint8_t* fname, uint8_t* buf, uint32_t nbytes){
 
-    dentry_t dentry[1]; 
+    dentry_t dentry[1];                 // just need 1 dentry to copy into
     uint32_t bytes_read; 
 
-    if(0!=read_dentry_by_name(fname, dentry)){                                              // get directory entry for fname into dentry 
+    if(0!=read_dentry_by_name(fname, dentry)){                                              // get directory entry corresponding to fname into dentry 
         return -1;
     }        
+
     bytes_read = read_data(dentry->inode_id, file_pos[dentry->inode_id], buf, nbytes);       // read data into buf, return number of bytes read
 
     // update file position
