@@ -468,7 +468,12 @@ void test_dir_read(){
 }
 
 
-
+/* term_driver_test
+ *   Inputs: none
+ *	 Outputs: none
+ *   Return Value: none
+ * 	 Coverage: terminal driver
+ *   Function: tests terminal driver read/write */
 int term_driver_test(){
     
     int nbytes;
@@ -482,12 +487,14 @@ int term_driver_test(){
 		nbytes = terminal_read(0, buf, 10);
         printf("Number of bytes written: %d\n", nbytes);
 
+        /* Test 2 */
         printf("TEST 2: Max number of bytes = 128 \n");
         terminal_write(0, "Enter a string: \n",  20);
 
         nbytes = terminal_read(0, buf, 128);
         printf("Number of bytes written: %d\n", nbytes);
 
+        /* Test 3 */
         printf("TEST 3: Max number of bytes = 0 \n");
         terminal_write(0, "Enter a string: \n",  20);
 
@@ -554,7 +561,6 @@ void launch_tests(){
 
 	//test_paging_access(); 
 
-    //term_driver_test();
+    term_driver_test();
 
-	term_driver_test();
 }

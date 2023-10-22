@@ -9,7 +9,10 @@ uint32_t terminal_close(int32_t fd) {
     return 0;
 }
 
-// read from keyboard buffer into buf, return number of bytes read
+/* terminal_read
+ *   Inputs: fd, buf (buffer to read into), nbytes (number of bytes to read)
+ *   Return Value: Number of bytes written
+ *   Function: Reads specified number of bytes from line buffer when return is pressed, and then prints to screen */
 uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     int num_bytes_read;
     
@@ -32,6 +35,10 @@ uint32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     return num_bytes_read;
 }
 
+/* terminal_write
+ *   Inputs: fd, buf (buffer to write to screen), nbytes (number of bytes to write)
+ *   Return Value: Number of bytes written
+ *   Function: Write specified number of bytes from buffer to screen */
 uint32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     int i;
     int bytes_written;

@@ -167,16 +167,22 @@ int32_t puts(int8_t* s) {
     return index;
 }
 
+/* int32_t putc(int8_t* s);
+ *   Inputs: single character
+ *   Return Value: none
+ *    Function: print a single character to the console */
+int newline_flag = 0;
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
+        newline_flag = 1;
     } else if (c == '\b') { // backspace
         if (screen_x > 0) {
             screen_x--;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        } else if (screen_x==0) {
+        } else if (screen_x==0 && newline_flag==0) {
             screen_x = NUM_COLS-1;
             screen_y--;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
@@ -187,7 +193,7 @@ void putc(uint8_t c) {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
         if (screen_x == NUM_COLS) // if reach end of line, go to next line
-            { screen_x = 0; screen_y++; }
+            { screen_x = 0; screen_y++; newline_flag=0; }
         
         if (screen_y == NUM_ROWS) // if reach end of screen, scroll
             scroll();

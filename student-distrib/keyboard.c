@@ -15,6 +15,7 @@
 #define RIGHT_SHIFT_PRESSED 0x59
 #define CAPS_LOCK_PRESSED 0x58
 #define CAPS_LOCK_RELEASED 0xF0
+#define TAB_SIZE 4
 
 extern void keyboard_link(); 
 
@@ -26,14 +27,6 @@ volatile int ctrl_pressed;
 volatile int enter_pressed;
 volatile int alt_pressed;
 
-
-
-/*
-    * TO DO
-    * Add backspace function
-    * fix tab functionality
-    *  
-*/
 
 /* Keyboard map */
 char key_map[] = {
@@ -113,8 +106,6 @@ extern void keyboard_init() {
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
 
-    /* Enable cursor */
-    //enable_cursor(0,80);
 }
 
 /* keyboard_handler
@@ -125,9 +116,6 @@ extern void keyboard_handler() {
     char out;
     int i;
     
-    /* start critical section */
-    
-
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
@@ -135,33 +123,32 @@ extern void keyboard_handler() {
     if (check_modifiers(scan_key))
         { send_eoi(KEYBOARD_IRQ);  return; }
  
-    /* Check if invalid scan key */
+    /* Check if invalid scan key (scancodes greater than 0x57 are not processed) */
     if (scan_key > 57) // invalid scan_key
         { send_eoi(KEYBOARD_IRQ); return; }
             
-    /* Check for tab */
+    /* Check for tab (0x0F is tab scan code)*/
     if (scan_key == 0x0F) {
-        for (i=0; i<4; i++)
+        for (i=0; i<TAB_SIZE; i++)
             { putc(' '); buf_push(' '); }
         send_eoi(KEYBOARD_IRQ); return;
     } 
     
-    /* Backspace */
+    /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
         buf_pop();
         putc('\b');
         send_eoi(KEYBOARD_IRQ); return;
     }
     
-    /* CTRL functions */
+    /* CTRL functions (0x26/0x2E are l/c scan codes) */
     if (ctrl_pressed) {
-        if (scan_key == 0x26 || scan_key == 0xA6) { // CTRL + L
-            clear(); 
-            send_eoi(KEYBOARD_IRQ); return;    
-        }
-        
-        if (scan_key == 0x2E) // CTRL + C
+        if (scan_key == 0x26) // CTRL + L
+            { clear(); send_eoi(KEYBOARD_IRQ); return; } 
+        else if (scan_key == 0x2E) // CTRL + C
             { putc('^'); putc('c'); send_eoi(KEYBOARD_IRQ); return; }
+        else // do nothing
+            { send_eoi(KEYBOARD_IRQ); return;}
     }
 
     /* ALT Functions (print nothing) */
@@ -191,19 +178,17 @@ extern void keyboard_handler() {
             out = key_map[scan_key];            
     
     }
-// target remote 10.0.2.2:1234
+
     /* Push character to line buffer and print to screen */
-    buf_push(out);
-    putc(out);
+    buf_push(out); putc(out);
 
-
-    /* End critical section and send EOI */
+    /* End of Interrupt */
     send_eoi(KEYBOARD_IRQ);
 }
 
 /* check_modifiers
  *   Inputs: scan key
- *   Return Value: 1 if modifier key pressed, 0 otherwise
+ *   Return Value: 1 if modifier key pressed, 0 otherwise. Enter does not count as modifier but has flag which is updated
  *   Function: check if modifier key is pressed, and if so update the corresponding flag */
 int check_modifiers(uint8_t scan_key) {
     
@@ -246,9 +231,9 @@ int check_modifiers(uint8_t scan_key) {
  *   Function: check if the input scan key is a letter  */
 int is_letter(uint8_t scan_key) {
     if (    
-            (scan_key>=0x10 && scan_key<=0x19) ||       // q-p
-            (scan_key>=0x1E && scan_key <= 0x26) ||     // a-l
-            (scan_key>=0x2C && scan_key<=0x32)          // z-m
+            (scan_key>=0x10 && scan_key<=0x19) ||       // scan keys - q->p
+            (scan_key>=0x1E && scan_key <= 0x26) ||     // scan keys - a->l
+            (scan_key>=0x2C && scan_key<=0x32)          // scan keys - z->m
     ) {    
         return 1;
     } else {
@@ -256,7 +241,10 @@ int is_letter(uint8_t scan_key) {
     }
 }
 
-// clears the line buffer
+/* clear_line_buffer
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: clears teh line buffer, sets all characters to null  */
 extern void clear_line_buffer() {
     int i;
     /* Set all elements of line buffer to null*/
@@ -265,7 +253,10 @@ extern void clear_line_buffer() {
     }
 }
 
-// get keyboard buffer, copy into passed array
+/* read_line_buffer
+ *   Inputs: terminal buffer, num_bytes (number of bytes to read)
+ *   Return Value: return number of bytes read
+ *   Function: when enter is pressed, copy line buffer into terminal buffer (the specified number of bytes)  */
 extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
     
@@ -284,7 +275,6 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
         
         /* Increment number of bytes read */
         num_bytes_read++;
-        
     }
 
     /* Clear the line buffer */
@@ -295,11 +285,19 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     return num_bytes_read;
 }
 
+/* buf_push
+ *   Inputs: val (character to push onto buffer)
+ *   Return Value: none
+ *   Function: pushes a single character onto line buffer and appends newline to end (if there is enough space) */
 void buf_push(char val) {
     if (buf_ptr+1 < MAX_BUFFER_SIZE)
         { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\n'; }
 }
 
+/* buf_pop
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: removes single character from line buffer (if able to), keeps the newline at the end of buffer */
 void buf_pop() {
     if (buf_ptr-1 > -1)
         { line_buffer[buf_ptr]='\n'; buf_ptr--; }
@@ -325,8 +323,7 @@ extern void set_cursor(int x, int y)
 /*
 *   Function: enable_cursor
 *   Desc: Enabling the cursor also allows you to set the start and end scanlines, 
-*         the rows where the cursor starts and ends. The highest scanline is 0 and 
-*         the lowest scanline is the maximum scanline (usually 15).
+*         the rows where the cursor starts and ends. 
 *           (Will most likely be using this for different terminals in CP3)
 *   Input: cursor_start, cursor_end
 *   Output: None

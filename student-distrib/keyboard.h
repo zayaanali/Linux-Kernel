@@ -11,7 +11,7 @@
 #define TERM_WIDTH 80
 #define TERM_HEIGHT 25
 
-/* Buffer (extra character for null termination) */
+/* Line Buffer */
 char line_buffer[MAX_BUFFER_SIZE];
 int buf_ptr;
 
