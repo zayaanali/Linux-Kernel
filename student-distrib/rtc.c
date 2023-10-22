@@ -48,8 +48,10 @@ void rtc_init(){
  *   Return Value: rate
  *    Function: frequency =  32768 >> (rate-1);  */
 uint8_t freq_to_rate(uint16_t freq) {
+
+    //Check if frequency is in range
     if (freq == 0) {
-        return 0;
+        return 1;
     }
 
     uint8_t rate = 1;
@@ -60,7 +62,7 @@ uint8_t freq_to_rate(uint16_t freq) {
         base >>= 1;
 
         if (rate > 15) {
-            return 0;
+            return 1;
         }
     }
 
@@ -98,6 +100,15 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 }
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     uint16_t buf_freq = (uint16_t)* (uint16_t*)buf;
+    
+    //Check if frequency is a power of 2
+    if(((buf_freq & (buf_freq - 1)) != 0)){
+        return -1;
+    }
+    //Check if frequency is in range
+    if (buf_freq == 0 || buf_freq > 32768) {
+        return -1;
+    }
     rtc_set_freq(buf_freq);
     return 0;
 }
