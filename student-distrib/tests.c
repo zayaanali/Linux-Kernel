@@ -229,6 +229,44 @@ void rtc_test(){
 }
 
 
+/* rtc_neg_test
+ *   Inputs: none
+ *	 Outputs: The screen should print that the chosen frequencies are invalid 
+ *   Return Value: none
+ * 	 Coverage: RTC (rtc_open, rtc_write)
+ *   Function: Tests the ability to reject invalid frequencies*/
+void rtc_neg_test(){
+
+	uint8_t* fname = (uint8_t*)"Hi";
+	rtc_open(fname);
+
+	enable_irq(RTC_IRQ);
+
+	uint16_t freq_buf[1];
+
+	freq_buf[0] = 0;
+	int32_t i = rtc_write(0, freq_buf, 0);
+	if(i = -1){
+		printf("%i HZ is invalid", freq_buf[0]);
+	}
+
+	freq_buf[0] = 32769;
+	int32_t i = rtc_write(0, freq_buf, 0);
+	if(i = -1){
+		printf("%i HZ is invalid", freq_buf[0]);
+	}
+
+	freq_buf[0] = 11;
+	int32_t i = rtc_write(0, freq_buf, 0);
+	if(i = -1){
+		printf("%i HZ is invalid", freq_buf[0]);
+	}
+
+}
+
+
+
+
 /* syscall_idt_test
  *   Inputs: none
  *	 Outputs: a message should print to the screen inidcating a system call has occurred
@@ -552,6 +590,8 @@ void launch_tests(){
 	//exceptions_test();
 
 	//rtc_test(); 
+
+	//rtc_neg_test();
 
 	//syscall_idt_test(); 
 
