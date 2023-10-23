@@ -561,7 +561,7 @@ void launch_tests(){
 	//rtc_test();
 	//rtc_neg_test();
 
-	//term_driver_test();
+	term_driver_test();
 
 	// test reading small files
 	//read_file((uint8_t*)"frame0.txt");

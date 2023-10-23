@@ -12,6 +12,7 @@
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
+int scroll_y_count = 0;
 
 /* void clear(void);
  * Inputs: void
@@ -23,9 +24,11 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    scroll_y_count=0;
     screen_x=0;
     screen_y=0;
     set_cursor(screen_x, screen_y);
+
 }
 
 /* Standard printf().
@@ -172,6 +175,7 @@ int32_t puts(int8_t* s) {
  *   Return Value: none
  *    Function: print a single character to the console */
 int newline_flag = 0;
+
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;
@@ -182,18 +186,19 @@ void putc(uint8_t c) {
             screen_x--;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        } else if (screen_x==0 && newline_flag==0) {
+        } else if (screen_x==0 && scroll_y_count>0) {
+            scroll_y_count--;
             screen_x = NUM_COLS-1;
             screen_y--;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         }
-    } else {
+    } else { // Write a character
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
         if (screen_x == NUM_COLS) // if reach end of line, go to next line
-            { screen_x = 0; screen_y++; newline_flag=0; }
+            { screen_x = 0; screen_y++; scroll_y_count++; }
         
         if (screen_y == NUM_ROWS) // if reach end of screen, scroll
             scroll();
