@@ -246,20 +246,20 @@ void rtc_neg_test(){
 
 	freq_buf[0] = 0;
 	int32_t i = rtc_write(0, freq_buf, 0);
-	if(i = -1){
-		printf("%i HZ is invalid", freq_buf[0]);
+	if(i == -1){
+		printf("%d HZ is invalid \n", freq_buf[0]);
 	}
 
 	freq_buf[0] = 32769;
-	int32_t i = rtc_write(0, freq_buf, 0);
-	if(i = -1){
-		printf("%i HZ is invalid", freq_buf[0]);
+	i = rtc_write(0, freq_buf, 0);
+	if(i == -1){
+		printf("%d HZ is invalid \n", freq_buf[0]);
 	}
 
 	freq_buf[0] = 11;
-	int32_t i = rtc_write(0, freq_buf, 0);
-	if(i = -1){
-		printf("%i HZ is invalid", freq_buf[0]);
+	i = rtc_write(0, freq_buf, 0);
+	if(i == -1){
+		printf("%d HZ is invalid \n", freq_buf[0]);
 	}
 
 }
@@ -559,7 +559,9 @@ void launch_tests(){
 	//test_dir_read(); 
 
 	//rtc_test();
+	//rtc_neg_test();
 
+	//term_driver_test();
 
 	// test reading small files
 	//read_file((uint8_t*)"frame0.txt");
@@ -591,8 +593,6 @@ void launch_tests(){
 
 	//rtc_test(); 
 
-	//rtc_neg_test();
-
 	//syscall_idt_test(); 
 
 	//test_paging_access(); 
@@ -601,6 +601,5 @@ void launch_tests(){
 
 	//test_paging_access(); 
 
-    term_driver_test();
 
 }
