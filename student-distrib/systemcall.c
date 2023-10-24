@@ -4,6 +4,10 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "system_s.h"
+#include "filesystem.h"
+#include "rtc.h"
+#include "file.h"
+#include "filedir.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -36,8 +40,85 @@ void init_syscall_idt(){
  *   Inputs: none
  *   Return Value: none
  *   Function: Handler for any systemcall */
-void systemcall_handler(){
+int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg3){
     printf("A system call was called. \n");
+
+    switch(syscall){
+        case SYS_HALT:
+            break;
+        case SYS_EXECUTE:
+            break; 
+        case SYS_READ:
+            read(arg1, (void*)arg2, arg3);
+            break;
+        case SYS_WRITE:
+            write(arg1, (const void*)arg2, arg3);
+            break;
+        case SYS_OPEN:
+            open((const uint8_t*)arg1);
+            break;
+        case SYS_CLOSE:
+            close(arg1);
+            break;
+        case SYS_GETARGS:
+            getargs((uint8_t*)arg1, arg2);
+            break; 
+        case SYS_VIDMAP:    
+            vidmap((uint8_t**)arg1);
+            break; 
+        case SYS_SET_HANDLER:
+            break;
+        case SYS_SIGRETURN:
+            break;
+        default:
+            return -1; //not a valid syscall
+    }
 }
 
     
+int32_t halt(uint8_t status){
+
+}
+
+int32_t execute(const uint8_t* command){
+
+}
+
+int32_t read(int32_t fd, void* buf, int32_t nbytes){
+
+}
+
+int32_t write(int32_t fd, const void* buf, int32_t nbytes){
+
+}
+
+int32_t open(const uint8_t* filename){
+    dentry_t dentry[1];
+
+    // create array of function pointers with int32_t type (since all these functions return int32_t). all functions have one arg of type const uint8_t*
+    int32_t (*func_open_table[])(const uint8_t*) = {rtc_open, dir_open, file_open};
+
+    // call correct open function depending on file type
+    // get dentry to know file type
+    int32_t i = read_dentry_by_name(filename, dentry);
+
+    if(i==-1){
+        return i;   // invalid filename
+    }
+
+    // call correct open function given filetype
+    return func_open_table[dentry->file_type](filename);
+    
+}
+
+int32_t close(int32_t fd){
+
+}
+
+int32_t getargs(uint8_t* buf, int32_t nbytes){
+
+}
+
+int32_t vidmap(uint8_t** screen_start){
+
+}

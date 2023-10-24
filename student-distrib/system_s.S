@@ -7,10 +7,16 @@
 systemcall_link:
             pushal 
             pushfl 
+            pushl %EDX
+            pushl %ECX
+            pushl %EBX
+            pushl %EAX
             call systemcall_handler 
+            ADDL $16, %ESP
             popfl       
             popal  
 
+            # rn, EAX being overwritten by popal. figure out how to save it
             iret  
 
 
