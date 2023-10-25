@@ -8,6 +8,7 @@
 #include "rtc.h"
 #include "file.h"
 #include "filedir.h"
+#include "pcb.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -33,6 +34,10 @@ void init_syscall_idt(){
 
     // set offset fields so that this gate points to assembly systemcall handler for the handler function 
     SET_IDT_ENTRY(idt[128], systemcall_link);
+
+    file_array[2].file_op_tbl_ptr = file_funcs; 
+    file_array[2].inode = 38; 
+    
 }
 
 
@@ -86,10 +91,13 @@ int32_t execute(const uint8_t* command){
 
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
 
+    return file_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
+
 }
 
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 
+    return file_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
 }
 
 int32_t open(const uint8_t* filename){
@@ -113,6 +121,12 @@ int32_t open(const uint8_t* filename){
 
 int32_t close(int32_t fd){
 
+    // check that fd is valid
+
+    // mark file array entry as not in use
+
+    // perhaps delete this line and just return 0
+    return file_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 
 int32_t getargs(uint8_t* buf, int32_t nbytes){
