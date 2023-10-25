@@ -174,7 +174,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the keyboard */
     keyboard_init();
      
-
+    pcb_init();
 
 
     /* Enable interrupts */

@@ -22,10 +22,10 @@ typedef struct file_op_func_t{
 
 }file_op_func_t;
 
-extern file_op_func_t* rtc_funcs; 
-extern file_op_func_t* file_funcs; 
-extern file_op_func_t* dir_funcs; 
-extern file_op_func_t* term_funcs; 
+extern file_op_func_t rtc_funcs; 
+extern file_op_func_t file_funcs; 
+extern file_op_func_t dir_funcs; 
+extern file_op_func_t term_funcs; 
 
 
 typedef struct file_arr_entry_t{
@@ -45,5 +45,9 @@ typedef struct file_arr_entry_t{
 
 
 extern file_arr_entry_t file_array[8];
+extern uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode);
+extern uint32_t remove_from_file_array(int32_t fd);
+
+extern void pcb_init();
 
 #endif

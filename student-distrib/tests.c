@@ -9,6 +9,8 @@
 #include "file.h"
 #include "filedir.h"
 #include "terminal.h"
+#include "systemcall.h"
+#include "pcb.h"
 
 #define PASS 1
 #define FAIL 0
@@ -136,96 +138,100 @@ void exceptions_test(){
  *   Function: Tests the RTC by enabling its IRQ line and changing the frequency to all possible frequencies*/
 void rtc_test(){
 
-	uint8_t* fname = (uint8_t*)"Hi";
-	rtc_open(fname);
+	//uint8_t* fname = (uint8_t*)"Hi";
+	int32_t fd;
+	fd = open("rtc");
+
+
 
 	enable_irq(RTC_IRQ);
 
 	uint16_t freq_buf[1];
 
 	freq_buf[0] = 1024;
-	rtc_write(0, freq_buf, 0);
+	write(fd, (void*)freq_buf, 0);
 	int i;
 
 	for(i = 0; i < 2048; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 1024HZ\n");
 		}
 	}
 
 	freq_buf[0] = 512;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 1024; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 512HZ\n");
 		}
 	}
 
 	freq_buf[0] = 256;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 512; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 256HZ\n");
 		}
 	}
 
 	freq_buf[0] = 128;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 256; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 128HZ\n");
 		}
 	}
 
 	freq_buf[0] = 64;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 128; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 64HZ\n");
 		}
 	}
 
 	freq_buf[0] = 32;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 64; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 32HZ\n");
 		}
 	}
 
 	freq_buf[0] = 16;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 32; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 16HZ\n");
 		}
 	}
 
 	freq_buf[0] = 8;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 16; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf(" 8HZ\n");
 		}
 	}
 
 	freq_buf[0] = 4;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 8; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf("4HZ\n");
 		}
 	}
 
 
 	freq_buf[0] = 2;
-	rtc_write(0, freq_buf, 0);
+	write(fd, freq_buf, 0);
 	for(i = 0; i < 4; i++){
-		if(rtc_read(0,0,0)){
+		if(read(fd,0,0)){
 			printf("2HZ\n");
 		}
 	}
 
+	close(fd);
 }
 
 
@@ -449,12 +455,14 @@ static void read_file(const uint8_t* fname){
 
 	uint8_t buf[81]; 
 	int k; 
+	int fd; 
 
 
-	file_open(fname);
+	fd = open(fname);
+	//file_open(fname);
 
 	uint32_t cnt; 
-	while (0 != (cnt = file_read(fname, buf, 80))) {
+	while (0 != (cnt = read(fd, buf, 80))) {
         if (-1 == cnt) {
 			printf(" file read failed\n");
 	        break; 
@@ -472,7 +480,7 @@ static void read_file(const uint8_t* fname){
 
 	printf(" \nfile: %s \n", fname);
 
-
+	close(fd);
 }
 
 
@@ -485,16 +493,19 @@ static void read_file(const uint8_t* fname){
 void test_dir_read(){
 	uint8_t buf[32]; 
 	uint8_t* fname=(uint8_t*)".";
-
+	int fd; 
 
 	clear(); 
 
-	dir_open(fname);
+
+
+	//dir_open(fname);
+	fd = open(fname);
 
 
 	// do an ls. that is, print all file names in directory 
 	uint32_t cnt; 
-	while (0 != (cnt = dir_read(fname, buf, 32))) {
+	while (0 != (cnt = read(fd, buf, 32))) {
         if (-1 == cnt) {
 			printf(" directory entry read failed\n");
 	        break; 
@@ -503,6 +514,8 @@ void test_dir_read(){
 		printf("%s \n", buf);
     
 	}
+
+	close(fd);
 }
 
 
@@ -517,31 +530,32 @@ int term_driver_test(){
     int nbytes;
     char buf[128];
     
+	terminal_open("terminal");
     while (1) {
         /* Test 1 */
         printf("TEST 1: Max number of bytes = 10 \n");
-        terminal_write(0, "Enter a string: \n",  20);
+        write(1, "Enter a string: \n",  20);
         
-		nbytes = terminal_read(0, buf, 10);
+		nbytes = read(0, buf, 10);
         printf("Number of bytes written: %d\n", nbytes);
 
         /* Test 2 */
         printf("TEST 2: Max number of bytes = 128 \n");
-        terminal_write(0, "Enter a string: \n",  20);
+        write(1, "Enter a string: \n",  20);
 
-        nbytes = terminal_read(0, buf, 128);
+        nbytes = read(0, buf, 128);
         printf("Number of bytes written: %d\n", nbytes);
 
         /* Test 3 */
         printf("TEST 3: Max number of bytes = 0 \n");
-        terminal_write(0, "Enter a string: \n",  20);
+        write(1, "Enter a string: \n",  20);
 
-        nbytes = terminal_read(0, buf, 0);
+        nbytes = read(0, buf, 0);
         printf("Number of bytes written: %d\n", nbytes);
 
     }
     
-    
+
 }
 
 
@@ -561,7 +575,7 @@ void launch_tests(){
 	//rtc_test();
 	//rtc_neg_test();
 
-	term_driver_test();
+	//term_driver_test();
 
 	// test reading small files
 	//read_file((uint8_t*)"frame0.txt");

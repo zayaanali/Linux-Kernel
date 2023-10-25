@@ -35,7 +35,7 @@ void init_syscall_idt(){
     // set offset fields so that this gate points to assembly systemcall handler for the handler function 
     SET_IDT_ENTRY(idt[128], systemcall_link);
 
-    file_array[2].file_op_tbl_ptr = file_funcs; 
+    file_array[2].file_op_tbl_ptr = &file_funcs; 
     file_array[2].inode = 38; 
     
 }
@@ -99,12 +99,12 @@ int32_t halt(uint8_t status) {
  */
 uint8_t args[128];
 
-int32_t execute(uint8_t* command) {
+int32_t execute(const uint8_t* command) {
     uint8_t filename[256];
     int space_found=0;
-
+    int i; 
     /* Parse the command */
-    for (int i = 0; i < strlen(command); i++) {
+    for (i = 0; i < strlen(command); i++) {
         if (command[i] == ' ') // check if space is found
             space_found = 1;
         else if (space_found == 0) // if no space found, add to filename
