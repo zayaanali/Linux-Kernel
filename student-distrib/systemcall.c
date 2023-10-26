@@ -9,6 +9,7 @@
 #include "file.h"
 #include "filedir.h"
 #include "pcb.h"
+#include "paging.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -113,7 +114,12 @@ int32_t execute(const uint8_t* command) {
             args[i] = command[i];
     }
 
-    /* Create virtual address space for new proces */
+    /* Allocate a single page for each task’s user-level memory */
+    add_pid_page(0);
+    add_pid_page(1);
+
+    /* Load Memory with Program Image */
+
 
     
     

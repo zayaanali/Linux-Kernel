@@ -6,7 +6,8 @@
 #include "file.h"
 #include "filedir.h"
 
-
+#define MAX_FD_ENTRIES 8
+#define NUM_REGS 10
 
 //typedef int32_t (*open_func_ptr)(const uint8_t* filename);
 typedef int32_t (*close_func_ptr)(int32_t fd);
@@ -43,8 +44,22 @@ typedef struct file_arr_entry_t{
     
 }file_arr_entry_t;
 
+typedef struct pcb_entry{
+    /* Current Task Info */
+    uint32_t pid;
+    file_arr_entry_t fd_array[MAX_FD_ENTRIES];
+    uint32_t state;
+    uint32_t priority;
+    uint32_t registers[NUM_REGS];
 
-extern file_arr_entry_t file_array[8];
+    /* Parent Data */
+    uint32_t parent_pid;
+    uint32_t registers[NUM_REGS];
+
+}pcb_entry_t;
+
+
+extern file_arr_entry_t file_array[MAX_FD_ENTRIES];
 extern uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode);
 extern uint32_t remove_from_file_array(int32_t fd);
 

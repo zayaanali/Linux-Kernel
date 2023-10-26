@@ -84,3 +84,31 @@ void page_init() {
     loadPageDirectory(page_dir);
     enablePaging();
 }
+
+void add_pid_page(uint32_t pid){
+    uint32_t physical_address;
+
+    /* Set the physical address based on PID */
+    if (pid == 0) {
+        physical_address = 0x800000; // 8MB
+    } else {
+        physical_address = 0xC00000; // 12MB
+    }
+
+    /* Set PID Memory Either 8-12MB (single 4MB page) or 12-16MB(single 4MB page) */
+    page_dir[32+pid].page_dir_entry_4mb_t.present = 1;
+    page_dir[32+pid].page_dir_entry_4mb_t.read_write = 1;
+    page_dir[32+pid].page_dir_entry_4mb_t.user_supervisor = 1;
+    page_dir[32+pid].page_dir_entry_4mb_t.page_write_through = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.page_cache_disable = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.accessed = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.dirty = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.page_size = 1; // 4MB page
+    page_dir[32+pid].page_dir_entry_4mb_t.global = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.avail = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.PAT = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.reserved = 0;
+    page_dir[32+pid].page_dir_entry_4mb_t.page_base_address = (physical_address >> 22); // align the page_table address to 4MB boundary
+
+
+}

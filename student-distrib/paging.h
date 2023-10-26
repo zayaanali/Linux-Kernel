@@ -72,6 +72,7 @@ extern page_table_entry_t page_table[PAGE_ENTRIES] __attribute__((aligned(4096))
 
 
 extern void page_init();
+extern void add_pid_page(uint32_t pid);
 
 #endif
 
