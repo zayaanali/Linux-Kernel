@@ -84,7 +84,14 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
     *   Inputs: status - 8-bit value to be returned to parent process
     *   Return Value: -1 on failure, 0 on success
  */
+
+int cur_pid = 0;
+
+
 int32_t halt(uint8_t status) {
+    /* Decrement the current process ID */
+    if (cur_pid > 0)
+        cur_pid--;
 
 }
 
@@ -97,11 +104,14 @@ int32_t halt(uint8_t status) {
 
  */
 uint8_t args[128];
+uint8_t ELF[] = {'\\', '1', '7','7', 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
     uint8_t filename[32];
     int space_found=0;
     int i; 
+    uint8_t read_buffer[36000];
+    
     /* Parse the command */
     for (i = 0; i < strlen(command); i++) {
         if (command[i] == ' ') // check if space is found
@@ -112,13 +122,40 @@ int32_t execute(const uint8_t* command) {
             args[i] = command[i];
     }
 
-     /* Allocate a single page for each task’s user-level memory. max of 6 processes */
-    for(i=0; i<6; i++){
-        add_pid_page(i);
+
+    /* Read the file into buffer */
+    if (file_open(filename) == -1)
+        { printf("File doesn't exist \n"); return -1; }
+    
+    int bytes_read=1;
+    while (bytes_read!=0) {
+        bytes_read = file_read(filename, read_buffer, 4);
     }
 
-    /* Load Memory with Program Image */
+    /* Check that file is executable*/
+    for (i=0; i<ELF_SIZE; i++) {
+        if (ELF[i]!= read_buffer[i])
+            { printf("Not an executable \n"); return -1; }
+    }
 
+    /* Check not at max processes */
+    if (cur_pid > 5)
+        { printf("Six processes already open"); return -1; }
+    
+    
+    /* Add PID page */
+    add_pid_page(cur_pid);
+
+
+    /* Load Memory with Program Image */
+    int dest = 0x800000 + (cur_pid*0x400000);
+    memcpy((void*) dest, read_buffer, 36000);
+
+    /* Create PCB entry */
+    pcb_entry_t cur_pcb; 
+    cur_pcb.pid=cur_pid;
+    cur_pcb.parent_pid = 0;
+    cur_pcb.fd_array = 
 
     
     
