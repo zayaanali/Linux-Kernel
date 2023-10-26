@@ -10,6 +10,7 @@
 #include "filedir.h"
 #include "pcb.h"
 #include "paging.h"
+#include "page.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -85,7 +86,7 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
     *   Return Value: -1 on failure, 0 on success
  */
 
-int cur_pid = 0;
+int cur_pid = -1; // -1 before any processes are open
 
 
 int32_t halt(uint8_t status) {
@@ -109,8 +110,11 @@ uint8_t ELF[] = {'\\', '1', '7','7', 'E', 'L', 'F'};
 int32_t execute(const uint8_t* command) {
     uint8_t filename[32];
     int space_found=0;
-    int i; 
-    uint8_t read_buffer[36000];
+    int i, read_bytes; 
+    uint8_t read_buffer[8];
+
+    /* Increment the cur pid */
+    cur_pid++;
     
     /* Parse the command */
     for (i = 0; i < strlen(command); i++) {
@@ -123,39 +127,57 @@ int32_t execute(const uint8_t* command) {
     }
 
 
-    /* Read the file into buffer */
+    /* Open file */
     if (file_open(filename) == -1)
         { printf("File doesn't exist \n"); return -1; }
     
-    int bytes_read=1;
-    while (bytes_read!=0) {
-        bytes_read = file_read(filename, read_buffer, 4);
-    }
-
-    /* Check that file is executable*/
+    /* Read first 2 bytes (check for ELF constant) */
+    if (file_read(filename, read_buffer, 2) != 2)
+        { printf("File read \n"); return -1; }
+    
+    /* Check that file is executable */
     for (i=0; i<ELF_SIZE; i++) {
-        if (ELF[i]!= read_buffer[i])
+        if (ELF[i] != read_buffer[i])
             { printf("Not an executable \n"); return -1; }
     }
 
     /* Check not at max processes */
     if (cur_pid > 5)
-        { printf("Six processes already open"); return -1; }
-    
+        { printf("Six processes already open \n"); return -1; }
     
     /* Add PID page */
     add_pid_page(cur_pid);
 
+    /* Flush TLB */
+    flush_tlb();
 
     /* Load Memory with Program Image */
     int dest = 0x800000 + (cur_pid*0x400000);
-    memcpy((void*) dest, read_buffer, 36000);
+    read_data(filename, 0, dest, 36000); // 36000 is the max size of file (in bytes)
 
+
+    
     /* Create PCB entry */
     pcb_entry_t cur_pcb; 
     cur_pcb.pid=cur_pid;
-    cur_pcb.parent_pid = 0;
-    cur_pcb.fd_array = 
+
+    /* Need to figure out how to fill these out */
+    cur_pcb.parent_pid = (cur_pid > 0) ? cur_pid-1 : cur_pid; // what is parent pid
+    cur_pcb.fd_array = []; // need to set up fd array
+    cur_pcb.state = 0; 
+    cur_pcb.priority = 0; 
+    cur_pcb.registers = [];
+    cur_pcb.parent_registers = [];
+
+    /* Copy PCB to memory */
+    pcb_entry_t* pcb_ptr = (pcb_entry_t*) (0x800000 - (cur_pid+1)*0x2000);
+    memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
+
+    /* Context Switch */
+    asm volatile (
+        "movl %%esp, %%eax;"
+    )
+
 
     
     
@@ -211,3 +233,4 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 int32_t vidmap(uint8_t** screen_start){
 
 }
+

@@ -1,6 +1,6 @@
 #define ASM 1
 
-.globl loadPageDirectory, enablePaging
+.globl loadPageDirectory, enablePaging, flush_tlb
 .text
 
 /*  Load page directory to cr3 */
@@ -37,5 +37,11 @@ popal
 leave
 ret
 
+
+
+flush_tlb:
+movl %cr3, %eax
+movl %eax, %cr3
+ret
 
 

@@ -8,6 +8,7 @@
 
 #define MAX_FD_ENTRIES 8
 #define NUM_REGS 10
+#define MAX_PROCESSES 6
 
 //typedef int32_t (*open_func_ptr)(const uint8_t* filename);
 typedef int32_t (*close_func_ptr)(int32_t fd);
@@ -57,6 +58,8 @@ typedef struct pcb_entry{
     uint32_t parent_registers[NUM_REGS];
 
 }pcb_entry_t;
+
+extern pcb_entry_t* pcb_ptr[MAX_PROCESSES] = { 0x7992000, 0x7991200, 0x7990400, 0x7989600, 0x7988800, 0x7988000 };
 
 
 extern file_arr_entry_t file_array[MAX_FD_ENTRIES];

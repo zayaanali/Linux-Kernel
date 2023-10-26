@@ -11,6 +11,7 @@
 
 extern void loadPageDirectory(page_dir_entry_t* p_d);
 extern void enablePaging();
+extern void flush_tlb();
 
 #endif
 
