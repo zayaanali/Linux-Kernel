@@ -54,7 +54,7 @@ typedef struct pcb_entry{
 
     /* Parent Data */
     uint32_t parent_pid;
-    uint32_t registers[NUM_REGS];
+    uint32_t parent_registers[NUM_REGS];
 
 }pcb_entry_t;
 
