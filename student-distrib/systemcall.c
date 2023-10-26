@@ -36,8 +36,6 @@ void init_syscall_idt(){
     // set offset fields so that this gate points to assembly systemcall handler for the handler function 
     SET_IDT_ENTRY(idt[128], systemcall_link);
 
-    file_array[2].file_op_tbl_ptr = &file_funcs; 
-    file_array[2].inode = 38; 
     
 }
 
@@ -101,7 +99,7 @@ int32_t halt(uint8_t status) {
 uint8_t args[128];
 
 int32_t execute(const uint8_t* command) {
-    uint8_t filename[256];
+    uint8_t filename[32];
     int space_found=0;
     int i; 
     /* Parse the command */
@@ -114,9 +112,10 @@ int32_t execute(const uint8_t* command) {
             args[i] = command[i];
     }
 
-    /* Allocate a single page for each task’s user-level memory */
-    add_pid_page(0);
-    add_pid_page(1);
+     /* Allocate a single page for each task’s user-level memory. max of 6 processes */
+    for(i=0; i<6; i++){
+        add_pid_page(i);
+    }
 
     /* Load Memory with Program Image */
 

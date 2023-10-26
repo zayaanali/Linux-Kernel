@@ -89,11 +89,7 @@ void add_pid_page(uint32_t pid){
     uint32_t physical_address;
 
     /* Set the physical address based on PID */
-    if (pid == 0) {
-        physical_address = 0x800000; // 8MB
-    } else {
-        physical_address = 0xC00000; // 12MB
-    }
+    physical_address = 0x800000 + (pid*0x400000);   // physical address = 8MB+(pid*4MB)
 
     /* Set PID Memory Either 8-12MB (single 4MB page) or 12-16MB(single 4MB page) */
     page_dir[32+pid].page_dir_entry_4mb_t.present = 1;
