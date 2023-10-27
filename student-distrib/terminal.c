@@ -1,25 +1,26 @@
 #include "terminal.h"
 #include "pcb.h"
+#include "systemcall.h"
 
 int32_t terminal_open(const uint8_t* filename) {
 
     // create stdin entry in file array
-    if(file_array[0].in_use==1){
+    if(pcb_ptr[cur_pid]->fd_array[0].in_use==1){
         printf("stdin already exists \n");
         return -1;
     }
 
-    file_array[0].file_op_tbl_ptr = &term_funcs; 
-    file_array[0].in_use=1; 
+    pcb_ptr[cur_pid]->fd_array[0].file_op_tbl_ptr = &term_funcs; 
+    pcb_ptr[cur_pid]->fd_array[0].in_use=1; 
 
     // create stdout entry in file array
-    if(file_array[1].in_use==1){
+    if(pcb_ptr[cur_pid]->fd_array[1].in_use==1){
         printf("stdout already exists");
         return -1; 
     }
 
-    file_array[1].file_op_tbl_ptr =&term_funcs;
-    file_array[1].in_use=1; 
+    pcb_ptr[cur_pid]->fd_array[1].file_op_tbl_ptr =&term_funcs;
+    pcb_ptr[cur_pid]->fd_array[1].in_use=1; 
 
     return 0;
 }

@@ -11,6 +11,7 @@
 #include "pcb.h"
 #include "paging.h"
 #include "page.h"
+#include "terminal.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -162,21 +163,29 @@ int32_t execute(const uint8_t* command) {
     cur_pcb.pid=cur_pid;
 
     /* Need to figure out how to fill these out */
-    cur_pcb.parent_pid = (cur_pid > 0) ? cur_pid-1 : cur_pid; // what is parent pid
-    cur_pcb.fd_array = []; // need to set up fd array
+    cur_pcb.parent_pid = (cur_pid > 0) ? cur_pid-1 : cur_pid; // what is parent pid     
     cur_pcb.state = 0; 
     cur_pcb.priority = 0; 
-    cur_pcb.registers = [];
-    cur_pcb.parent_registers = [];
+    //cur_pcb.registers = [];
+    //cur_pcb.parent_registers = [];
+
+    // set up stdin and stdout
+    terminal_open("");
+
+    //initialize other file array entries to not in use
+    for(i=2; i<8; i++){
+        cur_pcb.fd_array[i].in_use = 0; 
+    }
+
 
     /* Copy PCB to memory */
     pcb_entry_t* pcb_ptr = (pcb_entry_t*) (0x800000 - (cur_pid+1)*0x2000);
     memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
 
     /* Context Switch */
-    asm volatile (
-        "movl %%esp, %%eax;"
-    )
+    // asm volatile (
+    //     "movl %%esp, %%eax;"
+    // );
 
 
     
@@ -188,13 +197,13 @@ int32_t execute(const uint8_t* command) {
 
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
 
-    return file_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
+    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
 
 }
 
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 
-    return file_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
+    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
 }
 
 int32_t open(const uint8_t* filename){
@@ -223,7 +232,7 @@ int32_t close(int32_t fd){
     // mark file array entry as not in use
 
     // perhaps delete this line and just return 0
-    return file_array[fd].file_op_tbl_ptr->close_func(fd);
+    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 
 int32_t getargs(uint8_t* buf, int32_t nbytes){

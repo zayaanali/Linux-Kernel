@@ -1,6 +1,7 @@
 #include "file.h"
 #include "filesystem.h"
 #include "pcb.h"
+#include "systemcall.h"
 
 //uint32_t file_pos[64];      // store current file position for each file by inode#
 
@@ -66,10 +67,10 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
     //     return -1;
     // }        
 
-    bytes_read = read_data(file_array[fd].inode, file_array[fd].file_pos, buf, nbytes);       // read data into buf, return number of bytes read
+    bytes_read = read_data(pcb_ptr[cur_pid]->fd_array[fd].inode, pcb_ptr[cur_pid]->fd_array[fd].file_pos, buf, nbytes);       // read data into buf, return number of bytes read
 
     // update file position
-    file_array[fd].file_pos +=bytes_read; 
+    pcb_ptr[cur_pid]->fd_array[fd].file_pos +=bytes_read; 
 
     return bytes_read; 
 }

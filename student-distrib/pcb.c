@@ -3,6 +3,7 @@
 #include "file.h"
 #include "filedir.h"
 #include "terminal.h"
+#include "systemcall.h"
 
 #define FILE_ARRAY_SIZE 8
 
@@ -11,7 +12,7 @@ file_op_func_t file_funcs;
 file_op_func_t dir_funcs; 
 file_op_func_t term_funcs; 
 
-file_arr_entry_t file_array[8];
+pcb_entry_t* pcb_ptr[MAX_PROCESSES]={ (pcb_entry_t*)0x7992000, (pcb_entry_t*)0x7991200, (pcb_entry_t*)0x7990400, (pcb_entry_t*)0x7989600, (pcb_entry_t*)0x7988800, (pcb_entry_t*)0x7988000 };
 
 void pcb_init(){
     //rtc_funcs->open_func = rtc_open;
@@ -44,13 +45,13 @@ uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
 
     // find available file array entry
     for(k=2; k<FILE_ARRAY_SIZE; k++){
-        if(file_array[k].in_use !=1){
+        if(pcb_ptr[cur_pid]->fd_array[k].in_use !=1){
             // create file array entry here
-            file_array[k].in_use = 1;
-            file_array[k].file_pos = 0; 
-            file_array[k].file_op_tbl_ptr = file_funcs_ptr;
+            pcb_ptr[cur_pid]->fd_array[k].in_use = 1;
+            pcb_ptr[cur_pid]->fd_array[k].file_pos = 0; 
+            pcb_ptr[cur_pid]->fd_array[k].file_op_tbl_ptr = file_funcs_ptr;
             if(inode>=0 && inode<=63){
-                file_array[k].inode = inode; 
+                pcb_ptr[cur_pid]->fd_array[k].inode = inode; 
             }
 
             return k;   // return fd
@@ -70,11 +71,11 @@ uint32_t remove_from_file_array(int32_t fd){
         return -1; 
     }
 
-    if(file_array[fd].in_use!=1){
+    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
         printf("ERR cannot remove file array entry at fd: %d .File array entry already removed \n", fd);
         return -1; 
     }
 
-    file_array[fd].in_use = 0;
+   pcb_ptr[cur_pid]->fd_array[fd].in_use = 0;
     return 0;
 }

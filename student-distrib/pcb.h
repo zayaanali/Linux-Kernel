@@ -59,10 +59,8 @@ typedef struct pcb_entry{
 
 }pcb_entry_t;
 
-extern pcb_entry_t* pcb_ptr[MAX_PROCESSES] = { 0x7992000, 0x7991200, 0x7990400, 0x7989600, 0x7988800, 0x7988000 };
+extern pcb_entry_t* pcb_ptr[MAX_PROCESSES]; 
 
-
-extern file_arr_entry_t file_array[MAX_FD_ENTRIES];
 extern uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode);
 extern uint32_t remove_from_file_array(int32_t fd);
 
