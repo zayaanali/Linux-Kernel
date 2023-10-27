@@ -12,6 +12,7 @@
 #include "paging.h"
 #include "page.h"
 #include "terminal.h"
+#include "systemcall_asm.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -87,7 +88,7 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
     *   Return Value: -1 on failure, 0 on success
  */
 
-int cur_pid = -1; // -1 before any processes are open
+int cur_pid = -1; // -1 before any processes are open 
 
 
 int32_t halt(uint8_t status) {
@@ -106,7 +107,7 @@ int32_t halt(uint8_t status) {
 
  */
 uint8_t args[128];
-uint8_t ELF[] = {'\\', '1', '7','7', 'E', 'L', 'F'};
+uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
     uint8_t filename[32];
@@ -164,10 +165,9 @@ int32_t execute(const uint8_t* command) {
 
     /* Need to figure out how to fill these out */
     cur_pcb.parent_pid = (cur_pid > 0) ? cur_pid-1 : cur_pid; // what is parent pid     
-    cur_pcb.state = 0; 
+    cur_pcb.state = 1;      //active
     cur_pcb.priority = 0; 
     //cur_pcb.registers = [];
-    //cur_pcb.parent_registers = [];
 
     // set up stdin and stdout
     terminal_open("");
@@ -182,15 +182,18 @@ int32_t execute(const uint8_t* command) {
     pcb_entry_t* pcb_ptr = (pcb_entry_t*) (0x800000 - (cur_pid+1)*0x2000);
     memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
 
+    /* do after pcb put into kernel since this asm function saves to kernel space*/
+    save_parent_regs_to_pcb();
+
     /* Context Switch */
     // asm volatile (
     //     "movl %%esp, %%eax;"
     // );
 
 
-    
-    
 
+    
+    
 
 }
 

@@ -15,12 +15,13 @@
 #define SYS_SET_HANDLER  9
 #define SYS_SIGRETURN  10
 
-#define ELF_SIZE 7
+#define ELF_SIZE 4
 
 
 extern int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg_3);
 extern void init_syscall_idt();
 extern int cur_pid; 
+extern int parent_pid; 
 
 int32_t halt(uint8_t status);
 int32_t execute(const uint8_t* command);

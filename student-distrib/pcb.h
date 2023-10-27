@@ -46,16 +46,28 @@ typedef struct file_arr_entry_t{
 }file_arr_entry_t;
 
 typedef struct pcb_entry{
+    /* parent registers*/
+    uint32_t p_eip;
+    uint32_t p_esp;
+    uint32_t p_ebp;
+
+    /* current regs*/
+    uint32_t eip;
+    uint32_t esp;
+    uint32_t ebp;
+
     /* Current Task Info */
     uint32_t pid;
     file_arr_entry_t fd_array[MAX_FD_ENTRIES];
     uint32_t state;
     uint32_t priority;
-    uint32_t registers[NUM_REGS];
+
+
 
     /* Parent Data */
     uint32_t parent_pid;
-    uint32_t parent_registers[NUM_REGS];
+
+
 
 }pcb_entry_t;
 
