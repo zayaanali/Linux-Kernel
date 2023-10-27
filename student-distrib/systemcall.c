@@ -1,8 +1,8 @@
 /* This code creates the IDT entry for systemcalls and defines the c handler for a systemcall. */
 
 #include "systemcall.h"
-#include "x86_desc.h"
 #include "lib.h"
+
 #include "system_s.h"
 #include "filesystem.h"
 #include "rtc.h"
@@ -12,7 +12,6 @@
 #include "paging.h"
 #include "page.h"
 #include "terminal.h"
-#include "systemcall_asm.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -112,14 +111,15 @@ uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 int32_t execute(const uint8_t* command) {
     uint8_t filename[32];
     int space_found=0;
-    int i, read_bytes; 
-    uint8_t read_buffer[8];
+    int i;
+    uint8_t read_buffer[4];
+    uint32_t new_eip; 
 
     /* Increment the cur pid */
     cur_pid++;
-    
+
     /* Parse the command */
-    for (i = 0; i < strlen(command); i++) {
+    for (i = 0; i < strlen((const int8_t*)command); i++) {
         if (command[i] == ' ') // check if space is found
             space_found = 1;
         else if (space_found == 0) // if no space found, add to filename
@@ -128,14 +128,16 @@ int32_t execute(const uint8_t* command) {
             args[i] = command[i];
     }
 
+    /* get inode if valid file to use for read data */
+    dentry_t dentry[1];
+    i = read_dentry_by_name(filename, dentry);
+    if(i==-1){
+        printf("File doesn't exist \n");
+        return -1; 
+    }
 
-    /* Open file */
-    if (file_open(filename) == -1)
-        { printf("File doesn't exist \n"); return -1; }
-    
-    /* Read first 2 bytes (check for ELF constant) */
-    if (file_read(filename, read_buffer, 2) != 2)
-        { printf("File read \n"); return -1; }
+    /* read first 4 bytes (check for del and ELF const)*/
+    read_data(dentry->inode_id, 0, read_buffer, 4);
     
     /* Check that file is executable */
     for (i=0; i<ELF_SIZE; i++) {
@@ -154,11 +156,9 @@ int32_t execute(const uint8_t* command) {
     flush_tlb();
 
     /* Load Memory with Program Image */
-    int dest = 0x800000 + (cur_pid*0x400000);
-    read_data(filename, 0, dest, 36000); // 36000 is the max size of file (in bytes)
+    uint8_t* p_img = (uint8_t*)(0x800000 + (cur_pid*0x400000));
+    read_data(dentry->inode_id, 0, p_img, 36000); // 36000 is the max size of file (in bytes)
 
-
-    
     /* Create PCB entry */
     pcb_entry_t cur_pcb; 
     cur_pcb.pid=cur_pid;
@@ -170,7 +170,7 @@ int32_t execute(const uint8_t* command) {
     //cur_pcb.registers = [];
 
     // set up stdin and stdout
-    terminal_open("");
+    terminal_open((const uint8_t*)"");
 
     //initialize other file array entries to not in use
     for(i=2; i<8; i++){
@@ -183,16 +183,25 @@ int32_t execute(const uint8_t* command) {
     memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
 
     /* do after pcb put into kernel since this asm function saves to kernel space*/
-    save_parent_regs_to_pcb();
+    //save_parent_regs_to_pcb();
 
-    /* Context Switch */
-    // asm volatile (
-    //     "movl %%esp, %%eax;"
-    // );
-
-
-
+    memcpy(&new_eip, (p_img+24),4);            // add 24 to uint8_t pointer to get to bytes 24-27 of program image
     
+    /* Context Switch */
+    asm volatile(
+        "pushl %0;"                 // push operand 0, USER_DS
+        "pushl $0x8400000;"         // 132 MB - user stack pointer
+        "pushfl;"
+        "pushl %1;"                 // push operand 1, USER_CS
+        "pushl %2;"                 // push operand 2, eip of program to run 
+        "iret;"
+        "ret;"                   // need "leave" as well?
+        :                           // no outputs
+        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip) // inputs
+     );
+
+
+
     
 
 }
