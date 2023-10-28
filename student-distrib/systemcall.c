@@ -97,6 +97,13 @@ int32_t halt(uint8_t status) {
     if (cur_pid > 0)
         cur_pid--;
 
+
+    // asm volatile(
+    //     "jmp execute_ret;"
+    //     :
+    //     :
+    // );
+
 }
 
 
@@ -111,7 +118,7 @@ uint8_t args[128];
 uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
-    uint8_t filename[32];
+    uint8_t filename[32] = "";
     int space_found=0;
     int i;
     uint8_t read_buffer[4];
@@ -134,7 +141,7 @@ int32_t execute(const uint8_t* command) {
     dentry_t dentry[1];
     i = read_dentry_by_name(filename, dentry);
     if(i==-1){
-        printf("File doesn't exist \n");
+        printf("execute: File doesn't exist \n");
         return -1; 
     }
 
@@ -144,12 +151,12 @@ int32_t execute(const uint8_t* command) {
     /* Check that file is executable */
     for (i=0; i<ELF_SIZE; i++) {
         if (ELF[i] != read_buffer[i])
-            { printf("Not an executable \n"); return -1; }
+            { printf("execute: Not an executable \n"); return -1; }
     }
 
     /* Check not at max processes */
     if (cur_pid > 5)
-        { printf("Six processes already open \n"); return -1; }
+        { printf("execute: Six processes already open \n"); return -1; }
     
     /* Add PID page */
     add_pid_page(cur_pid);
@@ -171,20 +178,21 @@ int32_t execute(const uint8_t* command) {
     cur_pcb.priority = 0; 
     //cur_pcb.registers = [];
 
-    // set up stdin and stdout
-    terminal_open((const uint8_t*)"");
 
     //initialize other file array entries to not in use
-    for(i=2; i<8; i++){
+    for(i=0; i<8; i++){
         cur_pcb.fd_array[i].in_use = 0; 
     }
 
     /* Copy PCB to memory */
-    pcb_entry_t* pcb_ptr = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
-    memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
+    pcb_entry_t* new_pcb = pcb_ptr[cur_pid];
+    memcpy(new_pcb, &cur_pcb, sizeof(pcb_entry_t));
     
+    // set up stdin and stdout
+    terminal_open((const uint8_t*)"");
+
     // save old esp0
-    pcb_ptr->parent_esp0 = tss.esp0;
+    new_pcb->parent_esp0 = tss.esp0;
     
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
@@ -200,18 +208,23 @@ int32_t execute(const uint8_t* command) {
     //pcb_ptr->p_esp=tss.esp0;
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); 
-    
+
+    new_pcb->ebp = s_ebp;
+    new_pcb->esp = s_esp; 
+
     /* Context Switch */
     asm volatile(
-        "pushl %0;"                 // push operand 0, USER_DS
-        "pushl $0x8400000;"         // 132 MB - user stack pointer
+        "pushw %0;"                 // push operand 0, USER_DS
+        "pushw $0;"
+        "pushl $0x8400000;"
         "pushfl;"                   // push flags
-        "pushl %1;"                 // push operand 1, USER_CS
+        "pushw %1;"                 // push operand 1, USER_CS
+        "pushw $0;"
         "pushl %2;"                 // push operand 2, eip of program to run 
         "iret;"
         "ret;"                      // need "leave" as well?
         :                                           // no outputs
-        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip), "r"(s_esp), "r"(s_ebp)         // inputs
+        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip)       // inputs
      );
 
 
