@@ -2,7 +2,7 @@
 
 #include "systemcall.h"
 #include "lib.h"
-
+#include "x86_desc.h"
 #include "system_s.h"
 #include "filesystem.h"
 #include "rtc.h"
@@ -53,6 +53,7 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
         case SYS_HALT:
             break;
         case SYS_EXECUTE:
+            // 
             break; 
         case SYS_READ:
             read(arg1, (void*)arg2, arg3);
@@ -186,6 +187,10 @@ int32_t execute(const uint8_t* command) {
     //save_parent_regs_to_pcb();
 
     memcpy(&new_eip, (p_img+24),4);            // add 24 to uint8_t pointer to get to bytes 24-27 of program image
+
+    //pcb_ptr->p_esp=tss.esp0;
+    register uint32_t s_esp asm("%esp"); 
+    register uint32_t s_ebp asm("%ebp"); 
     
     /* Context Switch */
     asm volatile(
@@ -195,10 +200,12 @@ int32_t execute(const uint8_t* command) {
         "pushl %1;"                 // push operand 1, USER_CS
         "pushl %2;"                 // push operand 2, eip of program to run 
         "iret;"
-        "ret;"                   // need "leave" as well?
-        :                           // no outputs
-        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip) // inputs
+        "ret;"                      // need "leave" as well?
+        :                                           // no outputs
+        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip), "r"(s_esp), "r"(s_ebp)         // inputs
      );
+
+
 
 }
 
@@ -238,10 +245,12 @@ int32_t close(int32_t fd){
     // check that fd is valid
     if(fd<0 || fd >7){
         printf("ERR: invalid fd given in close function \n");
+        return -1; 
     }
 
     if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
         printf("ERR: trying to perform close on fd that's not in use \n");
+        return -1; 
     }
 
     // call close func -- should remove from fd array
