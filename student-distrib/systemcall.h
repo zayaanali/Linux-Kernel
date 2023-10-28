@@ -2,7 +2,7 @@
 #define _SYSTEMCALL_H
 
 #include "types.h"
-#include "x86_desc.h"
+
 
 #define SYS_HALT    1
 #define SYS_EXECUTE 2
