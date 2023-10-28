@@ -101,12 +101,11 @@ int32_t halt(uint8_t status) {
     pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
 
     /* Close relevant FDs */
-    for(i=2; i<8; i++)
-        cur_pcb.fd_array[i].in_use = 0; 
+    for(i=0; i<8; i++)
+        cur_pcb->fd_array[i].in_use = 0; 
 
     /* If current PID is base shell, then relaunch shell */
     if (cur_pid == 0) {
-        cur_pcb->parent_pid = 0;
         execute((uint8_t*)"shell");
     }
     
@@ -125,7 +124,23 @@ int32_t halt(uint8_t status) {
     tss.ss0 = KERNEL_DS;
     tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
-    /* Somehow return? */
+    /* restore stack */
+    //pcb_ptr->p_esp=tss.esp0;
+    register uint32_t s_esp = cur_pcb->esp;
+    register uint32_t s_ebp = cur_pcb->ebp; 
+
+
+    /* Context Switch */
+    asm volatile(
+        "movl %0, %%esp;"                 // push operand 0, USER_DS
+        "movl %1, %%ebp;"
+ 
+        :                                           // no outputs
+        : "r"(s_esp), "r"(s_ebp)       // inputs
+     );
+
+    /* Somehow return?
+           "jmp execute_ret;" */
 }
 
 
@@ -244,13 +259,14 @@ int32_t execute(const uint8_t* command) {
         "pushl %1;"                 // push operand 1, USER_CS
         "pushl %2;"                 // push operand 2, eip of program to run 
         "iret;"
-        "ret;"                      // need "leave" as well?
         :                                           // no outputs
         : "r"(l_USER_DS), "r"(l_USER_CS), "r"(new_eip)       // inputs
      );
 
-
-
+    return 0; 
+/*        "iret;"
+        "execute_ret:"
+        "ret;"                      // need "leave" as well?*/
 }
 
 
