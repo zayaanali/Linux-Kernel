@@ -97,39 +97,33 @@ int32_t halt(uint8_t status) {
     
     /* Get the current and parent pcb */
     pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
-    pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
     int parent_pid = cur_pcb->parent_pid;
     pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
 
-    
+    /* Close relevant FDs */
+    for(i=2; i<8; i++)
+        cur_pcb.fd_array[i].in_use = 0; 
+
     /* If current PID is base shell, then relaunch shell */
     if (cur_pid == 0) {
         cur_pcb->parent_pid = 0;
         execute((uint8_t*)"shell");
     }
-
+    
     /* Restore parent data */
     cur_pid = parent_pid;
 
     /* Restore paging (DOUBLE CHECK) */
-    add_pid_page(cur_pid); // for the 
+    add_pid_page(cur_pid);
 
     /* Flush TLB */
     flush_tlb();
-
-    /* Close relevant FDs (DOUBLE CHECK) */
-    for (i=0; i<MAX_FD_ENTRIES; i++) {
-        cur_pcb->fd_array->flags.in_use = 0;
-    }
 
     cur_pcb->pid = cur_pid;
 
     /* Restore TSS */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (parent_pid)*EIGHT_KB);
-
-    
-
+    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
     /* Somehow return? */
 }
