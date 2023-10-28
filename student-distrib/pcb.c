@@ -12,7 +12,8 @@ file_op_func_t file_funcs;
 file_op_func_t dir_funcs; 
 file_op_func_t term_funcs; 
 
-pcb_entry_t* pcb_ptr[MAX_PROCESSES]={ (pcb_entry_t*)0x7992000, (pcb_entry_t*)0x7991200, (pcb_entry_t*)0x7990400, (pcb_entry_t*)0x7989600, (pcb_entry_t*)0x7988800, (pcb_entry_t*)0x7988000 };
+int i = 0x7fe000;
+pcb_entry_t* pcb_ptr[MAX_PROCESSES]={ (pcb_entry_t*)0x7fe000, (pcb_entry_t*)0x7fc000, (pcb_entry_t*)0x7fa000, (pcb_entry_t*)0x7f8000, (pcb_entry_t*)0x7f6000, (pcb_entry_t*)0x7f4000 };
 
 void pcb_init(){
     //rtc_funcs->open_func = rtc_open;
