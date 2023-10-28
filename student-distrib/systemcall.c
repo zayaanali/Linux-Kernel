@@ -155,9 +155,9 @@ int32_t execute(const uint8_t* command) {
     /* Flush TLB */
     flush_tlb();
 
-    /* Load Memory with Program Image */
-    uint8_t* p_img = (uint8_t*)(0x800000 + (cur_pid*0x400000));
-    read_data(dentry->inode_id, 0, p_img, 36000); // 36000 is the max size of file (in bytes)
+    /* Load Memory with Program Image -- Use virtual address of 128 MB */
+    uint8_t* p_img = (uint8_t*)(0x8000000);
+    read_data(dentry->inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
 
     /* Create PCB entry */
     pcb_entry_t cur_pcb; 
@@ -200,10 +200,6 @@ int32_t execute(const uint8_t* command) {
         : "r"(USER_DS), "r"(USER_CS), "r"(new_eip) // inputs
      );
 
-
-
-    
-
 }
 
 
@@ -240,10 +236,15 @@ int32_t open(const uint8_t* filename){
 int32_t close(int32_t fd){
 
     // check that fd is valid
+    if(fd<0 || fd >7){
+        printf("ERR: invalid fd given in close function \n");
+    }
 
-    // mark file array entry as not in use
+    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+        printf("ERR: trying to perform close on fd that's not in use \n");
+    }
 
-    // perhaps delete this line and just return 0
+    // call close func -- should remove from fd array
     return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 

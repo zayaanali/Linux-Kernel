@@ -47,12 +47,12 @@ typedef struct file_arr_entry_t{
 
 typedef struct pcb_entry{
     /* parent registers*/
-    uint32_t p_eip;
+    // uint32_t p_eip;
     uint32_t p_esp;
     uint32_t p_ebp;
 
     /* current regs*/
-    uint32_t eip;
+    // uint32_t eip;
     uint32_t esp;
     uint32_t ebp;
 
