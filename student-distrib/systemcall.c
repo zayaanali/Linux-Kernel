@@ -212,19 +212,19 @@ int32_t execute(const uint8_t* command) {
     new_pcb->ebp = s_ebp;
     new_pcb->esp = s_esp; 
 
+    uint32_t l_USER_DS = (0|USER_DS)&(0x0ffff);
+    uint32_t l_USER_CS = (0|USER_CS)&(0x0ffff); 
     /* Context Switch */
     asm volatile(
-        "pushw %0;"                 // push operand 0, USER_DS
-        "pushw $0;"
+        "pushl %0;"                 // push operand 0, USER_DS
         "pushl $0x8400000;"
         "pushfl;"                   // push flags
-        "pushw %1;"                 // push operand 1, USER_CS
-        "pushw $0;"
+        "pushl %1;"                 // push operand 1, USER_CS
         "pushl %2;"                 // push operand 2, eip of program to run 
         "iret;"
         "ret;"                      // need "leave" as well?
         :                                           // no outputs
-        : "r"(USER_DS), "r"(USER_CS), "r"(new_eip)       // inputs
+        : "r"(l_USER_DS), "r"(l_USER_CS), "r"(new_eip)       // inputs
      );
 
 
