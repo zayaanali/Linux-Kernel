@@ -12,6 +12,7 @@
 #include "paging.h"
 #include "page.h"
 #include "terminal.h"
+#include "x86_desc.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -177,10 +178,18 @@ int32_t execute(const uint8_t* command) {
         cur_pcb.fd_array[i].in_use = 0; 
     }
 
-
     /* Copy PCB to memory */
-    pcb_entry_t* pcb_ptr = (pcb_entry_t*) (0x800000 - (cur_pid+1)*0x2000);
+    pcb_entry_t* pcb_ptr = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
     memcpy(pcb_ptr, &cur_pcb, sizeof(pcb_entry_t));
+    
+    // save old esp0
+    pcb_ptr->parent_esp0 = tss.esp0;
+    
+    /* Set TSS entries */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+
+    
 
     /* do after pcb put into kernel since this asm function saves to kernel space*/
     //save_parent_regs_to_pcb();
@@ -191,7 +200,7 @@ int32_t execute(const uint8_t* command) {
     asm volatile(
         "pushl %0;"                 // push operand 0, USER_DS
         "pushl $0x8400000;"         // 132 MB - user stack pointer
-        "pushfl;"
+        "pushfl;"                   // push flags
         "pushl %1;"                 // push operand 1, USER_CS
         "pushl %2;"                 // push operand 2, eip of program to run 
         "iret;"

@@ -66,6 +66,7 @@ typedef struct pcb_entry{
 
     /* Parent Data */
     uint32_t parent_pid;
+    uint32_t parent_esp0;
 
 
 

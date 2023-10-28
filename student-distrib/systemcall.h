@@ -16,6 +16,8 @@
 #define SYS_SIGRETURN  10
 
 #define ELF_SIZE 4
+#define EIGHT_MB 0x800000
+#define EIGHT_KB 0x2000
 
 
 extern int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg_3);
