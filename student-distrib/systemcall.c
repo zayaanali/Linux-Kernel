@@ -91,19 +91,47 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
 
 int cur_pid = -1; // -1 before any processes are open 
 
-
+/* Need to restore parent data, restore parent paging, close relevant FDs, jump to execute return */
 int32_t halt(uint8_t status) {
-    /* Decrement the current process ID */
-    if (cur_pid > 0)
-        cur_pid--;
+    int i;
+    
+    /* Get the current and parent pcb */
+    pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
+    pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
+    int parent_pid = cur_pcb->parent_pid;
+    pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
+
+    
+    /* If current PID is base shell, then relaunch shell */
+    if (cur_pid == 0) {
+        cur_pcb->parent_pid = 0;
+        execute((uint8_t*)"shell");
+    }
+
+    /* Restore parent data */
+    cur_pid = parent_pid;
+
+    /* Restore paging (DOUBLE CHECK) */
+    add_pid_page(cur_pid); // for the 
+
+    /* Flush TLB */
+    flush_tlb();
+
+    /* Close relevant FDs (DOUBLE CHECK) */
+    for (i=0; i<MAX_FD_ENTRIES; i++) {
+        cur_pcb->fd_array->flags.in_use = 0;
+    }
+
+    cur_pcb->pid = cur_pid;
+
+    /* Restore TSS */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = (EIGHT_MB - (parent_pid)*EIGHT_KB);
+
+    
 
 
-    // asm volatile(
-    //     "jmp execute_ret;"
-    //     :
-    //     :
-    // );
-
+    /* Somehow return? */
 }
 
 
