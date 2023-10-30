@@ -5,24 +5,23 @@
 
 .GLOBL systemcall_link
 systemcall_link:
-            pushal 
-            pushfl 
+            pushfl
+            pushl %EBX
+            pushl %esi
+            pushl %edi 
             pushl %EDX
             pushl %ECX
             pushl %EBX
             pushl %EAX
             call systemcall_handler 
             ADDL $16, %ESP
-            movl %eax, return
+            popl %edi
+            popl %esi
+            popl %ebx
             popfl       
-            popal  
-            movl return, %eax
+            
             # rn, EAX being overwritten by popal. figure out how to save it
             iret  
-
-.data
-return:
-    .long 0
 
 
   

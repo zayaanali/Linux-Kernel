@@ -94,6 +94,9 @@ parent_pid = -1; // -1 before any processes are open
 
 /* Need to restore parent data, restore parent paging, close relevant FDs, jump to execute return */
 int32_t halt(uint8_t status) {
+    uint32_t flags;
+    cli_and_save(flags);
+    
     int i;
     
     /* Get the current and parent pcb */
@@ -146,6 +149,7 @@ int32_t halt(uint8_t status) {
     register uint32_t s_esp = cur_pcb->esp;
     register uint32_t s_ebp = cur_pcb->ebp; 
 
+    restore_flags(flags);
     /* Context Switch */
     asm volatile(
         "movl %0, %%esp; \n"                 // push operand 0, USER_DS
@@ -170,6 +174,9 @@ uint8_t args[128];
 uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
+    uint32_t flags;
+    cli_and_save(flags);
+   
     uint8_t filename[32] = "";
     int space_found=0;
     int i, ret;
@@ -270,7 +277,7 @@ int32_t execute(const uint8_t* command) {
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     
     /* Enable interrupts (interrupt switch) */
-    // sti(); 
+    restore_flags(flags);
     
     /* Context Switch */
     asm volatile(
