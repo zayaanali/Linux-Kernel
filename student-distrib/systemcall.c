@@ -105,15 +105,16 @@ int32_t halt(uint8_t status) {
         cur_pcb->fd_array[i].in_use = 0; 
 
     /* If current PID is base shell, then relaunch shell */
-    if (cur_pid == 0)
-        execute((uint8_t*)"shell");
+    if (cur_pid == 0) { 
+        parent_pid = -1; cur_pid = -1; // cur_pid will be incremented in execute
+        execute((uint8_t*)"shell"); 
+    }
     
-    /* Update cur/parent pid */
+    /* Update cur/parent pid. Parent_pid should only be negative with base shell (case above) */
+    if (parent_pid < 0) printf("ERR: parent_pid is negative \n"); // sanity check
     cur_pid = parent_pid;
-    if (parent_pid > -1)
-        parent_pid--;
-    else
-        parent_pid=-1;
+    parent_pid--;
+    if (parent_pid < 0) printf("ERR: parent_pid is negative \n"); // sanity check
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -205,9 +206,9 @@ int32_t execute(const uint8_t* command) {
     
     /* Set current/parent pid */    
     cur_pid++;
-    if (cur_pid >= 1) // process 1 and above has a parent
+    if (cur_pid >= 1) // process 1 and above has a parent process
         parent_pid = cur_pid-1;
-    else // process 0 (base shell) has no parent
+    else // process 0 (base shell) has no parent process
         parent_pid = -1;
     
     /* Add PID page */
