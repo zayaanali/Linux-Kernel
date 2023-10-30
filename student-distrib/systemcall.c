@@ -76,7 +76,7 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
             break; 
         case SYS_SET_HANDLER:
             break;
-        case SYS_SIGRETURN:~
+        case SYS_SIGRETURN:
             break;
         default:
             return -1; //not a valid syscall
