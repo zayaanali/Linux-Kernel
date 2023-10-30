@@ -86,5 +86,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     // update file position
     pcb_ptr[cur_pid]->fd_array[fd].file_pos +=bytes_read; 
 
-    return bytes_read; 
+    ((uint8_t*)buf)[bytes_read] = '\0';
+
+    return (strlen((const int8_t*)buf)); 
 }

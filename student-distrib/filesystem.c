@@ -98,7 +98,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     uint32_t block_index = offset / BLOCK_SIZE;
 
     if (length > inode_ptr->length)
-        length = inode_ptr->length;
+        length = (inode_ptr->length);
 
     // Read data from data blocks
     while (read_length < length && block_index < num_blocks) {

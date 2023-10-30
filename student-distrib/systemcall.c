@@ -237,7 +237,7 @@ int32_t execute(const uint8_t* command) {
     read_data(new_dentry->inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file
 
     /* Set up PCB entry */
-    pcb_entry_t* pcb_addr = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB); 
+    pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
     pcb_entry_t pcb;
     pcb.pid = cur_pid;
     pcb.parent_pid = parent_pid;
@@ -254,8 +254,8 @@ int32_t execute(const uint8_t* command) {
     pcb.ebp = s_ebp;
     pcb.esp = s_esp; 
     
-    memcpy(&pcb, pcb_addr, sizeof(pcb_entry_t));
-    
+    memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
+
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
     
@@ -283,6 +283,7 @@ int32_t execute(const uint8_t* command) {
         "pushl %3; \n"                 // push operand 2, eip of program to run 
         "iret; \n"
         "return_label: \n"
+        "leave; \n"
         "ret; \n"
 
         :                                           // no outputs
