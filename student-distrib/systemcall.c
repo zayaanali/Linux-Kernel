@@ -27,7 +27,7 @@ void init_syscall_idt(){
     // systemcall should be in IDT entry 0x80 = 128
     // set reserved0|size|reserved1|reserved2|reserved3|reserved4[8] to 0 1111 0000 0000 for 32-bit trap gate
     idt[128].present = 1;             // segment is present
-    idt[128].dpl = 0;                 // DPL = 00 (highest priority)
+    idt[128].dpl = 3;                 // DPL = 00 (highest priority)
     idt[128].reserved0 = 0;           
     idt[128].size = 1;                // size (D) = 1 (32 bit gate)
     idt[128].reserved1 = 1;
@@ -48,13 +48,13 @@ void init_syscall_idt(){
  *   Return Value: none
  *   Function: Handler for any systemcall */
 int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg3){
-    printf("A system call was called. \n");
-
+    uint8_t ignore;
     switch(syscall){
         case SYS_HALT:
+            halt(ignore);
             break;
         case SYS_EXECUTE:
-            // 
+            execute((const uint8_t*) arg1);
             break; 
         case SYS_READ:
             read(arg1, (void*)arg2, arg3);
@@ -76,7 +76,7 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
             break; 
         case SYS_SET_HANDLER:
             break;
-        case SYS_SIGRETURN:
+        case SYS_SIGRETURN:~
             break;
         default:
             return -1; //not a valid syscall
@@ -89,7 +89,8 @@ int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t 
     *   Return Value: -1 on failure, 0 on success
  */
 
-int cur_pid = -1; // -1 before any processes are open 
+cur_pid = -1; // -1 before any processes are open
+parent_pid = -1; // -1 before any processes are open
 
 /* Need to restore parent data, restore parent paging, close relevant FDs, jump to execute return */
 int32_t halt(uint8_t status) {
@@ -97,7 +98,6 @@ int32_t halt(uint8_t status) {
     
     /* Get the current and parent pcb */
     pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
-    int parent_pid = cur_pcb->parent_pid;
     pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
 
     /* Close relevant FDs */
@@ -105,42 +105,56 @@ int32_t halt(uint8_t status) {
         cur_pcb->fd_array[i].in_use = 0; 
 
     /* If current PID is base shell, then relaunch shell */
-    if (cur_pid == 0) {
+    if (cur_pid == 0)
         execute((uint8_t*)"shell");
-    }
     
-    /* Restore parent data */
+    /* Update cur/parent pid */
     cur_pid = parent_pid;
+    if (parent_pid > -1)
+        parent_pid--;
+    else
+        parent_pid=-1;
 
-    /* Restore paging (DOUBLE CHECK) */
-    add_pid_page(cur_pid);
+    /* Add PID page */
+    page_dir[32].page_dir_entry_4mb_t.present = 1;
+    page_dir[32].page_dir_entry_4mb_t.read_write = 1;
+    page_dir[32].page_dir_entry_4mb_t.user_supervisor = 1;
+    page_dir[32].page_dir_entry_4mb_t.page_write_through = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_cache_disable = 0;
+    page_dir[32].page_dir_entry_4mb_t.accessed = 0;
+    page_dir[32].page_dir_entry_4mb_t.dirty = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_size = 1; // 4MB page
+    page_dir[32].page_dir_entry_4mb_t.global = 0;
+    page_dir[32].page_dir_entry_4mb_t.avail = 0;
+    page_dir[32].page_dir_entry_4mb_t.PAT = 0;
+    page_dir[32].page_dir_entry_4mb_t.reserved = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = (0x800000 + (cur_pid*0x400000) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
 
+
     cur_pcb->pid = cur_pid;
+    cur_pcb->parent_pid = parent_pid;
 
     /* Restore TSS */
     tss.ss0 = KERNEL_DS;
     tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
     /* restore stack */
-    //pcb_ptr->p_esp=tss.esp0;
     register uint32_t s_esp = cur_pcb->esp;
     register uint32_t s_ebp = cur_pcb->ebp; 
 
-
     /* Context Switch */
     asm volatile(
-        "movl %0, %%esp;"                 // push operand 0, USER_DS
-        "movl %1, %%ebp;"
- 
+        "movl %0, %%esp; \n"                 // push operand 0, USER_DS
+        "movl %1, %%ebp; \n"
+        "jmp return_label; \n"
+    
         :                                           // no outputs
         : "r"(s_esp), "r"(s_ebp)       // inputs
      );
 
-    /* Somehow return?
-           "jmp execute_ret;" */
 }
 
 
@@ -157,12 +171,10 @@ uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 int32_t execute(const uint8_t* command) {
     uint8_t filename[32] = "";
     int space_found=0;
-    int i;
+    int i, ret;
     uint8_t read_buffer[4];
-    uint32_t new_eip; 
-
-    /* Increment the cur pid */
-    cur_pid++;
+    uint32_t entry_point;
+    dentry_t *new_dentry;
 
     /* Parse the command */
     for (i = 0; i < strlen((const int8_t*)command); i++) {
@@ -175,15 +187,11 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* get inode if valid file to use for read data */
-    dentry_t dentry[1];
-    i = read_dentry_by_name(filename, dentry);
-    if(i==-1){
-        printf("execute: File doesn't exist \n");
-        return -1; 
-    }
+    if(read_dentry_by_name(filename, new_dentry) == -1)
+        { printf("execute: File doesn't exist \n"); return -1; }
 
     /* read first 4 bytes (check for del and ELF const)*/
-    read_data(dentry->inode_id, 0, read_buffer, 4);
+    read_data(new_dentry->inode_id, 0, read_buffer, 4);
     
     /* Check that file is executable */
     for (i=0; i<ELF_SIZE; i++) {
@@ -192,76 +200,99 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* Check not at max processes */
-    if (cur_pid > 5)
+    if (cur_pid >= 5)
         { printf("execute: Six processes already open \n"); return -1; }
     
+    /* Set current/parent pid */    
+    cur_pid++;
+    if (cur_pid >= 1) // process 1 and above has a parent
+        parent_pid = cur_pid-1;
+    else // process 0 (base shell) has no parent
+        parent_pid = -1;
+    
     /* Add PID page */
-    add_pid_page(cur_pid);
+    page_dir[32].page_dir_entry_4mb_t.present = 1;
+    page_dir[32].page_dir_entry_4mb_t.read_write = 1;
+    page_dir[32].page_dir_entry_4mb_t.user_supervisor = 1;
+    page_dir[32].page_dir_entry_4mb_t.page_write_through = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_cache_disable = 0;
+    page_dir[32].page_dir_entry_4mb_t.accessed = 0;
+    page_dir[32].page_dir_entry_4mb_t.dirty = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_size = 1; // 4MB page
+    page_dir[32].page_dir_entry_4mb_t.global = 0;
+    page_dir[32].page_dir_entry_4mb_t.avail = 0;
+    page_dir[32].page_dir_entry_4mb_t.PAT = 0;
+    page_dir[32].page_dir_entry_4mb_t.reserved = 0;
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = (0x800000 + (cur_pid*0x400000) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
 
     /* Load Memory with Program Image -- Use virtual address of 128 MB */
-    uint8_t* p_img = (uint8_t*)(0x8000000);
-    read_data(dentry->inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
+    uint8_t* p_img = (uint8_t*)((0x08048000));
 
-    /* Create PCB entry */
-    pcb_entry_t cur_pcb; 
-    cur_pcb.pid=cur_pid;
+    read_data(new_dentry->inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
 
-    /* Need to figure out how to fill these out */
-    cur_pcb.parent_pid = (cur_pid > 0) ? cur_pid-1 : cur_pid; // what is parent pid     
-    cur_pcb.state = 1;      //active
-    cur_pcb.priority = 0; 
-    //cur_pcb.registers = [];
+    /* Read entry point from program file */
+    read_data(new_dentry->inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file
+
+    /* Set up PCB entry */
+    pcb_entry_t* pcb_addr = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB); 
+    pcb_entry_t pcb;
+    pcb.pid = cur_pid;
+    pcb.parent_pid = parent_pid;
+    pcb.parent_esp0 = tss.esp0;
 
 
     //initialize other file array entries to not in use
-    for(i=0; i<8; i++){
-        cur_pcb.fd_array[i].in_use = 0; 
-    }
+    for(i=2; i<8; i++)
+        pcb.fd_array[i].in_use = 0;
 
-    /* Copy PCB to memory */
-    pcb_entry_t* new_pcb = pcb_ptr[cur_pid];
-    memcpy(new_pcb, &cur_pcb, sizeof(pcb_entry_t));
+    /* Save EBP/ESP and Copy PCB to memory */
+    register uint32_t s_esp asm("%esp"); 
+    register uint32_t s_ebp asm("%ebp"); 
+    pcb.ebp = s_ebp;
+    pcb.esp = s_esp; 
     
-    // set up stdin and stdout
+    memcpy(&pcb, pcb_addr, sizeof(pcb_entry_t));
+    
+    /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
-
-    // save old esp0
-    new_pcb->parent_esp0 = tss.esp0;
     
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
     tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
+    uint32_t user_ds_ext = (0|USER_DS)&(0x0ffff);
+    uint32_t user_cs_ext = (0|USER_CS)&(0x0ffff); 
+
+    uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     
-
-    /* do after pcb put into kernel since this asm function saves to kernel space*/
-    //save_parent_regs_to_pcb();
-
-    memcpy(&new_eip, (p_img+24),4);            // add 24 to uint8_t pointer to get to bytes 24-27 of program image
-
-    //pcb_ptr->p_esp=tss.esp0;
-    register uint32_t s_esp asm("%esp"); 
-    register uint32_t s_ebp asm("%ebp"); 
-
-    new_pcb->ebp = s_ebp;
-    new_pcb->esp = s_esp; 
-
-    uint32_t l_USER_DS = (0|USER_DS)&(0x0ffff);
-    uint32_t l_USER_CS = (0|USER_CS)&(0x0ffff); 
+    /* Enable interrupts (interrupt switch) */
+    // sti(); 
+    
     /* Context Switch */
     asm volatile(
-        "pushl %0;"                 // push operand 0, USER_DS
-        "pushl $0x8400000;"
-        "pushfl;"                   // push flags
-        "pushl %1;"                 // push operand 1, USER_CS
-        "pushl %2;"                 // push operand 2, eip of program to run 
-        "iret;"
+        "pushl %0; \n"             // set data segment register
+        "pushl %1; \n"
+        "pushfl; \n"
+        "popl %%ecx; \n"
+        "orl $0x200, %%ecx; \n"          // Set IF flag to one                 
+        "pushl %%ecx; \n"
+        "pushl %2; \n"                   // push flags
+        "pushl %3; \n"                 // push operand 2, eip of program to run 
+        "iret; \n"
+        "return_label: \n"
+        "ret; \n"
+
         :                                           // no outputs
-        : "r"(l_USER_DS), "r"(l_USER_CS), "r"(new_eip)       // inputs
+        : "g" (USER_DS), "g" (user_esp), "g" (USER_CS), "g" (entry_point)        // inputs
+        : "memory", "cc", "ecx"
      );
+
+     
+
+
 
     return 0; 
 /*        "iret;"

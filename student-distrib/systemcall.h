@@ -18,6 +18,8 @@
 #define ELF_SIZE 4
 #define EIGHT_MB 0x800000
 #define EIGHT_KB 0x2000
+#define KERNEL_BASE 0x08000000
+#define FOUR_MB 0x400000
 
 
 extern int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg_3);
