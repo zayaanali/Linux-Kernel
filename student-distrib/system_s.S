@@ -13,13 +13,16 @@ systemcall_link:
             pushl %EAX
             call systemcall_handler 
             ADDL $16, %ESP
+            movl %eax, return
             popfl       
             popal  
-
+            movl return, %eax
             # rn, EAX being overwritten by popal. figure out how to save it
             iret  
 
-
+.data
+return:
+    .long 0
 
 
   
