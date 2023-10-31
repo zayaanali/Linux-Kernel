@@ -48,10 +48,10 @@ void init_syscall_idt(){
  *   Return Value: none
  *   Function: Handler for any systemcall */
 int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg3){
-    uint8_t ignore;
+
     switch(syscall){
         case SYS_HALT:
-            halt(ignore);
+            halt((uint8_t)arg1);
             break;
         case SYS_EXECUTE:
             execute((const uint8_t*) arg1);
@@ -297,28 +297,60 @@ int32_t execute(const uint8_t* command) {
         : "memory", "cc", "ecx"
      );
 
-     
-
-
-
     return 0; 
-/*        "iret;"
-        "execute_ret:"
-        "ret;"                      // need "leave" as well?*/
 }
 
 
+/* read
+ *   Inputs: fd:    file descriptor of file to read
+ *           buf:   buffer to store read data
+ *           nbytes:number of bytes to read
+ *   Return Value: number of bytes sucessfully read
+ *   Function: reads from indicated file
+*/
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
+
+    if(fd<0 || fd>7){
+        return -1; 
+    }
+
+    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+        //printf("ERR in read: trying to read from fd %d which is not in use \n", fd);
+        return -1; 
+    }
 
     return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
 
 }
 
+
+/* write
+ *   Inputs: fd:    file descriptor of file to write to
+ *           buf:   buffer holding data to write
+ *           nbytes:number of bytes to write
+ *   Return Value: number of bytes sucessfully written, -1 on failure
+ *   Function: writes to inidicated file
+*/
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
+
+    if(fd<0 || fd>7){
+        return -1; 
+    }
+
+    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+        //printf("ERR in write: trying to write to fd %d which is not in use \n", fd);
+        return -1; 
+    }
 
     return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
 }
 
+
+/* open
+ *   Inputs: filename:  name of file to open
+ *   Return Value: fd of opened file if successful, -1 on failure
+ *   Function: opens indicated file
+*/
 int32_t open(const uint8_t* filename){
     dentry_t dentry[1];
 
@@ -338,16 +370,27 @@ int32_t open(const uint8_t* filename){
     
 }
 
+
+/* close
+ *   Inputs: fd:    file descriptor of file to close
+ *   Return Value: 0 on success, -1 on failure
+ *   Function: closes indicated file
+*/
 int32_t close(int32_t fd){
 
     // check that fd is valid
     if(fd<0 || fd >7){
-        printf("ERR: invalid fd given in close function \n");
+        //printf("ERR in close: invalid fd given in close function \n");
         return -1; 
     }
 
+    // cannot close stdin or stdout
+    if(fd==0 || fd==1){
+        return -1; 
+    }
+    
     if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
-        printf("ERR: trying to perform close on fd that's not in use \n");
+       // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
     }
 
@@ -355,10 +398,23 @@ int32_t close(int32_t fd){
     return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 
+
+/* getargs
+ *   Inputs: buf:
+ *           nbytes:
+ *   Return Value: 
+ *   Function: 
+*/
 int32_t getargs(uint8_t* buf, int32_t nbytes){
 
 }
 
+
+/* vidmap
+ *   Inputs: screen_start:   
+ *   Return Value: 
+ *   Function: 
+*/
 int32_t vidmap(uint8_t** screen_start){
 
 }
