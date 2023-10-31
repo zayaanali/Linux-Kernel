@@ -314,6 +314,11 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
         return -1; 
     }
 
+    if(fd==1){
+        //cannot read from stdout, is write-only
+        return -1; 
+    }
+
     if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in read: trying to read from fd %d which is not in use \n", fd);
         return -1; 
@@ -335,6 +340,11 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 
     if(fd<0 || fd>7){
         return -1; 
+    }
+
+    if(fd==0){
+        // cannot write to stdin -- is read-only
+        return -1;
     }
 
     if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
@@ -388,7 +398,7 @@ int32_t close(int32_t fd){
     if(fd==0 || fd==1){
         return -1; 
     }
-    
+
     if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
        // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
