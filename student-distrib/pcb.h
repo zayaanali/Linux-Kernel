@@ -62,12 +62,9 @@ typedef struct pcb_entry{
     uint32_t state;
     uint32_t priority;
 
-
-
     /* Parent Data */
     uint32_t parent_pid;
     uint32_t parent_esp0;
-
 
 
 }pcb_entry_t;

@@ -3,7 +3,6 @@
 #include "pcb.h"
 #include "systemcall.h"
 
-//uint32_t file_pos[64];      // store current file position for each file by inode#
 
 /* file_open
  *   Inputs: fname  : name of file to open
@@ -61,11 +60,7 @@ int32_t file_write(int32_t fd, const void* buf, int32_t nbytes){
 int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 
     dentry_t dentry[1];                 // just need 1 dentry to copy into
-    int32_t bytes_read; 
-
-    // if(0!=read_dentry_by_name(fname, dentry)){                                              // get directory entry corresponding to fname into dentry 
-    //     return -1;
-    // }        
+    int32_t bytes_read;   
 
     bytes_read = read_data(pcb_ptr[cur_pid]->fd_array[fd].inode, pcb_ptr[cur_pid]->fd_array[fd].file_pos, buf, nbytes);       // read data into buf, return number of bytes read
 

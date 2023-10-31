@@ -15,6 +15,11 @@ file_op_func_t term_funcs;
 int i = 0x7fe000;
 pcb_entry_t* pcb_ptr[MAX_PROCESSES]={ (pcb_entry_t*)0x7fe000, (pcb_entry_t*)0x7fc000, (pcb_entry_t*)0x7fa000, (pcb_entry_t*)0x7f8000, (pcb_entry_t*)0x7f6000, (pcb_entry_t*)0x7f4000 };
 
+/* pcb_init
+ *   Inputs: none
+ *   Return Value: none
+ *   Function: initializes things for pcb structures. sets up func operations table for each file type
+*/
 void pcb_init(){
     //rtc_funcs->open_func = rtc_open;
     rtc_funcs.close_func = rtc_close;
@@ -40,6 +45,13 @@ void pcb_init(){
     // set up stdout entry of file array
 }
 
+
+/* insert_into_file_array
+ *   Inputs: file_funcs_ptr:    ptr to func options that should be inserted into fd entry
+ *           inode:             if inserting reg file, inode of that file, else is sent as -1 (or some other invalid #) and ignored
+ *   Return Value:  fd of new file array entry if successful, -1 on failure
+ *   Function: inserts a new entry into current pcb's file array if possible
+*/
 uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
 
     uint8_t k; // iteration variable
@@ -60,11 +72,15 @@ uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
     }
 
     // no available file array entry
-    printf("no room to open this file \n");
+    printf("ERR in insert_into_file_array: no room to open this file \n");
     return -1; 
 }
 
-
+/* remove_from_file_array
+ *   Inputs: fd:    fd of file array entry to close
+ *   Return Value:  0 if successfully closed, -1 on failure (fd invalid or already closed)
+ *   Function: removes file array entry from current pcb's file array if possible
+*/
 uint32_t remove_from_file_array(int32_t fd){
 
     if(fd<0 || fd>7){

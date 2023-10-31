@@ -174,6 +174,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the keyboard */
     keyboard_init();
      
+    /* init pcb structs */
     pcb_init();
 
 
