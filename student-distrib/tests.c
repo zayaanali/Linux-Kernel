@@ -140,7 +140,7 @@ void rtc_test(){
 
 	//uint8_t* fname = (uint8_t*)"Hi";
 	int32_t fd;
-	fd = open("rtc");
+	fd = open((const uint8_t*)"rtc");
 
 
 
@@ -393,49 +393,60 @@ static void test_filesys_fails(){
 	uint8_t* buf[80];
 	uint8_t* fname; 
 
+	int32_t fd; 
+
 	printf("attempting to open non-existant file: %s \n", "abcde");
 
 	fname = (uint8_t*)"abcde";
-	if(-1==file_open(fname)){
+	fd = file_open(fname);
+	if(fd==-1){
 		printf("file open failed \n");
 	}else{
 		printf("success?!?! \n");
 	}
+	close(fd);
 
 	printf("attempting to open non-existant directory: %s \n", "z");
 
 	fname = (uint8_t*)"z";
-	if(-1==dir_open(fname)){
+	fd = dir_open(fname);
+	if(fd==-1){
 		printf("directory open failed \n");
 	}else{
 		printf("success?!?! \n");
 	}
+	close(fd);
+
 
 	printf("attempting to write to file: %s ", "frame0.txt");
 
 	fname = (uint8_t*)"frame0.txt";
-	if(-1==file_open(fname)){
+	fd = file_open(fname);
+	if(fd==-1){
 		printf("file open failed ?!?! \n");
 	}else{
 		printf("frame0.txt opened \n");
 	}
 
-	if(-1==file_write(fname, (void*)buf, 80)){
+
+	if(-1==file_write(fd, (void*)buf, 80)){
 		printf("writing to frame0.txt failed \n");
 	}else{
 		printf("success?!?!? \n");
 	}
+	close(fd);
 
 	printf("attempting to write to dir: %s ", ".");
 
 	fname = (uint8_t*)".";
-	if(-1==dir_open(fname)){
+	fd = dir_open(fname);
+	if(fd==-1){
 		printf("dir open failed ?!?! \n");
 	}else{
 		printf("director '.' opened \n");
 	}
 
-	if(-1==dir_write(1, buf, 80)){
+	if(-1==dir_write(fd, buf, 80)){
 		printf("writing to directory failed \n");
 	}else{
 		printf("success?!?!? \n");
@@ -529,8 +540,8 @@ int term_driver_test(){
     
     int nbytes;
     char buf[128];
-    
-	terminal_open("terminal");
+
+	terminal_open((const uint8_t*)"terminal");
     while (1) {
         /* Test 1 */
         printf("TEST 1: Max number of bytes = 10 \n");
