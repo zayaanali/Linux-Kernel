@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "x86_desc.h"
+#include "systemcall.h"
 
 
 #define KEYBOARD_IRQ 1
@@ -115,6 +116,7 @@ extern void keyboard_init() {
 extern void keyboard_handler() {
     char out;
     int i;
+    uint32_t ignore;
     
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
@@ -136,6 +138,9 @@ extern void keyboard_handler() {
     
     /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
+        if (buf_ptr==0)
+            { send_eoi(KEYBOARD_IRQ); return; }
+        
         buf_pop();
         putc('\b');
         send_eoi(KEYBOARD_IRQ); return;
@@ -146,7 +151,7 @@ extern void keyboard_handler() {
         if (scan_key == 0x26) // CTRL + L
             { clear(); send_eoi(KEYBOARD_IRQ); return; } 
         else if (scan_key == 0x2E) // CTRL + C
-            { putc('^'); putc('c'); send_eoi(KEYBOARD_IRQ); return; }
+            { halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
         else // do nothing
             { send_eoi(KEYBOARD_IRQ); return;}
     }

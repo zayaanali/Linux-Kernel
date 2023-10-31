@@ -174,7 +174,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the keyboard */
     keyboard_init();
      
-
+    /* init pcb structs */
+    pcb_init();
 
 
     /* Enable interrupts */
@@ -183,6 +184,8 @@ void entry(unsigned long magic, unsigned long addr) {
      * without showing you any output */
    //printf("Enabling Interrupts\n");
    sti();
+
+   execute("shell");
 
 #ifdef RUN_TESTS
      /* Run tests */

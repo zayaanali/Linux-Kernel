@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "i8259.h"
 #include "lib.h"
+#include "pcb.h"
 
 static volatile int INT_FLAG;
 
@@ -86,11 +87,14 @@ void rtc_set_freq(uint16_t freq) {
 
 int32_t rtc_open(const uint8_t* filename){
     rtc_set_freq(2);
-    return 0;
+
+    return insert_into_file_array(&rtc_funcs, -1);      // inode not relevant for rtc, send invalid value
 }
+
 int32_t rtc_close(int32_t fd){
-    return 0;
+    return remove_from_file_array(fd); 
 }
+
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
     while(INT_FLAG == 0){
         ;
@@ -98,6 +102,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
     INT_FLAG = 0; 
     return 1;
 }
+
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     uint16_t buf_freq = (uint16_t)* (uint16_t*)buf;
     
