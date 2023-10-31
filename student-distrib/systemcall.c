@@ -96,6 +96,7 @@ parent_pid = -1; // -1 before any processes are open
 int32_t halt(uint8_t status) {
     uint32_t flags;
     cli_and_save(flags);
+    uint8_t ignore;
     
     int i;
     
