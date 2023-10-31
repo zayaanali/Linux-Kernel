@@ -22,7 +22,7 @@
 #define FOUR_MB 0x400000
 
 
-extern int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg_3);
+extern int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t arg_3);
 extern void init_syscall_idt();
 extern int cur_pid; 
 extern int parent_pid; 

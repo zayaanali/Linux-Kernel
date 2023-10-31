@@ -47,7 +47,7 @@ void init_syscall_idt(){
  *   Inputs: none
  *   Return Value: none
  *   Function: Handler for any systemcall */
-int32_t systemcall_handler(uint8_t syscall, int32_t arg1, int32_t arg2, int32_t arg3){
+int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t arg3){
 
     switch(syscall){
         case SYS_HALT:
