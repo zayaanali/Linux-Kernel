@@ -133,12 +133,12 @@ int32_t halt(uint8_t status) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = (0x800000 + (cur_pid*0x400000) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = (EIGHT_MB + (cur_pid*FOUR_MB) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
 
-
+    /* Set PIDs */
     cur_pcb->pid = cur_pid;
     cur_pcb->parent_pid = parent_pid;
 
@@ -232,18 +232,18 @@ int32_t execute(const uint8_t* command) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = (0x800000 + (cur_pid*0x400000) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = (EIGHT_MB + (cur_pid*FOUR_MB) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
 
     /* Load Memory with Program Image -- Use virtual address of 128 MB */
-    uint8_t* p_img = (uint8_t*)((0x08048000));
+    uint8_t* p_img = (uint8_t*)((0x08048000)); // 128MB + offset of 0x48000
 
     read_data(new_dentry.inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
 
     /* Read entry point from program file */
-    read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file
+    read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
 
     /* Set up PCB entry */
     pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
