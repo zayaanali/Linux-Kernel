@@ -117,7 +117,7 @@ int32_t halt(uint8_t status) {
     if (parent_pid < 0) printf("ERR: parent_pid is negative \n"); // sanity check
     cur_pid = parent_pid;
     parent_pid--;
-    if (parent_pid < 0) printf("ERR: parent_pid is negative \n"); // sanity check
+    if (parent_pid < -1) printf("ERR: parent_pid is negative \n"); // sanity check
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -182,7 +182,7 @@ int32_t execute(const uint8_t* command) {
     int i, ret;
     uint8_t read_buffer[4];
     uint32_t entry_point;
-    dentry_t *new_dentry;
+    dentry_t new_dentry;
 
     /* Parse the command */
     for (i = 0; i < strlen((const int8_t*)command); i++) {
@@ -195,11 +195,11 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* get inode if valid file to use for read data */
-    if(read_dentry_by_name(filename, new_dentry) == -1)
+    if(read_dentry_by_name(filename, &new_dentry) == -1)
         { printf("execute: File doesn't exist \n"); return -1; }
 
     /* read first 4 bytes (check for del and ELF const)*/
-    read_data(new_dentry->inode_id, 0, read_buffer, 4);
+    read_data(new_dentry.inode_id, 0, read_buffer, 4);
     
     /* Check that file is executable */
     for (i=0; i<ELF_SIZE; i++) {
@@ -239,10 +239,10 @@ int32_t execute(const uint8_t* command) {
     /* Load Memory with Program Image -- Use virtual address of 128 MB */
     uint8_t* p_img = (uint8_t*)((0x08048000));
 
-    read_data(new_dentry->inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
+    read_data(new_dentry.inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
 
     /* Read entry point from program file */
-    read_data(new_dentry->inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file
+    read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file
 
     /* Set up PCB entry */
     pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
@@ -257,28 +257,28 @@ int32_t execute(const uint8_t* command) {
         pcb.fd_array[i].in_use = 0;
 
     /* Save EBP/ESP and Copy PCB to memory */
-    register uint32_t s_esp asm("%esp"); 
-    register uint32_t s_ebp asm("%ebp"); 
-    pcb.ebp = s_ebp;
-    pcb.esp = s_esp; 
+
     
     memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
 
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
-    
-    /* Set TSS entries */
-    tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
-    uint32_t user_ds_ext = (0|USER_DS)&(0x0ffff);
-    uint32_t user_cs_ext = (0|USER_CS)&(0x0ffff); 
 
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     
+    register uint32_t s_esp asm("%esp"); 
+    register uint32_t s_ebp asm("%ebp"); 
+    pcb_ptr[cur_pid]->esp = s_esp;
+    pcb_ptr[cur_pid]->ebp = s_ebp;
+
+    /* Set TSS entries */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+    
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
-    
+
     /* Context Switch */
     asm volatile(
         "pushl %0; \n"             // set data segment register
@@ -291,8 +291,6 @@ int32_t execute(const uint8_t* command) {
         "pushl %3; \n"                 // push operand 2, eip of program to run 
         "iret; \n"
         "return_label: \n"
-        "leave; \n"
-        "ret; \n"
 
         :                                           // no outputs
         : "g" (USER_DS), "g" (user_esp), "g" (USER_CS), "g" (entry_point)        // inputs
