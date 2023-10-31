@@ -13,12 +13,12 @@ file_op_func_t dir_funcs;
 file_op_func_t term_funcs; 
 
 int i = 0x7fe000;
-pcb_entry_t* pcb_ptr[MAX_PROCESSES]={ (pcb_entry_t*)0x7fe000, (pcb_entry_t*)0x7fc000, (pcb_entry_t*)0x7fa000, (pcb_entry_t*)0x7f8000, (pcb_entry_t*)0x7f6000, (pcb_entry_t*)0x7f4000 };
+pcb_entry_t* pcb_ptr[MAX_PROCESSES];
 
 /* pcb_init
  *   Inputs: none
  *   Return Value: none
- *   Function: initializes things for pcb structures. sets up func operations table for each file type
+ *   Function: Initializes things for pcb structures. Sets up func operations table for each file type and pcb struct pointers.
 */
 void pcb_init(){
     //rtc_funcs->open_func = rtc_open;
@@ -41,8 +41,13 @@ void pcb_init(){
     term_funcs.read_func = terminal_read;
     term_funcs.write_func = terminal_write;
 
-    // set up stdin entry of file array
-    // set up stdout entry of file array
+    // set up pcb pointers
+    int i; 
+
+    for(i=0; i<MAX_PROCESSES; i++){
+        // process 0 pcb starts 8kb above 8mb(kernel bottom), each following pcb starts 8kb above the last
+        pcb_ptr[i] = (pcb_entry_t*)(EIGHT_MB - (i+1)*EIGHT_KB);
+    }
 }
 
 
