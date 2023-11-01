@@ -6,6 +6,7 @@
 #include "excepts.h"
 #include "lib.h"
 #include "excepts_s.h"
+#include "systemcall.h"
 
 extern void divide_error_link(); 
 extern void debug_link();
@@ -26,6 +27,7 @@ extern void fp_error_link();
 extern void align_check_link();
 extern void mach_check_link();
 extern void simd_fp_link();
+int exception_flag = 0;
 
 /* setup_exceptions
  *   Inputs: none
@@ -82,7 +84,6 @@ void setup_exceptions(){
 
 }
 
-
 /* divide_error
  *   Inputs: none
  *   Return Value: none
@@ -90,11 +91,10 @@ void setup_exceptions(){
 void divide_error(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1; 
     printf("ERR Trying to divide by 0 \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -105,11 +105,10 @@ void divide_error(){
 extern void debug(){
 
     cli();
-    clear(); 
+    exception_flag = 1; 
     printf("ERR DB exception \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 
 }
@@ -121,11 +120,10 @@ extern void debug(){
 extern void nmi_interrupt(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Non-Maskable Interrupt \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -136,11 +134,10 @@ extern void nmi_interrupt(){
 extern void breakpoint(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR breakpoint \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 
 }
@@ -152,11 +149,10 @@ extern void breakpoint(){
 extern void overflow(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR overflow \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -168,11 +164,10 @@ extern void overflow(){
 extern void bound_rng_ex(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR bound range exceeded \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -184,11 +179,10 @@ extern void bound_rng_ex(){
 extern void invalid_op(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR invalid opcode \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 
 }
@@ -201,11 +195,10 @@ extern void invalid_op(){
 extern void device_not_avail(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR device not available \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -217,11 +210,10 @@ extern void device_not_avail(){
 extern void dbl_fault(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Double Fault \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -233,11 +225,10 @@ extern void dbl_fault(){
 extern void co_seg_overrun(){
     
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Coprocessor Segment Overrun \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 }
 
@@ -248,11 +239,10 @@ extern void co_seg_overrun(){
 extern void invalid_tss(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Invalid TSS \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti();
 
 }
@@ -265,11 +255,10 @@ extern void invalid_tss(){
 extern void seg_not_present(){
        
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Segment Not Present \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti();
 }
 
@@ -281,11 +270,10 @@ extern void seg_not_present(){
 extern void stack_seg_fault(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Stack-Segment Fault \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti();
 }
 
@@ -297,11 +285,10 @@ extern void stack_seg_fault(){
 extern void gen_prot(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR General Protection Fault \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti();
 
 }
@@ -314,11 +301,10 @@ extern void gen_prot(){
 extern void page_fault(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Page Fault \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 
 }
@@ -331,11 +317,10 @@ extern void page_fault(){
 extern void fp_error(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Floating-Point Error \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti(); 
 
 }
@@ -348,11 +333,10 @@ extern void fp_error(){
 extern void align_check(){
 
     cli();
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Alignment Check Fault \n");
-    while(1){
-        ;
-    }
+    halt(0);
+
     sti();
 }
 
@@ -364,11 +348,9 @@ extern void align_check(){
 extern void mach_check(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR Machine Check \n");
-    while(1){
-        ;
-    }
+    halt(0);
     sti();
 }
 
@@ -380,11 +362,9 @@ extern void mach_check(){
 extern void simd_fp(){
 
     cli(); 
-    clear(); 
+    exception_flag = 1;  
     printf("ERR SIMD Floating-Point Exception \n");
-    while(1){
-        ;
-    }
+    halt(0);
     sti(); 
     
 }
