@@ -16,7 +16,7 @@
 #include "page.h"
 #include "paging.h"
 #include "systemcall.h"
-
+#include "pcb.h"
 
 #define RUN_TESTS 
 
@@ -185,7 +185,7 @@ void entry(unsigned long magic, unsigned long addr) {
    //printf("Enabling Interrupts\n");
    sti();
 
-   execute("shell");
+   execute((const uint8_t*)"shell");
 
 #ifdef RUN_TESTS
      /* Run tests */

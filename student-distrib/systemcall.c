@@ -51,36 +51,33 @@ int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t 
 
     switch(syscall){
         case SYS_HALT:
-            halt((uint8_t)arg1);
+            return halt((uint8_t)arg1);
             break;
         case SYS_EXECUTE:
-            execute((const uint8_t*) arg1);
+            return execute((const uint8_t*) arg1);
             break; 
         case SYS_READ:
-            read(arg1, (void*)arg2, arg3);
+            return read(arg1, (void*)arg2, arg3);
             break;
         case SYS_WRITE:
-            write(arg1, (const void*)arg2, arg3);
+            return write(arg1, (const void*)arg2, arg3);
             break;
         case SYS_OPEN:
-            open((const uint8_t*)arg1);
+            return open((const uint8_t*)arg1);
             break;
         case SYS_CLOSE:
-            close(arg1);
+            return close(arg1);
             break;
         case SYS_GETARGS:
-            getargs((uint8_t*)arg1, arg2);
+            return getargs((uint8_t*)arg1, arg2);
             break; 
         case SYS_VIDMAP:    
-            vidmap((uint8_t**)arg1);
+            return vidmap((uint8_t**)arg1);
             break; 
-        case SYS_SET_HANDLER:
-            break;
-        case SYS_SIGRETURN:
-            break;
         default:
             return -1; //not a valid syscall
     }
+
 }
 
     
@@ -89,20 +86,18 @@ int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t 
     *   Return Value: -1 on failure, 0 on success
  */
 
-cur_pid = -1; // -1 before any processes are open
-parent_pid = -1; // -1 before any processes are open
+int cur_pid = -1; // -1 before any processes are open
+int parent_pid = -1; // -1 before any processes are open
 
 /* Need to restore parent data, restore parent paging, close relevant FDs, jump to execute return */
 int32_t halt(uint8_t status) {
     uint32_t flags;
     cli_and_save(flags);
-    uint8_t ignore;
     
     int i;
     
     /* Get the current and parent pcb */
     pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
-    pcb_entry_t* parent_pcb = (pcb_entry_t*) (EIGHT_MB - (parent_pid+1)*EIGHT_KB);
 
     /* Close relevant FDs */
     for(i=0; i<8; i++)
@@ -111,7 +106,7 @@ int32_t halt(uint8_t status) {
     /* If current PID is base shell, then relaunch shell */
     if (cur_pid == 0) { 
         parent_pid = -1; cur_pid = -1; // cur_pid will be incremented in execute
-        execute((uint8_t*)"shell"); 
+        execute((const uint8_t*)"shell"); 
     }
     
     /* Update cur/parent pid. Parent_pid should only be negative with base shell (case above) */
@@ -133,7 +128,7 @@ int32_t halt(uint8_t status) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = (EIGHT_MB + (cur_pid*FOUR_MB) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
@@ -153,14 +148,15 @@ int32_t halt(uint8_t status) {
     restore_flags(flags);
     /* Context Switch */
     asm volatile(
-        "movl %0, %%esp; \n"                 // push operand 0, USER_DS
-        "movl %1, %%ebp; \n"
+        "movl %0, %%esp; \n"                 // restore esp
+        "movl %1, %%ebp; \n"                 // restore ebp
         "jmp return_label; \n"
     
-        :                                           // no outputs
-        : "r"(s_esp), "r"(s_ebp)       // inputs
+        :                                    // no outputs
+        : "r"(s_esp), "r"(s_ebp)                // inputs
      );
 
+    return 0;   // to silence compiler warning
 }
 
 
@@ -180,7 +176,7 @@ int32_t execute(const uint8_t* command) {
    
     uint8_t filename[32] = "";
     int space_found=0;
-    int i, ret;
+    int i;
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
@@ -232,7 +228,7 @@ int32_t execute(const uint8_t* command) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = (EIGHT_MB + (cur_pid*FOUR_MB) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
@@ -253,8 +249,8 @@ int32_t execute(const uint8_t* command) {
     pcb.parent_esp0 = tss.esp0;
 
 
-    //initialize other file array entries to not in use
-    for(i=2; i<8; i++)
+    //initialize file array entries to not in use
+    for(i=0; i<8; i++)
         pcb.fd_array[i].in_use = 0;
 
     /* Save EBP/ESP and Copy PCB to memory */
@@ -418,6 +414,7 @@ int32_t close(int32_t fd){
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
 
+    return 0;
 }
 
 
@@ -428,5 +425,6 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 */
 int32_t vidmap(uint8_t** screen_start){
 
+    return 0;
 }
 

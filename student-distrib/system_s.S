@@ -20,9 +20,5 @@ systemcall_link:
             popl %ebx
             popfl       
             
-            # rn, EAX being overwritten by popal. figure out how to save it
             iret  
 
-
-  
-            
