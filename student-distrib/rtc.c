@@ -62,8 +62,8 @@ uint8_t freq_to_rate(uint16_t freq) {
         rate++;
         base >>= 1;
 
-        if (rate > 15) {
-            return 1;
+        if (rate > 13) {
+            return 13;
         }
     }
 
@@ -76,6 +76,7 @@ uint8_t freq_to_rate(uint16_t freq) {
  *    Function: set frequency of RTC interrupts */
 void rtc_set_freq(uint16_t freq) {
     uint8_t new_freq = freq_to_rate(freq); 
+
     uint8_t old_freq;
     cli(); 
     outb(RTC_A, RTC_CMD_PORT); 
@@ -111,7 +112,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
     //Check if frequency is in range
-    if (buf_freq == 0 || buf_freq > 32768) {
+    if (buf_freq == 0 || buf_freq > 1024) {
         return -1;
     }
     rtc_set_freq(buf_freq);
