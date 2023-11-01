@@ -6,6 +6,7 @@
 #include "excepts.h"
 #include "lib.h"
 #include "excepts_s.h"
+#include "systemcall.h"
 
 extern void divide_error_link(); 
 extern void debug_link();
