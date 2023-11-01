@@ -29,7 +29,7 @@ extern void fp_error();
 extern void align_check();
 extern void mach_check();
 extern void simd_fp();
-
+extern int exception_flag;
 
 
 #endif

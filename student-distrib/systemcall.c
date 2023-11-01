@@ -13,6 +13,7 @@
 #include "page.h"
 #include "terminal.h"
 #include "x86_desc.h"
+#include "excepts.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -41,7 +42,6 @@ void init_syscall_idt(){
 
     
 }
-
 
 /* systemcall_handler
  *   Inputs: none
@@ -155,6 +155,8 @@ int32_t halt(uint8_t status) {
     asm volatile(
         "movl %0, %%esp; \n"                 // push operand 0, USER_DS
         "movl %1, %%ebp; \n"
+        "movsx %%bl, %%ebx; \n"
+        "movl %%ebx, %%eax; \n"              //expand 8bit arg from BL into 32-bit return val
         "jmp return_label; \n"
     
         :                                           // no outputs
@@ -180,7 +182,7 @@ int32_t execute(const uint8_t* command) {
    
     uint8_t filename[32] = "";
     int space_found=0;
-    int i, ret;
+    int i;
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
@@ -267,9 +269,10 @@ int32_t execute(const uint8_t* command) {
 
 
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
+    register uint32_t ret;
     
     register uint32_t s_esp asm("%esp"); 
-    register uint32_t s_ebp asm("%ebp"); 
+    register uint32_t s_ebp asm("%ebp"); //reg values volatile?
     pcb_ptr[cur_pid]->esp = s_esp;
     pcb_ptr[cur_pid]->ebp = s_ebp;
 
@@ -282,23 +285,29 @@ int32_t execute(const uint8_t* command) {
 
     /* Context Switch */
     asm volatile(
-        "pushl %0; \n"             // set data segment register
-        "pushl %1; \n"
+        "pushl %1; \n"             // set data segment register
+        "pushl %2; \n"
         "pushfl; \n"
         "popl %%ecx; \n"
         "orl $0x200, %%ecx; \n"          // Set IF flag to one                 
         "pushl %%ecx; \n"
-        "pushl %2; \n"                   // push flags
-        "pushl %3; \n"                 // push operand 2, eip of program to run 
+        "pushl %3; \n"                   // push flags
+        "pushl %4; \n"                 // push operand 2, eip of program to run 
         "iret; \n"
         "return_label: \n"
-
-        :                                           // no outputs
+        "movl %%eax, %0; \n"     
+        
+        : "=r" (ret)                                          // no outputs
         : "g" (USER_DS), "g" (user_esp), "g" (USER_CS), "g" (entry_point)        // inputs
         : "memory", "cc", "ecx"
      );
 
-    return 0; 
+    /* if an exception occurs*/
+    if(exception_flag == 1){
+        return 256;
+    } 
+    /* return program call*/
+    return ret;
 }
 
 
