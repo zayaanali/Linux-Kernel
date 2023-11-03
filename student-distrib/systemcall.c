@@ -423,7 +423,7 @@ int32_t close(int32_t fd){
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
 
-    return 0;
+    return -1;
 }
 
 
@@ -434,6 +434,6 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 */
 int32_t vidmap(uint8_t** screen_start){
 
-    return 0;
+    return -1;
 }
 
