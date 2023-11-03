@@ -86,16 +86,36 @@ void rtc_set_freq(uint16_t freq) {
     sti();  
 }
 
+
+/* rtc_open
+ *   Inputs: filename
+ *   Return Value: fd if successfully insert into file array, -1 for failure
+ *    Function: "open" rtc by setting default frequency, enabling interrupt, and inserting entry into file array  */
 int32_t rtc_open(const uint8_t* filename){
     rtc_set_freq(2);
+
+    enable_irq(RTC_IRQ);
 
     return insert_into_file_array(&rtc_funcs, -1);      // inode not relevant for rtc, send invalid value
 }
 
+
+/* rtc_close
+ *   Inputs: filename
+ *   Return Value: 0 if successfully closed, else -1
+ *    Function: "close" rtc by removing its file array entry  */
 int32_t rtc_close(int32_t fd){
+
+    disable_irq(RTC_IRQ);
+
     return remove_from_file_array(fd); 
 }
 
+
+/* rtc_read
+ *   Inputs: fd, buf, nbytes (none of these used)
+ *   Return Value: 1 when read
+ *    Function: reads from RTC by waiting for interrupt  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
     while(INT_FLAG == 0){
         ;
@@ -104,6 +124,11 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
     return 1;
 }
 
+
+/* rtc_write
+ *   Inputs: fd, buf, nbytes  (only buf used)
+ *   Return Value: 0 
+ *    Function: writes a frequency to RTC indicated by value in buf  */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     uint16_t buf_freq = (uint16_t)* (uint16_t*)buf;
     
