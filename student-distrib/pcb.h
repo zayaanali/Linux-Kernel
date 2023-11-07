@@ -5,6 +5,7 @@
 #include "rtc.h"
 #include "file.h"
 #include "filedir.h"
+#include "keyboard.h"
 
 #define MAX_FD_ENTRIES 8
 #define NUM_REGS 10
@@ -61,6 +62,9 @@ typedef struct pcb_entry{
     file_arr_entry_t fd_array[MAX_FD_ENTRIES];
     uint32_t state;
     uint32_t priority;
+
+    /* current args */
+    unsigned char args[MAX_BUFFER_SIZE];
 
     /* Parent Data */
     uint32_t parent_pid;

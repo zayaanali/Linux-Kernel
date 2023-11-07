@@ -169,29 +169,40 @@ int32_t halt(uint8_t status) {
     *   Return Value: -1 on failure, 256 if program dies by exception, 0-255 if program executes halt system call (return value of halt)
 
  */
-uint8_t args[128];
+
 uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
+    uint8_t args[128];
+    
     uint32_t flags;
     cli_and_save(flags);
    
     uint8_t filename[32] = "";
     int space_found=0;
-    int i;
+    int i, j;
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
 
-    /* Parse the command */
+    /* Init args array to NULL char */
+    for (i=0; i<MAX_BUFFER_SIZE; i++) {
+        args[i]='\0';
+    }
+    
+    /* Parse filename/arguments */
+    j=0;
     for (i = 0; i < strlen((const int8_t*)command); i++) {
         if (command[i] == ' ') // check if space is found
             space_found = 1;
         else if (space_found == 0) // if no space found, add to filename
             filename[i] = command[i];
-        else // if space found, add to args
-            args[i] = command[i];
+        else {                      // if space found, add to args
+            args[j] = command[i];
+            j++;
+        }
     }
+    
 
     /* get inode if valid file to use for read data */
     if(read_dentry_by_name(filename, &new_dentry) == -1)
@@ -249,6 +260,11 @@ int32_t execute(const uint8_t* command) {
     pcb.pid = cur_pid;
     pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
+
+    /* Copy arguments to PCB args value */
+    for (i=0; i<MAX_BUFFER_SIZE; i++) {
+        pcb.args[i] = args[i];
+    }
 
 
     //initialize file array entries to not in use
@@ -422,8 +438,24 @@ int32_t close(int32_t fd){
  *   Function: 
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
+    int i;
+    
+    /* Check buffer is valid */
+    if (buf==NULL || nbytes<0)
+        { printf("Invalid Argument to getargs"); return -1; }
+    
+    /* Get the current PCB */
+    pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid];
 
-    return -1;
+    //printf("%s\n", cur_pcb->args);
+    // printf("%d", nbytes);
+    
+    // for (i=0; i<nbytes; i++) {
+    //     buf[i] = cur_pcb->args[i];
+    // }
+    strncpy(buf, cur_pcb->args, nbytes);
+    
+    return 0;
 }
 
 
