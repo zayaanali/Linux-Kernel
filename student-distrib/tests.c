@@ -604,6 +604,7 @@ void launch_tests(){
 	//read_file((uint8_t*)"counter");
 	//read_file((uint8_t*)"hello");
 	//read_file((uint8_t*)"testprint");
+	//read_file((uint8_t*)"frame0.txt");
 
 	// test large files
 	//read_file((uint8_t*)"verylargetextwithverylongname.tx");

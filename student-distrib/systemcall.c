@@ -362,6 +362,8 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 
+    char *char_buf = (char*)buf;
+    
     if(fd<0 || fd>7){
         return -1; 
     }
@@ -453,10 +455,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
     //printf("%s\n", cur_pcb->args);
     // printf("%d", nbytes);
     
-    // for (i=0; i<nbytes; i++) {
+    // for (i=0; i<nbytes; i++) {   
     //     buf[i] = cur_pcb->args[i];
     // }
     strncpy((void *)buf, (void *)cur_pcb->args, nbytes);
+    //printf("%s\n", buf);
     
     return 0;
 }

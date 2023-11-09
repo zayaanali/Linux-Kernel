@@ -66,11 +66,8 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     
     /* Print each character in the buffer */
     for (i=0; i < nbytes; i++) {
-        if (char_buf[i] == '\n')  // check if reached end of buffer
-            { putc('\n'); break; } 
-        else 
-            { putc(char_buf[i]); bytes_written++; }
-        
+        putc(char_buf[i]); 
+        bytes_written++;
     }
     
     /* Return number of bytes written */

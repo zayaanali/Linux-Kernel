@@ -12,7 +12,7 @@ int main ()
         ece391_fdputs (1, (uint8_t*)"could not read arguments\n");
 	return 3;
     }
-
+    
     if (-1 == (fd = ece391_open (buf))) {
         ece391_fdputs (1, (uint8_t*)"file not found\n");
 	return 2;
