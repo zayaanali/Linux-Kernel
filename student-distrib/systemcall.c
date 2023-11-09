@@ -15,6 +15,8 @@
 #include "x86_desc.h"
 #include "excepts.h"
 
+page_table_entry_t vm_page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // vidmap page table
+
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
 
@@ -447,13 +449,14 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
     /* Get the current PCB */
     pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid];
 
+    //if ( cur_pcb->args )
     //printf("%s\n", cur_pcb->args);
     // printf("%d", nbytes);
     
     // for (i=0; i<nbytes; i++) {
     //     buf[i] = cur_pcb->args[i];
     // }
-    strncpy(buf, cur_pcb->args, nbytes);
+    strncpy((void *)buf, (void *)cur_pcb->args, nbytes);
     
     return 0;
 }
@@ -471,17 +474,37 @@ int32_t vidmap(uint8_t** screen_start){
     if(screen_start == NULL || (int)screen_start > PROGIMG_BASE || (int)screen_start < KERNEL_BASE){
         return -1;
     }
-    /* page table for vidmap */
-    /* Add PID page */
 
-    /* entry into page table*/
+    //pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid]; //(need to implement pcb/pid if just remapping?)
 
+    /* Set the physical address */
+    uint32_t progimg_base_addr = 0xB8000;  //page base address for entry (videomem)
 
-    uint32_t progimg_base_addr = 0xB8000;  //page base address for entry (is this correct?)
+    /* add PID page */ 
+    page_dir[33].page_dir_entry_4mb_t.present = 1;  
+    page_dir[33].page_dir_entry_4mb_t.read_write = 1;
+    page_dir[33].page_dir_entry_4mb_t.user_supervisor = 1;
+    page_dir[33].page_dir_entry_4mb_t.page_write_through = 0;
+    page_dir[33].page_dir_entry_4mb_t.page_cache_disable = 0;
+    page_dir[33].page_dir_entry_4mb_t.accessed = 0;
+    page_dir[33].page_dir_entry_4mb_t.dirty = 0;
+    page_dir[33].page_dir_entry_4mb_t.page_size = 1; // 4MB page
+    page_dir[33].page_dir_entry_4mb_t.global = 0;
+    page_dir[33].page_dir_entry_4mb_t.avail = 0;
+    page_dir[33].page_dir_entry_4mb_t.PAT = 0;
+    page_dir[33].page_dir_entry_4mb_t.reserved = 0;
+    page_dir[33].page_dir_entry_4mb_t.page_base_address = (progimg_base_addr >> 12); //align into page index
+
+    /* entry into page table ?*/
+    //vm_page_table[PAGE_ENTRIES]; 
+
+    /* Flush TLB */
+    flush_tlb();
+
     /*set screen_start location in mem*/
     *screen_start = (uint8_t *)PROGIMG_BASE;
 
     sti();
-    return -1;
+    return 0;
 }
 
