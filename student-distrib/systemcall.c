@@ -465,7 +465,23 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
  *   Function: 
 */
 int32_t vidmap(uint8_t** screen_start){
+    cli();
+    
+    /* check for valid ptr or if screen_start within memory map bounds*/
+    if(screen_start == NULL || (int)screen_start > PROGIMG_BASE || (int)screen_start < KERNEL_BASE){
+        return -1;
+    }
+    /* page table for vidmap */
+    /* Add PID page */
 
+    /* entry into page table*/
+
+
+    uint32_t progimg_base_addr = 0xB8000;  //page base address for entry (is this correct?)
+    /*set screen_start location in mem*/
+    *screen_start = (uint8_t *)PROGIMG_BASE;
+
+    sti();
     return -1;
 }
 
