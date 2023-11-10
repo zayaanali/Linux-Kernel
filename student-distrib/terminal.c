@@ -61,11 +61,13 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
  *   Function: Write specified number of bytes from buffer to screen */
 int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     int i;
-    int bytes_written;
+    int bytes_written=0;
     char *char_buf = (char*)buf;
     
     /* Print each character in the buffer */
     for (i=0; i < nbytes; i++) {
+        if (char_buf[i]=='\0')
+            continue;
         putc(char_buf[i]); 
         bytes_written++;
     }
