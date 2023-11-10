@@ -15,8 +15,6 @@
 #include "x86_desc.h"
 #include "excepts.h"
 
-page_table_entry_t vm_page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // vidmap page table
-
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
 
@@ -439,7 +437,8 @@ int32_t close(int32_t fd){
  *   Inputs: buf:
  *           nbytes:
  *   Return Value: 
- *   Function: 
+ *   Function: Arguments are parsed from the command buffer in execute
+
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
     int i;
@@ -450,6 +449,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
     
     /* Get the current PCB */
     pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid];
+
+    /*If the arguments and a terminal NULL (0-byte) 
+    do not fit in the buffer, simply return -1*/
+    if(strlen(cur_pcb->args) + 1 > nbytes){
+        return -1;
+    }
 
     //if ( cur_pcb->args )
     //printf("%s\n", cur_pcb->args);
@@ -467,45 +472,41 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 
 /* vidmap
  *   Inputs: screen_start:   
- *   Return Value: 
- *   Function: 
+ *   Return Value: 132MB address on success (from *screen_start), -1 on failure 
+ *   Function: Maps video memory into user space at adress 132MB after prog img page
 */
 int32_t vidmap(uint8_t** screen_start){
     cli();
     
-    /* check for valid ptr or if screen_start within memory map bounds*/
-    if(screen_start == NULL || (int)screen_start > PROGIMG_BASE || (int)screen_start < KERNEL_BASE){
+    /* check for valid ptr or if screen_start in 4MB user page at 128MB */
+    if(screen_start == NULL || (int)screen_start > ONETHIRTYTWO_MB || (int)screen_start < KERNEL_BASE){
         return -1;
     }
 
     //pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid]; //(need to implement pcb/pid if just remapping?)
 
     /* Set the physical address */
-    uint32_t progimg_base_addr = 0xB8000;  //page base address for entry (videomem)
+    uint32_t video_page_addr = 0xB8000;  //page base address for entry (videomem)
 
-    /* add PID page */ 
-    page_dir[33].page_dir_entry_4mb_t.present = 1;  
-    page_dir[33].page_dir_entry_4mb_t.read_write = 1;
-    page_dir[33].page_dir_entry_4mb_t.user_supervisor = 1;
-    page_dir[33].page_dir_entry_4mb_t.page_write_through = 0;
-    page_dir[33].page_dir_entry_4mb_t.page_cache_disable = 0;
-    page_dir[33].page_dir_entry_4mb_t.accessed = 0;
-    page_dir[33].page_dir_entry_4mb_t.dirty = 0;
-    page_dir[33].page_dir_entry_4mb_t.page_size = 1; // 4MB page
-    page_dir[33].page_dir_entry_4mb_t.global = 0;
-    page_dir[33].page_dir_entry_4mb_t.avail = 0;
-    page_dir[33].page_dir_entry_4mb_t.PAT = 0;
-    page_dir[33].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[33].page_dir_entry_4mb_t.page_base_address = (progimg_base_addr >> 12); //align into page index
+    /* add 4kb video page (132MB/4MB = 33 for pd index) */ 
+    page_dir[33].page_dir_entry_4kb_t.present = 1;
+    page_dir[33].page_dir_entry_4kb_t.read_write = 1;
+    page_dir[33].page_dir_entry_4kb_t.user_supervisor = 1;  
+    page_dir[33].page_dir_entry_4kb_t.page_size = 0; // 4KB page size
+    page_dir[33].page_dir_entry_4kb_t.page_table_base_address =  ((unsigned int)video_page_table) >> 12; // align the page_table address to 4KB boundary
 
-    /* entry into page table ?*/
-    //vm_page_table[PAGE_ENTRIES]; 
+    /* entry into page table */
+    video_page_table[184].present = 1;
+    video_page_table[184].page_cache_disable = 0;      
+    video_page_table[184].read_write = 1;
+    video_page_table[184].user_supervisor = 1;
+    video_page_table[184].page_base_address = (video_page_addr) >> 12;
 
     /* Flush TLB */
     flush_tlb();
 
     /*set screen_start location in mem*/
-    *screen_start = (uint8_t *)PROGIMG_BASE;
+    *screen_start = (uint8_t *)ONETHIRTYTWO_MB;
 
     sti();
     return 0;
