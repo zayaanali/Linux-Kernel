@@ -69,7 +69,7 @@ typedef union page_dir_entry_t {
 
 extern page_dir_entry_t page_dir[PAGE_ENTRIES] __attribute__((aligned(4096)));
 extern page_table_entry_t page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // new page table
-
+extern page_table_entry_t video_page_table[PAGE_ENTRIES] __attribute__((aligned(4096))); // new page table
 
 extern void page_init();
 void add_pid_page(uint32_t pid);
