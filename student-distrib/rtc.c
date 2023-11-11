@@ -4,7 +4,7 @@
 #include "lib.h"
 #include "pcb.h"
 
-static volatile int INT_FLAG;
+volatile int INT_FLAG;
 
 extern void rtc_link(); 
 
@@ -36,6 +36,7 @@ void rtc_init(){
     // link idt entry to rtc liner function
     SET_IDT_ENTRY(idt[40], rtc_link);
 
+    rtc_set_freq(2);
    
 
    // enable_irq(RTC_IRQ);
@@ -114,14 +115,15 @@ int32_t rtc_close(int32_t fd){
 
 /* rtc_read
  *   Inputs: fd, buf, nbytes (none of these used)
- *   Return Value: 1 when read
+ *   Return Value: 0 when read
  *    Function: reads from RTC by waiting for interrupt  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
+    INT_FLAG = 0;
     while(INT_FLAG == 0){
         ;
     }
     INT_FLAG = 0; 
-    return 1;
+    return 0;
 }
 
 

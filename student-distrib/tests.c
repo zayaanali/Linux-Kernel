@@ -583,7 +583,7 @@ void launch_tests(){
 	/* checkpoint 2 */
 	//test_dir_read(); 
 
-	//rtc_test();
+	rtc_test();
 	//rtc_neg_test();
 
 	//term_driver_test();

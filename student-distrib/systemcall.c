@@ -130,6 +130,9 @@ int32_t halt(uint8_t status) {
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
     page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
+    /* mark vidmem page as not present*/
+    video_page_table[0].present = 0;
+
     /* Flush TLB */
     flush_tlb();
 
@@ -452,7 +455,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 
     /*If the arguments and a terminal NULL (0-byte) 
     do not fit in the buffer, simply return -1*/
-    if(strlen(cur_pcb->args) + 1 > nbytes){
+    if(strlen((const int8_t *)cur_pcb->args) + 1 > nbytes){
         return -1;
     }
 
@@ -496,17 +499,17 @@ int32_t vidmap(uint8_t** screen_start){
     page_dir[33].page_dir_entry_4kb_t.page_table_base_address =  ((unsigned int)video_page_table) >> 12; // align the page_table address to 4KB boundary
 
     /* entry into page table */
-    video_page_table[184].present = 1;
-    video_page_table[184].page_cache_disable = 0;      
-    video_page_table[184].read_write = 1;
-    video_page_table[184].user_supervisor = 1;
-    video_page_table[184].page_base_address = (video_page_addr) >> 12;
+    video_page_table[0].present = 1;
+    video_page_table[0].page_cache_disable = 0;      
+    video_page_table[0].read_write = 1;
+    video_page_table[0].user_supervisor = 1;
+    video_page_table[0].page_base_address = (video_page_addr) >> 12;
 
     /* Flush TLB */
     flush_tlb();
 
     /*set screen_start location in mem*/
-    *screen_start = (uint8_t *)ONETHIRTYTWO_MB;
+    *screen_start = (uint8_t*)ONETHIRTYTWO_MB;
 
     sti();
     return 0;

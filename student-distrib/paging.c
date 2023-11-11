@@ -59,7 +59,7 @@ void page_init() {
 
     /* Initialize video page table (for vidmap)*/
         for (i = 0; i < NUM_PAGES; i++) {
-        if(i==184){
+        if(i==0){
             video_page_table[i].present = 1;
             video_page_table[i].page_cache_disable = 0;       // pcd should be 0 for video memory pages
         }else{
