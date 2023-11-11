@@ -437,9 +437,9 @@ int32_t close(int32_t fd){
 
 
 /* getargs
- *   Inputs: buf:
- *           nbytes:
- *   Return Value: 
+ *   Inputs: buf: buffer for argument to be parsed into
+ *           nbytes: number of bytes to be copied
+ *   Return Value: returns the argument
  *   Function: Arguments are parsed from the command buffer in execute
 
 */
@@ -474,7 +474,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 
 
 /* vidmap
- *   Inputs: screen_start:   
+ *   Inputs: screen_start: points to start of video memory
  *   Return Value: 132MB address on success (from *screen_start), -1 on failure 
  *   Function: Maps video memory into user space at adress 132MB after prog img page
 */
@@ -485,8 +485,6 @@ int32_t vidmap(uint8_t** screen_start){
     if(screen_start == NULL || (int)screen_start > ONETHIRTYTWO_MB || (int)screen_start < KERNEL_BASE){
         return -1;
     }
-
-    //pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid]; //(need to implement pcb/pid if just remapping?)
 
     /* Set the physical address */
     uint32_t video_page_addr = 0xB8000;  //page base address for entry (videomem)
