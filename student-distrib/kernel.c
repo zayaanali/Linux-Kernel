@@ -59,7 +59,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     if (CHECK_FLAG(mbi->flags, 3)) {
         int mod_count = 0;
-        int i;
+        //int i;
         module_t* mod = (module_t*)mbi->mods_addr;
 
         /* initialize file system*/
@@ -83,16 +83,16 @@ void entry(unsigned long magic, unsigned long addr) {
     }
 
     /* Is the section header table of ELF valid? */
-    if (CHECK_FLAG(mbi->flags, 5)) {
-        elf_section_header_table_t *elf_sec = &(mbi->elf_sec);
+    //if (CHECK_FLAG(mbi->flags, 5)) {
+        //elf_section_header_table_t *elf_sec = &(mbi->elf_sec);
        // printf("elf_sec: num = %u, size = 0x%#x, addr = 0x%#x, shndx = 0x%#x\n",
                 //(unsigned)elf_sec->num, (unsigned)elf_sec->size,
                 //(unsigned)elf_sec->addr, (unsigned)elf_sec->shndx);
-    }
+    //}
 
     /* Are mmap_* valid? */
-    if (CHECK_FLAG(mbi->flags, 6)) {
-        memory_map_t *mmap;
+    //if (CHECK_FLAG(mbi->flags, 6)) {
+        //memory_map_t *mmap;
         // printf("mmap_addr = 0x%#x, mmap_length = 0x%x\n",
         //         (unsigned)mbi->mmap_addr, (unsigned)mbi->mmap_length);
         // for (mmap = (memory_map_t *)mbi->mmap_addr;
@@ -105,7 +105,7 @@ void entry(unsigned long magic, unsigned long addr) {
         //             (unsigned)mmap->type,
         //             (unsigned)mmap->length_high,
         //             (unsigned)mmap->length_low);
-    }
+    //}
 
     /* Construct an LDT entry in the GDT */
     {

@@ -363,7 +363,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 
-    char *char_buf = (char*)buf;
+    //char *char_buf = (char*)buf;
     
     if(fd<0 || fd>7){
         return -1; 
@@ -444,7 +444,6 @@ int32_t close(int32_t fd){
 
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
-    int i;
     
     /* Check buffer is valid */
     if (buf==NULL || nbytes<0)
