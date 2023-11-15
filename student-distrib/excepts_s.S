@@ -50,7 +50,6 @@ rtc_link:
             call rtc_handler    
             popfl       
             popal  
-
             iret  
 
 
@@ -65,5 +64,18 @@ keyboard_link:
             call keyboard_handler   
             popfl       
             popal  
+            iret
 
-            iret  
+
+#  pit_int_link
+#    Inputs: none
+#    Return Value: none
+#    Function: assembly wrapper for timer. sets up the stack, calls pit_int_handler , then does iret
+.GLOBL pit_int_link
+pit_int_link:
+            pushal 
+            pushfl 
+            call pit_int_handler   
+            popfl       
+            popal  
+            iret    

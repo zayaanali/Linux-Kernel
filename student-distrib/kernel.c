@@ -17,6 +17,7 @@
 #include "paging.h"
 #include "systemcall.h"
 #include "pcb.h"
+#include "pit.h"
 
 #define RUN_TESTS
 
@@ -158,12 +159,16 @@ void entry(unsigned long magic, unsigned long addr) {
     /* add system call entry to idt */
     init_syscall_idt();
 
+    /* enable pit interrupts */
+    pit_init();
+
     /* load idtr */
     lidt(idt_desc_ptr);
 
-
     /* Init the PIC */
     i8259_init();
+
+    enable_irq(0);
 
     /* Init the RTC*/
     rtc_init();
@@ -176,6 +181,7 @@ void entry(unsigned long magic, unsigned long addr) {
      
     /* init pcb structs */
     pcb_init();
+    
 
 
     /* Enable interrupts */
