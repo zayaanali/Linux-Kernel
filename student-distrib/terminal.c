@@ -76,3 +76,34 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     return bytes_written;
 }
 
+/* Switches execution from one terminal to the other */
+int32_t terminal_switch(int new_term_idx) {
+    int i;
+    
+    /* Copy video mem from current terminal to memory (saving current video mem) */
+    memcpy(TERMINAL_VIDMEM_PTR[cur_terminal], VIDEO, FOUR_KB);
+
+    /* Save keyboard buffer and cursor */
+    for (i=0; i<MAX_BUFFER_SIZE; i++)
+        terminals[cur_terminal].keyboard_buf[i] = line_buffer[i];
+    
+    terminals[cur_terminal].buf_ptr = buf_ptr;
+    terminals[cur_terminal].cursor_x = screen_x;
+    terminals[cur_terminal].cursor_y = screen_y;
+
+    /* Copy new video terminal mem */
+    memcpy(VIDEO, TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
+
+    /* Restore keyboard buffer/cursor */
+    for (i=0; i<MAX_BUFFER_SIZE; i++)
+        line_buffer[i] = terminals[new_term_idx].keyboard_buf[i];
+    
+    buf_ptr = terminals[new_term_idx].buf_ptr = buf_ptr;
+    screen_x = terminals[new_term_idx].cursor_x;
+    screen_y = terminals[new_term_idx].cursor_y;
+
+    /* Set new current terminal index */
+    cur_terminal = new_term_idx;
+
+}
+

@@ -17,6 +17,7 @@
 #include "paging.h"
 #include "systemcall.h"
 #include "pcb.h"
+#include "terminal.h"
 
 #define RUN_TESTS
 
@@ -32,6 +33,11 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Clear the screen. */
     clear();
+
+    /* Init video mem for all terminals */
+    memcpy(TERMINAL_VIDMEM_PTR[0], VIDEO, FOUR_KB);
+    memcpy(TERMINAL_VIDMEM_PTR[1], VIDEO, FOUR_KB);
+    memcpy(TERMINAL_VIDMEM_PTR[2], VIDEO, FOUR_KB);
 
     /* Am I booted by a Multiboot-compliant boot loader? */
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
