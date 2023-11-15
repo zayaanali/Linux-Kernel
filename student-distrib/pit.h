@@ -8,6 +8,7 @@
 
 void pit_init();
 void pit_int_handler();
+void init_pit_idt();
 
 
 #endif

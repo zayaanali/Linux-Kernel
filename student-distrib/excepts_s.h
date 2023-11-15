@@ -31,5 +31,6 @@ extern void simd_fp_link();
 /* assembly-linked functions for interrupt handlers */
 extern void rtc_link(); 
 extern void keyboard_link(); 
+extern void pit_int_link();
 
 #endif
