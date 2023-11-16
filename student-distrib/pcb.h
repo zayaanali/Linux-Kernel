@@ -67,7 +67,7 @@ typedef struct pcb_entry{
     unsigned char args[MAX_BUFFER_SIZE];
 
     /* Parent Data */
-    uint32_t parent_pid;
+    int32_t parent_pid;
     uint32_t parent_esp0;
 
 

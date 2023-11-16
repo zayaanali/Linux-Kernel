@@ -160,7 +160,7 @@ void entry(unsigned long magic, unsigned long addr) {
     init_syscall_idt();
 
     /* enable pit interrupts */
-    pit_init();
+    //pit_init();
 
     /* load idtr */
     lidt(idt_desc_ptr);
@@ -168,7 +168,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     i8259_init();
 
-    enable_irq(0);
+    //enable_irq(0);
 
     /* Init the RTC*/
     rtc_init();

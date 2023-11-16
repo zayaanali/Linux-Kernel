@@ -32,7 +32,6 @@ void pit_init(){
     
 }
 void pit_int_handler(){
-    // printf("timer interrupt!!!");
     send_eoi(0);
     terminal_write(1, "timer", 5);
 
@@ -40,8 +39,8 @@ void pit_int_handler(){
 }
 void init_pit_idt(){
     
-    // systemcall should be in IDT entry 0x80 = 128
-    // set reserved0|size|reserved1|reserved2|reserved3|reserved4[8] to 0 1111 0000 0000 for 32-bit trap gate
+    // pit should be at entry 0x20 of idt
+    // set reserved0|size|reserved1|reserved2|reserved3|reserved4[8] to 0 1110 0000 0000 for 32-bit interrupt gate
     idt[32].present = 1;             // segment is present
     idt[32].dpl = 0;                 // DPL = 00 (highest priority)
     idt[32].reserved0 = 0;           

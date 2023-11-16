@@ -87,7 +87,6 @@ int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t 
  */
 
 int cur_pid = -1; // -1 before any processes are open
-int parent_pid = -1; // -1 before any processes are open
 
 /* Need to restore parent data, restore parent paging, close relevant FDs, jump to execute return */
 int32_t halt(uint8_t status) {
@@ -104,18 +103,17 @@ int32_t halt(uint8_t status) {
         cur_pcb->fd_array[i].in_use = 0; 
 
     /* If current PID is base shell, then relaunch shell */
-    if (cur_pid == 0) { 
-        parent_pid = -1; cur_pid = -1; // cur_pid will be incremented in execute
+    if (cur_pid >= 0 && cur_pid <=2) { 
+        // CHANGE
+        cur_pid --; // cur_pid will be incremented in execute
         execute((const uint8_t*)"shell"); 
     }
     
-    /* Update cur/parent pid. Parent_pid should only be negative with base shell (case above) */
-    if (parent_pid < 0) printf("ERR: parent_pid is negative \n"); // sanity check
-    cur_pid = parent_pid;
-    parent_pid--;
-    if (parent_pid < -1) printf("ERR: parent_pid is negative \n"); // sanity check
+    /* Update cur pid */
+    cur_pid = cur_pcb->parent_pid;
+    cur_pcb->pid = cur_pid;
 
-    /* Add PID page */
+    /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
     page_dir[32].page_dir_entry_4mb_t.read_write = 1;
     page_dir[32].page_dir_entry_4mb_t.user_supervisor = 1;
@@ -135,10 +133,6 @@ int32_t halt(uint8_t status) {
 
     /* Flush TLB */
     flush_tlb();
-
-    /* Set PIDs */
-    cur_pcb->pid = cur_pid;
-    cur_pcb->parent_pid = parent_pid;
 
     /* Restore TSS */
     tss.ss0 = KERNEL_DS;
@@ -187,6 +181,8 @@ int32_t execute(const uint8_t* command) {
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
+    int32_t caller_pid; 
+    int32_t parent_pid;
 
     /* Init args array to NULL char */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
@@ -224,13 +220,16 @@ int32_t execute(const uint8_t* command) {
     if (cur_pid >= 5)
         { printf("execute: Six processes already open \n"); return -1; }
     
-    /* Set current/parent pid */    
-    cur_pid++;
-    if (cur_pid >= 1) // process 1 and above has a parent process
-        parent_pid = cur_pid-1;
-    else // process 0 (base shell) has no parent process
+    /* Set parent pid */  
+    caller_pid = cur_pid; 
+    cur_pid++;  
+    if (cur_pid >= 3) // process 3 and above have a parent process
+        parent_pid = caller_pid;
+    else // process 0, 1, 2 (base shells) have no parent process
         parent_pid = -1;
     
+
+
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
     page_dir[32].page_dir_entry_4mb_t.read_write = 1;
@@ -362,8 +361,6 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  *   Function: writes to inidicated file
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes){
-
-    //char *char_buf = (char*)buf;
     
     if(fd<0 || fd>7){
         return -1; 
@@ -458,15 +455,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
         return -1;
     }
 
-    //if ( cur_pcb->args )
-    //printf("%s\n", cur_pcb->args);
-    // printf("%d", nbytes);
-    
-    // for (i=0; i<nbytes; i++) {   
-    //     buf[i] = cur_pcb->args[i];
-    // }
     strncpy((void *)buf, (void *)cur_pcb->args, nbytes);
-    //printf("%s\n", buf);
     
     return 0;
 }
