@@ -6,6 +6,7 @@
 #include "i8259.h"
 #include "x86_desc.h"
 #include "systemcall.h"
+#include "terminal.h"
 
 
 #define KEYBOARD_IRQ 1
@@ -126,7 +127,7 @@ extern void keyboard_handler() {
         { send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key (scancodes greater than 0x57 are not processed) */
-    if (scan_key > 57) // invalid scan_key
+    if (scan_key > 0x57) // invalid scan_key
         { send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab (0x0F is tab scan code)*/
@@ -158,7 +159,14 @@ extern void keyboard_handler() {
 
     /* ALT Functions (print nothing) */
     if (alt_pressed) {
-        send_eoi(KEYBOARD_IRQ); return;  
+        if (scan_key == 0x3B)
+            terminal_switch(0);
+        else if (scan_key == 0x3c)
+            terminal_switch(1);
+        else if (scan_key == 0x3d)
+            terminal_switch(2);
+        
+        send_eoi(KEYBOARD_IRQ); return;
     }    
 
     /* Set key to be printed */    
