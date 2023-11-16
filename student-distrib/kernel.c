@@ -35,9 +35,9 @@ void entry(unsigned long magic, unsigned long addr) {
     clear();
 
     /* Init video mem for all terminals */
-    memcpy(TERMINAL_VIDMEM_PTR[0], VIDEO, FOUR_KB);
-    memcpy(TERMINAL_VIDMEM_PTR[1], VIDEO, FOUR_KB);
-    memcpy(TERMINAL_VIDMEM_PTR[2], VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[0], (void*)VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[1], (void*)VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[2], (void*)VIDEO, FOUR_KB);
 
     /* Am I booted by a Multiboot-compliant boot loader? */
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {

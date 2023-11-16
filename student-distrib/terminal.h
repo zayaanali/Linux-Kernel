@@ -5,16 +5,15 @@
 #include "types.h"
 #include "keyboard.h"
 #include "lib.h"
-#include "lib.c"
 
 #define NUM_TERMINALS 3
 
 #define TERM1_VIDMEM 0xB9000
 #define TERM2_VIDMEM 0xBA000
-#define TERM2_VIDMEM 0xBB000
+#define TERM3_VIDMEM 0xBB000
 #define FOUR_KB 0x1000
 
-int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM2_VIDMEM };
+extern int32_t TERMINAL_VIDMEM_PTR[3];
 
 
 int32_t terminal_switch();
