@@ -15,6 +15,7 @@
 #include "excepts.h"
 #include "excepts_s.h"
 #include "i8259.h"
+#include "scheduler.h"
 
 
 #define FREQ 20
@@ -33,9 +34,8 @@ void pit_init(){
 }
 void pit_int_handler(){
     send_eoi(0);
-    terminal_write(1, "timer", 5);
-
-    return;
+    //terminal_write(1, "timer", 5);
+    switch_process();
 }
 void init_pit_idt(){
     

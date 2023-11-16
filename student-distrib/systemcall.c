@@ -235,9 +235,6 @@ int32_t execute(const uint8_t* command) {
     else{ // process 0, 1, 2 (base shells) have no parent process
         parent_pid = -1;
     } 
-       
-    
-
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -269,6 +266,7 @@ int32_t execute(const uint8_t* command) {
     pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
     pcb_entry_t pcb;
     pcb.pid = cur_pid;
+    pcb.t_id = cur_terminal;
     pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
     pcb.current = 1;

@@ -166,7 +166,7 @@ void entry(unsigned long magic, unsigned long addr) {
     init_syscall_idt();
 
     /* enable pit interrupts */
-    //pit_init();
+    pit_init();
 
     /* load idtr */
     lidt(idt_desc_ptr);
@@ -174,7 +174,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     i8259_init();
 
-    //enable_irq(0);
+    enable_irq(0);
 
     /* Init the RTC*/
     rtc_init();
@@ -197,12 +197,6 @@ void entry(unsigned long magic, unsigned long addr) {
    //printf("Enabling Interrupts\n");
    sti();
 
-   execute((const uint8_t*)"shell");
-   terminal_switch(1);
-   execute((const uint8_t*)"shell");
-   terminal_switch(2);
-   execute((const uint8_t*)"shell");
-   terminal_switch(0);
 
 #ifdef RUN_TESTS
      /* Run tests */

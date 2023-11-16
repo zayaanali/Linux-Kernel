@@ -6,6 +6,6 @@
 extern int32_t active_pid;
 extern int32_t active_tid;
 
-extern void switch_process();
+extern int32_t switch_process();
 
 #endif
