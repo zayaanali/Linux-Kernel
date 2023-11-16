@@ -197,10 +197,10 @@ void entry(unsigned long magic, unsigned long addr) {
    //printf("Enabling Interrupts\n");
    sti();
 
-   execute((const uint8_t*)"shell");
-   terminal_switch(1);
-   execute((const uint8_t*)"shell");
-   terminal_switch(2);
+//    execute((const uint8_t*)"shell");
+//    terminal_switch(1);
+//    execute((const uint8_t*)"shell");
+//    terminal_switch(2);
    execute((const uint8_t*)"shell");
    terminal_switch(0);
 
