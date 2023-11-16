@@ -272,7 +272,7 @@ int32_t execute(const uint8_t* command) {
     pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
     pcb.current = 1;
-    // pcb.t_id = cur_terminal;
+    pcb.t_id = cur_terminal;
 
     /* Copy arguments to PCB args value */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {

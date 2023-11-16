@@ -78,6 +78,7 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     return bytes_written;
 }
 
+int cur_terminal = 0; 
 /* Switches execution from one terminal to the other */
 int32_t terminal_switch(int new_term_idx) {
     int i;
