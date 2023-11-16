@@ -70,6 +70,12 @@ typedef struct pcb_entry{
     int32_t parent_pid;
     uint32_t parent_esp0;
 
+    // thread id. matches 0 indexed terminal this process is on
+    uint8_t t_id; 
+
+    // flag to track if this process is current process of it's thread
+    uint8_t current;
+
 
 }pcb_entry_t;
 

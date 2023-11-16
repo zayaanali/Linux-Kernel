@@ -81,7 +81,8 @@ int32_t systemcall_handler(int32_t syscall, int32_t arg1, int32_t arg2, int32_t 
 }
 
     
-/* Terminates process, return to parent process. 
+/* halt
+    *   Function: Terminates process, return to parent process. 
     *   Inputs: status - 8-bit value to be returned to parent process
     *   Return Value: -1 on failure, 0 on success
  */
@@ -102,6 +103,9 @@ int32_t halt(uint8_t status) {
     for(i=0; i<8; i++)
         cur_pcb->fd_array[i].in_use = 0; 
 
+    /* mark process as not current */
+    cur_pcb->current = 0;
+
     /* If current PID is base shell, then relaunch shell */
     if (cur_pid >= 0 && cur_pid <=2) { 
         // CHANGE
@@ -109,9 +113,10 @@ int32_t halt(uint8_t status) {
         execute((const uint8_t*)"shell"); 
     }
     
-    /* Update cur pid */
+    /* Update cur pid to parent, mark parent as current*/
     cur_pid = cur_pcb->parent_pid;
-    cur_pcb->pid = cur_pid;
+    cur_pcb->current = 1; 
+    //cur_pcb->pid = cur_pid;
 
     /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -220,13 +225,17 @@ int32_t execute(const uint8_t* command) {
     if (cur_pid >= 5)
         { printf("execute: Six processes already open \n"); return -1; }
     
-    /* Set parent pid */  
+    /* Set parent pid, mark parent as not current */  
     caller_pid = cur_pid; 
     cur_pid++;  
-    if (cur_pid >= 3) // process 3 and above have a parent process
+    if (cur_pid >= 3){ // process 3 and above have a parent process
         parent_pid = caller_pid;
-    else // process 0, 1, 2 (base shells) have no parent process
+        pcb_ptr[parent_pid]->current = 0; 
+    } 
+    else{ // process 0, 1, 2 (base shells) have no parent process
         parent_pid = -1;
+    } 
+       
     
 
 
@@ -262,6 +271,8 @@ int32_t execute(const uint8_t* command) {
     pcb.pid = cur_pid;
     pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
+    pcb.current = 1;
+    // pcb.t_id = cur_terminal;
 
     /* Copy arguments to PCB args value */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
