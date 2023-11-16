@@ -27,6 +27,9 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 
 extern void scroll();
 extern void test_interrupts(); 
+extern void update_screen_coords(int new_screen_x, int new_screen_y);
+extern int get_screen_x();
+extern int get_screen_y();
 
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);

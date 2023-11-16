@@ -18,6 +18,7 @@
 #include "systemcall.h"
 #include "pcb.h"
 #include "pit.h"
+#include "terminal.h"
 
 #define RUN_TESTS
 
@@ -33,6 +34,11 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Clear the screen. */
     clear();
+
+    /* Init video mem for all terminals */
+    memcpy((void*)TERMINAL_VIDMEM_PTR[0], (void*)VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[1], (void*)VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[2], (void*)VIDEO, FOUR_KB);
 
     /* Am I booted by a Multiboot-compliant boot loader? */
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {

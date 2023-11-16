@@ -31,6 +31,24 @@ void clear(void) {
 
 }
 
+/* update_screen_coords;
+ * Inputs: new_screen_x, new_screen_y. 
+ * Return Value: none
+ * Function: called from external functions to update screen_x and screen_y */
+void update_screen_coords(int new_screen_x, int new_screen_y){
+
+    screen_x = new_screen_x;
+    screen_y = new_screen_y; 
+}
+
+int get_screen_x(){
+    return screen_x;
+}
+
+int get_screen_y(){
+    return screen_y; 
+}
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character

@@ -2,6 +2,8 @@
 #include "pcb.h"
 #include "systemcall.h"
 
+int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
+
 int32_t terminal_open(const uint8_t* filename) {
 
     // create stdin entry in file array
@@ -74,5 +76,36 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     
     /* Return number of bytes written */
     return bytes_written;
+}
+
+/* Switches execution from one terminal to the other */
+int32_t terminal_switch(int new_term_idx) {
+    int i;
+    
+    /* Copy video mem from current terminal to memory (saving current video mem) */
+    memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)VIDEO, FOUR_KB);
+    
+    /* Save keyboard buffer and cursor */
+    for (i=0; i<MAX_BUFFER_SIZE; i++)
+        terminals[cur_terminal].keyboard_buf[i] = line_buffer[i];
+    
+    terminals[cur_terminal].buf_ptr = buf_ptr;
+    terminals[cur_terminal].cursor_x = get_screen_x();
+    terminals[cur_terminal].cursor_y = get_screen_y();
+
+    /* Copy new video terminal mem */
+    memcpy((void*)VIDEO, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
+
+    /* Restore keyboard buffer/cursor */
+    for (i=0; i<MAX_BUFFER_SIZE; i++)
+        line_buffer[i] = terminals[new_term_idx].keyboard_buf[i];
+    
+    buf_ptr = terminals[new_term_idx].buf_ptr = buf_ptr;
+    update_screen_coords(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
+
+    /* Set new current terminal index */
+    cur_terminal = new_term_idx;
+
+    return 0;
 }
 
