@@ -266,7 +266,7 @@ int32_t execute(const uint8_t* command) {
     pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
     pcb_entry_t pcb;
     pcb.pid = cur_pid;
-    pcb.t_id = cur_terminal;
+    // pcb.t_id = cur_terminal; don't think this is correct
     pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
     pcb.current = 1;
