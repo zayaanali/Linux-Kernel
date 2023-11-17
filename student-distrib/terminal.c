@@ -94,6 +94,7 @@ int32_t terminal_switch(int new_term_idx) {
     terminals[cur_terminal].buf_ptr = buf_ptr;
     terminals[cur_terminal].cursor_x = get_screen_x();
     terminals[cur_terminal].cursor_y = get_screen_y();
+    
 
     /* Copy new video terminal mem */
     memcpy((void*)VIDEO, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
@@ -104,6 +105,7 @@ int32_t terminal_switch(int new_term_idx) {
     
     buf_ptr = terminals[new_term_idx].buf_ptr = buf_ptr;
     update_screen_coords(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
+    set_cursor(get_screen_x(), get_screen_y());
 
     /* Set new current terminal index */
     cur_terminal = new_term_idx;
