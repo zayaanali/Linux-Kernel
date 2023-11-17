@@ -20,12 +20,12 @@ int32_t switch_process(){
         execute((const uint8_t*)"shell");
     }
 
-    int32_t new_pid = find_next_pid(active_pid);
+    // int32_t new_pid = find_next_pid(active_pid);
 
-    // update active_pid
-    active_pid = new_pid;
+    // // update active_pid
+    // active_pid = new_pid;
 
-    // do context switch
+    // // do context switch
 }
 
 

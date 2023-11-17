@@ -1,6 +1,7 @@
 #include "terminal.h"
 #include "pcb.h"
 #include "systemcall.h"
+#include "paging.h"
 
 int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
 
