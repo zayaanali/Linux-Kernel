@@ -14,6 +14,7 @@
 #include "terminal.h"
 #include "x86_desc.h"
 #include "excepts.h"
+#include "scheduler.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -226,15 +227,8 @@ int32_t execute(const uint8_t* command) {
         { printf("execute: Six processes already open \n"); return -1; }
     
     /* Set parent pid, mark parent as not current */  
-    caller_pid = cur_pid; 
+    caller_pid = active_pid; 
     cur_pid++;  
-    if (cur_pid >= 3){ // process 3 and above have a parent process
-        parent_pid = caller_pid;
-        pcb_ptr[parent_pid]->current = 0; 
-    } 
-    else{ // process 0, 1, 2 (base shells) have no parent process
-        parent_pid = -1;
-    } 
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -266,11 +260,18 @@ int32_t execute(const uint8_t* command) {
     pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
     pcb_entry_t pcb;
     pcb.pid = cur_pid;
-    // pcb.t_id = cur_terminal; don't think this is correct
-    pcb.parent_pid = parent_pid;
     pcb.parent_esp0 = tss.esp0;
     pcb.current = 1;
-    pcb.t_id = cur_terminal;
+
+    if (cur_pid >= 3){ // process 3 and above have a parent process
+        pcb.parent_pid = caller_pid;
+        pcb_ptr[parent_pid]->current = 0; 
+        pcb.t_id = pcb_ptr[parent_pid]->t_id;
+    } 
+    else{ // process 0, 1, 2 (base shells) have no parent process
+        pcb.parent_pid = -1;
+        pcb.t_id = cur_pid; 
+    } 
 
     /* Copy arguments to PCB args value */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {

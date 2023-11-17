@@ -3,6 +3,7 @@
 #include "systemcall.h"
 
 int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
+static char* video_mem = (char *)VIDEO;
 
 int32_t terminal_open(const uint8_t* filename) {
 
@@ -84,7 +85,7 @@ int32_t terminal_switch(int new_term_idx) {
     int i;
     
     /* Copy video mem from current terminal to memory (saving current video mem) */
-    memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)VIDEO, FOUR_KB);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
     
     /* Save keyboard buffer and cursor */
     for (i=0; i<MAX_BUFFER_SIZE; i++)
@@ -95,7 +96,7 @@ int32_t terminal_switch(int new_term_idx) {
     terminals[cur_terminal].cursor_y = get_screen_y();
 
     /* Copy new video terminal mem */
-    memcpy((void*)VIDEO, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
+    memcpy((void*)video_mem, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
 
     /* Restore keyboard buffer/cursor */
     for (i=0; i<MAX_BUFFER_SIZE; i++)
