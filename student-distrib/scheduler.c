@@ -3,6 +3,9 @@
 #include "systemcall.h"
 #include "terminal.h"
 #include "paging.h"
+#include "lib.h"
+#include "x86_desc.h"
+
 
 int32_t active_pid = -1; 
 int32_t find_next_pid(int32_t active_pid);
@@ -38,8 +41,13 @@ int32_t switch_process(){
     }else{
         page_table[184].page_base_address = 184 + 1 + pcb_ptr[active_pid]->t_id;
     }
+    // get esp, ebp, and eip of next process
+    uint32_t new_esp;
+    uint32_t new_ebp;
+    uint32_t new_eip;
 
     // do context switch
+    context_switch(new_esp, new_ebp, new_eip);
 }
 
 /* find_next_pid
@@ -66,3 +74,21 @@ int32_t find_next_pid(int32_t active_pid){
     return -1;
 }
 
+void context_switch(uint32_t esp, uint32_t ebp, uint32_t eip) {
+    asm volatile(
+        "pushl %0; \n"            // push data segment register
+        "pushl %1; \n"            // push new esp
+        "pushfl; \n"
+        "popl %%ecx; \n"
+        "orl $0x200, %%ecx; \n"   // Set IF flag to one
+        "pushl %%ecx; \n"
+        "pushl %2; \n"            // push new eflags
+        "pushl %3; \n"            // push new eip
+        "iret; \n"
+
+        :                                       
+        : "g" (USER_DS), "g" (esp), "g" (USER_CS), "g" (eip)
+        : "memory", "cc", "ecx"
+    );
+    return;
+}
