@@ -3,6 +3,7 @@
 #include "systemcall.h"
 #include "terminal.h"
 #include "paging.h"
+#include "page.h"
 #include "lib.h"
 #include "x86_desc.h"
 
@@ -19,6 +20,7 @@ uint8_t base_shells_opened = 0;
 int32_t switch_process(){
 
     int32_t new_pid;
+    int32_t old_pid = active_pid; 
 
     if(base_shells_opened<3){
         active_pid++;
@@ -34,6 +36,7 @@ int32_t switch_process(){
 
         active_pid = 0;
         active_tid = 0; 
+        new_pid = 0;
     } else{
         new_pid = find_next_pid(active_pid);
 
@@ -51,13 +54,39 @@ int32_t switch_process(){
         page_table[184].page_base_address = 184 + 1 + active_tid;
     }
 
+
+    // change page base address
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (new_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+
+    /* Flush TLB */
+    flush_tlb();
+
+    // save esp and ebp of current process
+    register uint32_t s_esp asm("%esp");
+    register uint32_t s_ebp asm("%ebp");
+
+    pcb_ptr[old_pid]->esp = s_esp;
+    pcb_ptr[old_pid]->ebp = s_ebp; 
+
+    /* Set TSS entries */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = (EIGHT_MB - (new_pid)*EIGHT_KB);
+
     // get esp, ebp, and eip of next process
-    uint32_t new_esp;
-    uint32_t new_ebp;
+    register uint32_t new_esp = pcb_ptr[new_pid]->esp;
+    register uint32_t new_ebp = pcb_ptr[new_pid]->ebp;
     uint32_t new_eip;
 
     // do context switch
-    context_switch(new_esp, new_ebp, new_eip);
+    asm volatile(
+        "movl %0, %%esp; \n"            // switch to new esp
+        "movl %1, %%ebp; \n"            // switch to new ebp
+
+        :                                       
+        : "g" (new_esp), "g" (new_ebp)
+        : "memory", "cc", "ecx"
+    );
+    return 0;
 }
 
 /* find_next_pid
@@ -69,7 +98,6 @@ int32_t find_next_pid(int32_t active_pid){
     uint32_t pid = (active_pid+1)%6; 
     int i;
     pcb_entry_t* pcb = pcb_ptr[pid];
-    uint32_t cur_t_id = pcb_ptr[active_pid]->t_id;
 
     for(i=0; i<6; i++){
         if(pcb->current){
@@ -84,21 +112,3 @@ int32_t find_next_pid(int32_t active_pid){
     return -1;
 }
 
-void context_switch(uint32_t esp, uint32_t ebp, uint32_t eip) {
-    asm volatile(
-        "pushl %0; \n"            // push data segment register
-        "pushl %1; \n"            // push new esp
-        "pushfl; \n"
-        "popl %%ecx; \n"
-        "orl $0x200, %%ecx; \n"   // Set IF flag to one
-        "pushl %%ecx; \n"
-        "pushl %2; \n"            // push new eflags
-        "pushl %3; \n"            // push new eip
-        "iret; \n"
-
-        :                                       
-        : "g" (USER_DS), "g" (esp), "g" (USER_CS), "g" (eip)
-        : "memory", "cc", "ecx"
-    );
-    return;
-}

@@ -5,7 +5,6 @@
 
 extern int32_t active_pid;
 extern int32_t active_tid;
-void context_switch();
 
 extern int32_t switch_process();
 
