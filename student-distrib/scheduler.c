@@ -8,6 +8,7 @@
 
 
 int32_t active_pid = -1; 
+int32_t active_tid = -1;
 int32_t find_next_pid(int32_t active_pid);
 uint8_t base_shells_opened = 0;
 
@@ -27,19 +28,26 @@ int32_t switch_process(){
     if(base_shells_opened==3){
         terminal_switch(0);
         base_shells_opened++;
+
+        // start out with terminal 0/process 0 active
+        active_pid = 0;
+        active_tid = 0; 
+
+        return; 
     }
 
     int32_t new_pid = find_next_pid(active_pid);
 
-    // update active_pid
+    // update active_pid and active_tid
     active_pid = new_pid;
+    active_tid = pcb_ptr[new_pid]->t_id;
 
     // remap vidmem
    // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
-    if(pcb_ptr[active_pid]->t_id == cur_terminal){
+    if(active_tid == cur_terminal){
         page_table[184].page_base_address = 184;
     }else{
-        page_table[184].page_base_address = 184 + 1 + pcb_ptr[active_pid]->t_id;
+        page_table[184].page_base_address = 184 + 1 + active_tid;
     }
     // get esp, ebp, and eip of next process
     uint32_t new_esp;
