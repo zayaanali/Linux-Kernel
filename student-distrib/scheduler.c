@@ -10,8 +10,10 @@
 
 int32_t active_pid = -1; 
 int32_t active_tid = -1;
-int32_t find_next_pid(int32_t active_pid);
+int32_t find_next_pid(int32_t p);
 uint8_t base_shells_opened = 0;
+int32_t new_pid;
+int32_t old_pid;
 
 /* switch_process
  *   Inputs: none
@@ -19,31 +21,33 @@ uint8_t base_shells_opened = 0;
  *   Function: switches to next process in round-robin fashion when pit interrrupt occurs */
 int32_t switch_process(){
 
-    int32_t new_pid;
-    int32_t old_pid = active_pid; 
-
     if(base_shells_opened<3){
         active_pid++;
+        active_tid++;
         base_shells_opened++;
         terminal_switch(active_pid);
         execute((const uint8_t*)"shell");
     }
 
-    if(base_shells_opened==3){
-        // after base shells opened, start by servicing process 0/terminal 0
-        terminal_switch(0);
-        base_shells_opened++;
+    old_pid = active_pid; 
+    new_pid = find_next_pid(active_pid);
 
-        active_pid = 0;
-        active_tid = 0; 
-        new_pid = 0;
-    } else{
-        new_pid = find_next_pid(active_pid);
+    // update active_pid and active_tid
+    active_pid = new_pid;
+    active_tid = pcb_ptr[new_pid]->t_id;
 
-        // update active_pid and active_tid
-        active_pid = new_pid;
-        active_tid = pcb_ptr[new_pid]->t_id;
-    }
+
+//     if(base_shells_opened==3){
+//         // after base shells opened, start by servicing process 0/terminal 0
+//         terminal_switch(0);
+//         base_shells_opened++;
+
+//         active_pid = 0;
+//         active_tid = 0; 
+//         new_pid = 0;
+//     } else{
+
+//     }
 
     
     // remap vidmem
@@ -65,8 +69,8 @@ int32_t switch_process(){
     register uint32_t s_esp asm("%esp");
     register uint32_t s_ebp asm("%ebp");
 
-    pcb_ptr[old_pid]->esp = s_esp;
-    pcb_ptr[old_pid]->ebp = s_ebp; 
+    pcb_ptr[old_pid]->esp = (uint32_t)s_esp;
+    pcb_ptr[old_pid]->ebp = (uint32_t)s_ebp; 
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
@@ -75,6 +79,7 @@ int32_t switch_process(){
     // get esp, ebp, and eip of next process
     register uint32_t new_esp = pcb_ptr[new_pid]->esp;
     register uint32_t new_ebp = pcb_ptr[new_pid]->ebp;
+
     uint32_t new_eip;
 
     // do context switch
@@ -93,9 +98,9 @@ int32_t switch_process(){
  *   Inputs: pid of currently active process
  *   Return Value: pid scheduler should switch to
  *   Function: helper function that starts at cur_pid, walks through pcb structs to find next active process to run */
-int32_t find_next_pid(int32_t active_pid){
+int32_t find_next_pid(int32_t p){
 
-    uint32_t pid = (active_pid+1)%6; 
+    uint32_t pid = (p+1)%6; 
     int i;
     pcb_entry_t* pcb = pcb_ptr[pid];
 
