@@ -18,6 +18,8 @@ uint8_t base_shells_opened = 0;
  *   Function: switches to next process in round-robin fashion when pit interrrupt occurs */
 int32_t switch_process(){
 
+    int32_t new_pid;
+
     if(base_shells_opened<3){
         active_pid++;
         base_shells_opened++;
@@ -26,22 +28,21 @@ int32_t switch_process(){
     }
 
     if(base_shells_opened==3){
+        // after base shells opened, start by servicing process 0/terminal 0
         terminal_switch(0);
         base_shells_opened++;
 
-        // start out with terminal 0/process 0 active
         active_pid = 0;
         active_tid = 0; 
+    } else{
+        new_pid = find_next_pid(active_pid);
 
-        return; 
+        // update active_pid and active_tid
+        active_pid = new_pid;
+        active_tid = pcb_ptr[new_pid]->t_id;
     }
 
-    int32_t new_pid = find_next_pid(active_pid);
-
-    // update active_pid and active_tid
-    active_pid = new_pid;
-    active_tid = pcb_ptr[new_pid]->t_id;
-
+    
     // remap vidmem
    // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
     if(active_tid == cur_terminal){
@@ -49,6 +50,7 @@ int32_t switch_process(){
     }else{
         page_table[184].page_base_address = 184 + 1 + active_tid;
     }
+
     // get esp, ebp, and eip of next process
     uint32_t new_esp;
     uint32_t new_ebp;
