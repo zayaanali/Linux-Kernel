@@ -22,13 +22,14 @@ int32_t switch_process(){
     int32_t new_pid;
     int32_t old_pid = active_pid; 
 
+    /* Open base shell if three don't already exist */
     if(base_shells_opened<3){
         active_pid++;
         base_shells_opened++;
         terminal_switch(active_pid);
         execute((const uint8_t*)"shell");
     }
-
+   
     if(base_shells_opened==3){
         // after base shells opened, start by servicing process 0/terminal 0
         terminal_switch(0);
