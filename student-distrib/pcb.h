@@ -57,6 +57,9 @@ typedef struct pcb_entry{
     uint32_t esp;
     uint32_t ebp;
 
+    uint32_t esp_exec;
+    uint32_t ebp_exec;
+
     /* Current Task Info */
     uint32_t pid;
     file_arr_entry_t fd_array[MAX_FD_ENTRIES];

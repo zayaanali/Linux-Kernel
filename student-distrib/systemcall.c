@@ -145,8 +145,8 @@ int32_t halt(uint8_t status) {
     tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
 
     /* restore stack */
-    register uint32_t s_esp = cur_pcb->esp;
-    register uint32_t s_ebp = cur_pcb->ebp; 
+    register uint32_t s_esp = cur_pcb->esp_exec;
+    register uint32_t s_ebp = cur_pcb->ebp_exec; 
 
     restore_flags(flags);
     /* Context Switch */
@@ -271,7 +271,7 @@ int32_t execute(const uint8_t* command) {
     else{ // process 0, 1, 2 (base shells) have no parent process
         pcb.parent_pid = -1;
         pcb.t_id = cur_pid; 
-        pcb_ptr[cur_pid]->current = 1;
+        pcb.current = 1;
     } 
 
     /* Copy arguments to PCB args value */
@@ -298,8 +298,8 @@ int32_t execute(const uint8_t* command) {
     
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    pcb_ptr[cur_pid]->esp = s_esp;
-    pcb_ptr[cur_pid]->ebp = s_ebp;
+    pcb_ptr[cur_pid]->esp_exec = s_esp;
+    pcb_ptr[cur_pid]->ebp_exec = s_ebp;
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
