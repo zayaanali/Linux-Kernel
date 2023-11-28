@@ -271,6 +271,7 @@ int32_t execute(const uint8_t* command) {
     else{ // process 0, 1, 2 (base shells) have no parent process
         pcb.parent_pid = -1;
         pcb.t_id = cur_pid; 
+        pcb_ptr[cur_pid]->current = 1;
     } 
 
     /* Copy arguments to PCB args value */

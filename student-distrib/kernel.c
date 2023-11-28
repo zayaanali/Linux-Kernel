@@ -187,7 +187,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* init pcb structs */
     pcb_init();
 
-    initialize_shells();
+    enable_irq(0);
+    //initialize_shells();
 
     
 

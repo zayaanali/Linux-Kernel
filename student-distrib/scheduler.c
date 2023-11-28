@@ -37,11 +37,11 @@ int32_t initialize_shells(){
 int32_t switch_process(){
 
     if(base_shells_opened<3){
-        // active_pid++;
-        // active_tid++;
-        // base_shells_opened++;
-        // terminal_switch(active_pid);
-        // execute((const uint8_t*)"shell");
+        active_pid++;
+        active_tid++;
+        base_shells_opened++;
+        terminal_switch(active_pid);
+        execute((const uint8_t*)"shell");
         return 0;
     }
 
