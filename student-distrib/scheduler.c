@@ -6,14 +6,29 @@
 #include "page.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "i8259.h"
 
 
 int32_t active_pid = -1; 
 int32_t active_tid = -1;
 int32_t find_next_pid(int32_t p);
-uint8_t base_shells_opened = 0;
+static uint8_t base_shells_opened = 0;
 int32_t new_pid;
 int32_t old_pid;
+
+int32_t initialize_shells(){
+        while(base_shells_opened<3){
+        active_pid++;
+        active_tid++;
+        base_shells_opened++;
+        terminal_switch(active_pid);
+        execute((const uint8_t*)"shell");
+        }
+        enable_irq(0);
+        return 0;
+}
+
+
 
 /* switch_process
  *   Inputs: none
@@ -22,11 +37,12 @@ int32_t old_pid;
 int32_t switch_process(){
 
     if(base_shells_opened<3){
-        active_pid++;
-        active_tid++;
-        base_shells_opened++;
-        terminal_switch(active_pid);
-        execute((const uint8_t*)"shell");
+        // active_pid++;
+        // active_tid++;
+        // base_shells_opened++;
+        // terminal_switch(active_pid);
+        // execute((const uint8_t*)"shell");
+        return 0;
     }
 
     old_pid = active_pid; 
