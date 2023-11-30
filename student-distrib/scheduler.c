@@ -48,6 +48,7 @@ int32_t switch_process() {
         active_pid++;
         active_tid++;
     } else { // all base shells open. Current PID context needs to 
+        //return 0;
         pcb_ptr[active_pid]->esp = (uint32_t)s_esp;
         pcb_ptr[active_pid]->ebp = (uint32_t)s_ebp; 
 
@@ -59,11 +60,11 @@ int32_t switch_process() {
     
 //     // remap vidmem
 //    // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
-//     if(active_tid == cur_terminal){
-//         page_table[184].page_base_address = 184;
-//     }else{
-//         page_table[184].page_base_address = 184 + 1 + active_tid;
-//     }
+    if(active_tid == cur_terminal){
+        page_table[184].page_base_address = 184;
+    }else{
+        page_table[184].page_base_address = 184 + 1 + active_tid;
+    }
 
 
     // change page base address and flush tlb

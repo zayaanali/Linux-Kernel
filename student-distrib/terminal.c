@@ -2,6 +2,7 @@
 #include "pcb.h"
 #include "systemcall.h"
 #include "scheduler.h"
+#include "paging.h"
 
 int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
 static char* video_mem = (char *)VIDEO;
@@ -86,6 +87,12 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
 int32_t terminal_switch(int new_term_idx) {
     int i;
     
+    uint32_t flags;
+    cli_and_save(flags);
+
+    //map virt vid mem to physical vid mem being viewed
+    page_table[184].page_base_address = 184;
+
     /* Copy video mem from current terminal to memory (saving current video mem) */
     memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
         
@@ -99,6 +106,15 @@ int32_t terminal_switch(int new_term_idx) {
 
     /* Set new current terminal index */
     cur_terminal = new_term_idx;
+
+    // restore virt vid mem to point to correct video page depending on what's viewed
+    if(active_tid == cur_terminal){
+        page_table[184].page_base_address = 184;
+    }else{
+        page_table[184].page_base_address = 184 + 1 + active_tid;
+    }
+
+    restore_flags(flags);
 
     return 0;
 }
