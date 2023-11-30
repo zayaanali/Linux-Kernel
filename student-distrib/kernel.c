@@ -188,7 +188,6 @@ void entry(unsigned long magic, unsigned long addr) {
     pcb_init();
 
     enable_irq(0);
-    //initialize_shells();
 
     
 

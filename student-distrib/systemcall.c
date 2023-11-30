@@ -118,7 +118,7 @@ int32_t halt(uint8_t status) {
 
     // update active_pid to parent??
 
-    cur_pcb->in_use=0;
+    cur_pcb->pid_in_use=0;
     active_pid = cur_pcb->parent_pid;
     cur_pcb->current = 0; 
     //cur_pcb->pid = cur_pid;
@@ -191,7 +191,6 @@ int32_t execute(const uint8_t* command) {
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
-    int32_t caller_pid; 
     int32_t parent_pid;
 
     /* Init args array to NULL char */
@@ -234,17 +233,21 @@ int32_t execute(const uint8_t* command) {
     parent_pid = active_pid; 
 
     // find next available pid
-    if(active_pid!=0 && active_pid!=1 && active_pid!=2){
+   // if(active_pid!=0 && active_pid!=1 && active_pid!=2){
+    if(base_shells_opened==3){
         for(i=0; i<(MAX_PROCESSES+1); i++){
             if(i==MAX_PROCESSES){
                 { printf("execute: Six processes already open \n"); return -1; }
             }
 
-            if(pcb_ptr[i]->in_use==0){
+            if(pcb_ptr[i]->pid_in_use==0){
                 active_pid = i;
-                pcb_ptr[active_pid]->in_use=1;
+                pcb_ptr[active_pid]->pid_in_use=1;
             }
         }
+    }else{
+        // opening shell
+        base_shells_opened++;
     }
    
     // cur_pid++;  
@@ -276,37 +279,40 @@ int32_t execute(const uint8_t* command) {
     read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
 
     /* Set up PCB entry */
-    pcb_entry_t* pcb_addr = pcb_ptr[active_pid]; 
-    pcb_entry_t pcb;
-    pcb.pid = active_pid;
-    pcb.parent_esp0 = tss.esp0;
-    pcb.current = 1;
+    // pcb_entry_t* pcb_addr = pcb_ptr[active_pid]; 
+    // pcb_entry_t pcb;
+    // pcb.pid = active_pid;
+    // pcb.parent_esp0 = tss.esp0;
+    // pcb.current = 1;
+    pcb_ptr[active_pid]->parent_esp0 = tss.esp0;
+    pcb_ptr[active_pid]->current = 1;
+
 
     if (active_pid >= 3){ // process 3 and above have a parent process
-        pcb.parent_pid = parent_pid;
+        pcb_ptr[active_pid]->parent_pid = parent_pid;
         pcb_ptr[parent_pid]->current = 0; 
-        pcb.t_id = pcb_ptr[parent_pid]->t_id;
+        pcb_ptr[active_pid]->t_id = pcb_ptr[parent_pid]->t_id;
     } 
     else{ // process 0, 1, 2 (base shells) have no parent process
-        pcb.parent_pid = -1;
-        pcb.t_id = active_pid; 
-        pcb.current = 1;
+        pcb_ptr[active_pid]->parent_pid = -1;
+        pcb_ptr[active_pid]->t_id = active_pid; 
+        pcb_ptr[active_pid]->current = 1;
     } 
 
     /* Copy arguments to PCB args value */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
-        pcb.args[i] = args[i];
+       pcb_ptr[active_pid]->args[i] = args[i];
     }
 
 
     //initialize file array entries to not in use
     for(i=0; i<8; i++)
-        pcb.fd_array[i].in_use = 0;
+        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
     /* Save EBP/ESP and Copy PCB to memory */
 
     
-    memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
+    //memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
 
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");

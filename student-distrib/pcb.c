@@ -49,7 +49,7 @@ void pcb_init(){
         // process 0 pcb starts 8kb above 8mb(kernel bottom), each following pcb starts 8kb above the last
         pcb_ptr[i] = (pcb_entry_t*)(EIGHT_MB - (i+1)*EIGHT_KB);
         pcb_ptr[i]->current = 0;
-        pcb_ptr[i]->in_use = 0;
+        pcb_ptr[i]->pid_in_use = 0;
     }
 }
 
