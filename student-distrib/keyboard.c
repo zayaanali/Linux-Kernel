@@ -147,7 +147,7 @@ extern void keyboard_handler() {
         
         buf_pop();
         putc('\b');
-        send_eoi(KEYBOARD_IRQ); remap_vidmem_service(); return;
+        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions (0x26/0x2E are l/c scan codes) */

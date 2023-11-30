@@ -58,13 +58,8 @@ int32_t switch_process() {
     }
 
     
-    // remap vidmem
-   // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
-    if(active_tid == cur_terminal){
-        page_table[184].page_base_address = 184;
-    }else{
-        page_table[184].page_base_address = 184 + 1 + active_tid;
-    }
+   /* Remap vidmem to currently serviced */
+   remap_vidmem_service();
 
 
     // change page base address and flush tlb
@@ -84,6 +79,7 @@ int32_t switch_process() {
     if (base_shells_opened <3) {        
         base_shells_opened++;    
         //terminal_switch(active_pid);
+        send_eoi(0);
         execute((const uint8_t*)"shell");
         return 0;
     }
@@ -97,6 +93,7 @@ int32_t switch_process() {
         : "g" (new_esp), "g" (new_ebp)
         : "memory", "cc", "ecx"
     );
+    send_eoi(0);
     return 0;
 }
 
