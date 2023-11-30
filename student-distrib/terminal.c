@@ -85,7 +85,6 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
 
 /* Switches execution from one terminal to the other */
 int32_t terminal_switch(int new_term_idx) {
-    int i;
     
     uint32_t flags;
     cli_and_save(flags);

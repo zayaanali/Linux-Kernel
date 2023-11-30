@@ -118,43 +118,46 @@ extern void keyboard_handler() {
     char out;
     int i;
     uint32_t ignore;
+
+    /* Remap the video memory to print to the visible terminal */
+    remap_vidmem_visible();
     
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
     if (check_modifiers(scan_key))
-        { send_eoi(KEYBOARD_IRQ);  return; }
+        { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key (scancodes greater than 0x57 are not processed) */
     if (scan_key > 0x57) // invalid scan_key
-        { send_eoi(KEYBOARD_IRQ); return; }
+        { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab (0x0F is tab scan code)*/
     if (scan_key == 0x0F) {
         for (i=0; i<TAB_SIZE; i++)
-            { putc(' '); buf_push(' '); }
-        send_eoi(KEYBOARD_IRQ); return;
+            { putc(' '); buf_push(' ');  }
+        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
     } 
     
     /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
         if (terminals[cur_terminal].buf_ptr==0)
-            { send_eoi(KEYBOARD_IRQ); return; }
+            { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; }
         
         buf_pop();
         putc('\b');
-        send_eoi(KEYBOARD_IRQ); return;
+        send_eoi(KEYBOARD_IRQ); remap_vidmem_service(); return;
     }
     
     /* CTRL functions (0x26/0x2E are l/c scan codes) */
     if (ctrl_pressed) {
         if (scan_key == 0x26) // CTRL + L
-            { clear(); send_eoi(KEYBOARD_IRQ); return; } 
+            { clear(); remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; } 
         else if (scan_key == 0x2E) // CTRL + C
-            { halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
+            { remap_vidmem_service(); halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
         else // do nothing
-            { send_eoi(KEYBOARD_IRQ); return;}
+            { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;}
     }
 
     /* ALT Functions (print nothing) */
@@ -166,7 +169,7 @@ extern void keyboard_handler() {
         else if (scan_key == 0x3d)
             terminal_switch(2);
         
-        send_eoi(KEYBOARD_IRQ); return;
+        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
     }    
 
     /* Set key to be printed */    
@@ -191,9 +194,6 @@ extern void keyboard_handler() {
             out = key_map[scan_key];            
     
     }
-
-    /* Remap the video memory to print to the visible terminal */
-    remap_vidmem_visible();
     
     /* Push character to line buffer and print to screen */
     buf_push(out); putc(out);
@@ -278,7 +278,7 @@ extern void clear_line_buffer() {
  *   Function: when enter is pressed, copy line buffer into terminal buffer (the specified number of bytes)  */
 extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
-    
+
     /* Wait for enter keypress */
     enter_pressed=0;
     while (enter_pressed==0);
