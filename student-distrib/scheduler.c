@@ -12,20 +12,8 @@
 int32_t active_pid = -1; 
 int32_t active_tid = -1;
 int32_t find_next_pid(int32_t p);
-static uint8_t base_shells_opened = 0;
-
-int32_t initialize_shells(){
-        while(base_shells_opened<3){
-        active_pid++;
-        active_tid++;
-        base_shells_opened++;
-        terminal_switch(active_pid);
-        execute((const uint8_t*)"shell");
-        }
-        enable_irq(0);
-        return 0;
-}
-
+//static uint8_t base_shells_opened = 0;
+uint8_t base_shells_opened = 0;
 
 
 /* switch_process
@@ -41,12 +29,15 @@ int32_t switch_process() {
     if (base_shells_opened == 0) { // Opening the first base shell. The current process context does not need to be stored (switching from kernel)
         active_pid = 0;
         active_tid = 0;
+        pcb_ptr[active_pid]->pid_in_use=1;
     } else if (base_shells_opened > 0 && base_shells_opened < 3) { // Opening second and third base shells. Current PID context needs to be stored
         pcb_ptr[active_pid]->esp = (uint32_t)s_esp;
         pcb_ptr[active_pid]->ebp = (uint32_t)s_ebp; 
 
         active_pid++;
         active_tid++;
+
+        pcb_ptr[active_pid]->pid_in_use=1;
     } else { // all base shells open. Current PID context needs to 
         //return 0;
         pcb_ptr[active_pid]->esp = (uint32_t)s_esp;
@@ -82,7 +73,7 @@ int32_t switch_process() {
 
 
     if (base_shells_opened <3) {        
-        base_shells_opened++;    
+       // base_shells_opened++;    
         //terminal_switch(active_pid);
         execute((const uint8_t*)"shell");
         return 0;

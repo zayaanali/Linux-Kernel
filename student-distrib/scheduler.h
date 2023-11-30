@@ -7,6 +7,7 @@ extern int32_t active_pid;
 extern int32_t active_tid;
 
 extern int32_t switch_process();
-extern int32_t initialize_shells();
+
+extern uint8_t base_shells_opened;
 
 #endif
