@@ -103,6 +103,7 @@ int32_t terminal_switch(int new_term_idx) {
     /* Copy new video terminal mem */
     memcpy((void*)video_mem, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
     update_screen_coords(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
+    set_cursor(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
 
     /* Set new current terminal index */
     cur_terminal = new_term_idx;
