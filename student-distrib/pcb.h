@@ -79,6 +79,9 @@ typedef struct pcb_entry{
     // flag to track if this process is current process of it's thread
     uint8_t current;
 
+    // flag to track if this pcb currently being used
+    uint8_t in_use;
+
 
 }pcb_entry_t;
 

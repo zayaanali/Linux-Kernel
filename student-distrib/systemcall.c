@@ -98,7 +98,7 @@ int32_t halt(uint8_t status) {
     int i;
     
     /* Get the current and parent pcb */
-    pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
+    pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (active_pid+1)*EIGHT_KB);
 
     /* Close relevant FDs */
     for(i=0; i<8; i++)
@@ -108,15 +108,19 @@ int32_t halt(uint8_t status) {
     cur_pcb->current = 0;
 
     /* If current PID is base shell, then relaunch shell */
-    if (cur_pid >= 0 && cur_pid <=2) { 
+    if (active_pid >= 0 && active_pid <=2) { 
         // CHANGE
-        cur_pid --; // cur_pid will be incremented in execute
+        //cur_pid --; // cur_pid will be incremented in execute
         execute((const uint8_t*)"shell"); 
     }
     
     /* Update cur pid to parent, mark parent as current*/
-    cur_pid = cur_pcb->parent_pid;
-    cur_pcb->current = 1; 
+
+    // update active_pid to parent??
+
+    cur_pcb->in_use=0;
+    active_pid = cur_pcb->parent_pid;
+    cur_pcb->current = 0; 
     //cur_pcb->pid = cur_pid;
 
     /* restore PID page */
@@ -132,7 +136,7 @@ int32_t halt(uint8_t status) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* mark vidmem page as not present*/
     video_page_table[0].present = 0;
@@ -142,7 +146,7 @@ int32_t halt(uint8_t status) {
 
     /* Restore TSS */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+    tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
 
     /* restore stack */
     register uint32_t s_esp = cur_pcb->esp_exec;
@@ -223,12 +227,27 @@ int32_t execute(const uint8_t* command) {
     }
 
     /* Check not at max processes */
-    if (cur_pid >= 5)
-        { printf("execute: Six processes already open \n"); return -1; }
+    // if (cur_pid >= 5)
+    //     { printf("execute: Six processes already open \n"); return -1; }
     
     /* Set parent pid, mark parent as not current */  
-    caller_pid = active_pid; 
-    cur_pid++;  
+    parent_pid = active_pid; 
+
+    // find next available pid
+    if(active_pid!=0 && active_pid!=1 && active_pid!=2){
+        for(i=0; i<(MAX_PROCESSES+1); i++){
+            if(i==MAX_PROCESSES){
+                { printf("execute: Six processes already open \n"); return -1; }
+            }
+
+            if(pcb_ptr[i]->in_use==0){
+                active_pid = i;
+                pcb_ptr[active_pid]->in_use=1;
+            }
+        }
+    }
+   
+    // cur_pid++;  
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -243,7 +262,7 @@ int32_t execute(const uint8_t* command) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
@@ -257,20 +276,20 @@ int32_t execute(const uint8_t* command) {
     read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
 
     /* Set up PCB entry */
-    pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
+    pcb_entry_t* pcb_addr = pcb_ptr[active_pid]; 
     pcb_entry_t pcb;
-    pcb.pid = cur_pid;
+    pcb.pid = active_pid;
     pcb.parent_esp0 = tss.esp0;
     pcb.current = 1;
 
-    if (cur_pid >= 3){ // process 3 and above have a parent process
-        pcb.parent_pid = caller_pid;
+    if (active_pid >= 3){ // process 3 and above have a parent process
+        pcb.parent_pid = parent_pid;
         pcb_ptr[parent_pid]->current = 0; 
         pcb.t_id = pcb_ptr[parent_pid]->t_id;
     } 
     else{ // process 0, 1, 2 (base shells) have no parent process
         pcb.parent_pid = -1;
-        pcb.t_id = cur_pid; 
+        pcb.t_id = active_pid; 
         pcb.current = 1;
     } 
 
@@ -298,12 +317,12 @@ int32_t execute(const uint8_t* command) {
     
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    pcb_ptr[cur_pid]->esp_exec = s_esp;
-    pcb_ptr[cur_pid]->ebp_exec = s_ebp;
+    pcb_ptr[active_pid]->esp_exec = s_esp;
+    pcb_ptr[active_pid]->ebp_exec = s_ebp;
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+    tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
     
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
@@ -354,12 +373,12 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
         return -1; 
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in read: trying to read from fd %d which is not in use \n", fd);
         return -1; 
     }
 
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
 
 }
 
@@ -382,12 +401,12 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in write: trying to write to fd %d which is not in use \n", fd);
         return -1; 
     }
 
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
 }
 
 
@@ -434,13 +453,13 @@ int32_t close(int32_t fd){
         return -1; 
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
        // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
     }
 
     // call close func -- should remove from fd array
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 
 
@@ -458,7 +477,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
         { printf("Invalid Argument to getargs"); return -1; }
     
     /* Get the current PCB */
-    pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid];
+    pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[active_pid];
 
     /*If the arguments and a terminal NULL (0-byte) 
     do not fit in the buffer, simply return -1*/
