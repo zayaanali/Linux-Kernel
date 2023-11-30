@@ -43,6 +43,9 @@ int32_t terminal_close(int32_t fd);
 
 int32_t terminal_switch(int new_term_idx);
 
+void remap_vidmem_service();
+void remap_vidmem_visible();
+
 
 
 

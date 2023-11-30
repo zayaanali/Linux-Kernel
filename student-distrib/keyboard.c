@@ -192,8 +192,14 @@ extern void keyboard_handler() {
     
     }
 
+    /* Remap the video memory to print to the visible terminal */
+    remap_vidmem_visible();
+    
     /* Push character to line buffer and print to screen */
     buf_push(out); putc(out);
+
+    /* Remap the video memory to print to the currently servicing terminal*/
+    remap_vidmem_service();
 
     /* End of Interrupt */
     send_eoi(KEYBOARD_IRQ);

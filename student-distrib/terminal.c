@@ -120,3 +120,16 @@ int32_t terminal_switch(int new_term_idx) {
     return 0;
 }
 
+/* Remap to the currently serviced terminal */
+void remap_vidmem_service() {
+    if(active_tid == cur_terminal){
+        page_table[184].page_base_address = 184;
+    }else{
+        page_table[184].page_base_address = 184 + 1 + active_tid;
+    }
+}
+
+void remap_vidmem_visible() {
+    page_table[184].page_base_address = 184;
+}
+

@@ -58,8 +58,8 @@ int32_t switch_process() {
     }
 
     
-//     // remap vidmem
-//    // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
+    // remap vidmem
+   // if active_pid is on cur_terminal, it's being viewed, map vid mem to b8000
     if(active_tid == cur_terminal){
         page_table[184].page_base_address = 184;
     }else{
