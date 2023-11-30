@@ -5,6 +5,7 @@
 
 int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
 static char* video_mem = (char *)VIDEO;
+int cur_terminal = 0; 
 
 int32_t terminal_open(const uint8_t* filename) {
 
@@ -80,30 +81,20 @@ int32_t terminal_write(int fd, const void* buf, int32_t nbytes) {
     return bytes_written;
 }
 
-int cur_terminal = 0; 
+
 /* Switches execution from one terminal to the other */
 int32_t terminal_switch(int new_term_idx) {
     int i;
     
     /* Copy video mem from current terminal to memory (saving current video mem) */
     memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
-    
-    /* Save keyboard buffer and cursor */
-    for (i=0; i<MAX_BUFFER_SIZE; i++)
-        terminals[cur_terminal].keyboard_buf[i] = line_buffer[i];
-    
-    terminals[cur_terminal].buf_ptr = buf_ptr;
+        
+    /* Save the cursor location */
     terminals[cur_terminal].cursor_x = get_screen_x();
     terminals[cur_terminal].cursor_y = get_screen_y();
 
     /* Copy new video terminal mem */
     memcpy((void*)video_mem, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
-
-    /* Restore keyboard buffer/cursor */
-    for (i=0; i<MAX_BUFFER_SIZE; i++)
-        line_buffer[i] = terminals[new_term_idx].keyboard_buf[i];
-    
-    buf_ptr = terminals[new_term_idx].buf_ptr = buf_ptr;
     update_screen_coords(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
 
     /* Set new current terminal index */

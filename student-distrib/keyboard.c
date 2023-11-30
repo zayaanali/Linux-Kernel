@@ -103,7 +103,7 @@ extern void keyboard_init() {
     ctrl_pressed = 0;
     enter_pressed = 0;
     alt_pressed = 0;
-    buf_ptr = 0;
+    terminals[cur_terminal].buf_ptr = 0;
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
@@ -139,7 +139,7 @@ extern void keyboard_handler() {
     
     /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
-        if (buf_ptr==0)
+        if (terminals[cur_terminal].buf_ptr==0)
             { send_eoi(KEYBOARD_IRQ); return; }
         
         buf_pop();
@@ -262,7 +262,7 @@ extern void clear_line_buffer() {
     int i;
     /* Set all elements of line buffer to null*/
     for (i=0; i < MAX_BUFFER_SIZE; i++) {
-        line_buffer[i] = '\0';
+        terminals[cur_terminal].keyboard_buffer[i] = '\0';
     }
 }
 
@@ -280,11 +280,11 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
     for (i=0; i < num_bytes; i++) {
         /* Check if reached newline (end of string). If so then clear line buffer and return */
-        if (line_buffer[i] == '\n') 
-            { clear_line_buffer(); buf_ptr=0; return num_bytes_read; }
+        if (terminals[cur_terminal].keyboard_buffer[i] == '\n') 
+            { clear_line_buffer(); terminals[cur_terminal].buf_ptr=0; return num_bytes_read; }
         
         /* Copy from line buffer to terminal buffer */
-        terminal_buffer[i] = line_buffer[i];
+        terminal_buffer[i] = terminals[cur_terminal].keyboard_buffer[i];
         
         /* Increment number of bytes read */
         num_bytes_read++;
@@ -292,7 +292,7 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
 
     /* Clear the line buffer */
     clear_line_buffer();
-    buf_ptr=0;
+    terminals[cur_terminal].buf_ptr=0;
     
     /* Return number of bytes read */
     return num_bytes_read;
@@ -303,8 +303,13 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
  *   Return Value: none
  *   Function: pushes a single character onto line buffer and appends newline to end (if there is enough space) */
 void buf_push(char val) {
-    if (buf_ptr+1 < MAX_BUFFER_SIZE)
-        { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\n'; }
+    int cur_buf_ptr = terminals[cur_terminal].buf_ptr;
+
+    if (cur_buf_ptr+1 < MAX_BUFFER_SIZE) {
+        terminals[cur_terminal].keyboard_buffer[cur_buf_ptr] = val;
+        terminals[cur_terminal].buf_ptr++;
+        terminals[cur_terminal].keyboard_buffer[ terminals[cur_terminal].buf_ptr ] = '\n';
+    }
 }
 
 /* buf_pop
@@ -312,8 +317,11 @@ void buf_push(char val) {
  *   Return Value: none
  *   Function: removes single character from line buffer (if able to), keeps the newline at the end of buffer */
 void buf_pop() {
-    if (buf_ptr-1 > -1)
-        { line_buffer[buf_ptr]='\n'; buf_ptr--; }
+    int cur_buf_ptr = terminals[cur_terminal].buf_ptr;
+    if (cur_buf_ptr-1 > -1) {
+        terminals[cur_terminal].keyboard_buffer[cur_buf_ptr]='\n'; 
+        terminals[cur_terminal].buf_ptr--;
+    }
 }
 
 /*

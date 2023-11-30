@@ -12,6 +12,7 @@
 #define TERM2_VIDMEM 0xBA000
 #define TERM3_VIDMEM 0xBB000
 #define FOUR_KB 0x1000
+#define MAX_BUFFER_SIZE 128
 
 extern int32_t TERMINAL_VIDMEM_PTR[3];
 
@@ -19,7 +20,7 @@ extern int32_t TERMINAL_VIDMEM_PTR[3];
 int32_t terminal_switch();
 
 typedef struct terminal {
-    char keyboard_buf[MAX_BUFFER_SIZE];
+    char keyboard_buffer[MAX_BUFFER_SIZE];
     int buf_ptr;
 
     int cursor_x, cursor_y;

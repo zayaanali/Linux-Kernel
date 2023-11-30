@@ -6,15 +6,11 @@
 #define _KEYBOARD_H
 
 #include "types.h"
+#include "terminal.h"
 
 #define MAX_BUFFER_SIZE 128
 #define TERM_WIDTH 80
 #define TERM_HEIGHT 25
-
-/* Line Buffer */
-char line_buffer[MAX_BUFFER_SIZE];
-int buf_ptr;
-
 
 extern void keyboard_init();
 extern void keyboard_handler();
