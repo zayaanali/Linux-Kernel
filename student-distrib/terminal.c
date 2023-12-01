@@ -147,3 +147,12 @@ void remap_vidmem_service_test(int tid) {
     }
 }
 
+void save_cursors(int tid){
+        terminals[tid].cursor_x = get_screen_x();
+        terminals[tid].cursor_y = get_screen_y();
+}
+
+void restore_cursors(int tid){
+    update_screen_coords(terminals[tid].cursor_x, terminals[tid].cursor_y);
+    set_cursor(terminals[tid].cursor_x, terminals[tid].cursor_y);
+}
