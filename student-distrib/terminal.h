@@ -47,9 +47,6 @@ void remap_vidmem_service();
 void remap_vidmem_visible();
 int remap_vidmem_vis_test();
 void remap_vidmem_service_test(int tid);
-extern void restore_cursors(int tid);
-extern void save_cursors(int tid);
-
 
 
 
