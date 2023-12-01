@@ -3,6 +3,7 @@
 #include "systemcall.h"
 #include "scheduler.h"
 #include "paging.h"
+#include "page.h"
 
 int32_t TERMINAL_VIDMEM_PTR[] = { TERM1_VIDMEM, TERM2_VIDMEM, TERM3_VIDMEM};
 static char* video_mem = (char *)VIDEO;
@@ -92,6 +93,7 @@ int32_t terminal_switch(int new_term_idx) {
     //map virt vid mem to physical vid mem being viewed
     remap_vidmem_visible();
 
+
     /* Copy video mem from current terminal to memory (saving current video mem) */
     memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
         
@@ -123,10 +125,13 @@ void remap_vidmem_service() {
     }else{
         page_table[184].page_base_address = 184 + 1 + active_tid;
     }
+    flush_tlb();
+    
 }
 
 void remap_vidmem_visible() {
     page_table[184].page_base_address = 184;
+    flush_tlb();
 }
 
 int remap_vidmem_vis_test() {

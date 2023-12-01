@@ -97,32 +97,33 @@ int32_t halt(uint8_t status) {
     
     int i;
     
-    /* Get the current and parent pcb */
-    pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (active_pid+1)*EIGHT_KB);
+    // /* Get the current pcb */
+    pcb_entry_t* cur_pcb = pcb_ptr[active_pid];
+    
+    /* Some useful vars */
+    int term_id = pcb_ptr[active_pid]->t_id;
+    int parent_pid = pcb_ptr[active_pid]->parent_pid;
 
     /* Close relevant FDs */
     for(i=0; i<8; i++)
-        cur_pcb->fd_array[i].in_use = 0; 
+        cur_pcb->fd_array[i].in_use = 0;
 
-    /* mark process as not current */
-    cur_pcb->current = 0;
+    /* mark process as not current, set highest current process for terminal */
+    pcb_ptr[active_pid]->current = 0;
+    term_cur_pid[term_id] = parent_pid;
 
-    /* If current PID is base shell, then relaunch shell */
+    /* set PCB as not in use, set parent as current */
+    cur_pcb->pid_in_use = 0;
+
+    /* Set new active_pid, set parent as current highest process */
+    active_pid = parent_pid;
+    pcb_ptr[active_pid]->current = 1;
+
+    /* If current PID is base shell, then do nothing (base shell cannot be exited) */
     if (active_pid >= 0 && active_pid <=2) { 
-        // CHANGE
-        //cur_pid --; // cur_pid will be incremented in execute
-        execute((const uint8_t*)"shell"); 
+        printf("Cannot halt base shell!");
+        return 0;
     }
-    
-    /* Update cur pid to parent, mark parent as current*/
-
-    // update active_pid to parent??
-
-    cur_pcb->pid_in_use=0;
-    active_pid = cur_pcb->parent_pid;
-    cur_pcb->current = 0; 
-    //cur_pcb->pid = cur_pid;
-    
 
     /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
