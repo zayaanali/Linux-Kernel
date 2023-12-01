@@ -75,9 +75,9 @@ int32_t switch_process() {
     if (base_shells_opened <3) {        
        // base_shells_opened++;    
         
-        terminal_switch(2-active_pid); // open 2, 1, then 0 (starts on terminal 0)
+        terminal_switch(active_pid); // open 2, 1, then 0 (starts on terminal 0)
         send_eoi(0);
-        printf("Starting shell %d\n", 2-active_pid);
+        printf("Starting shell %d\n", active_pid);
         execute((const uint8_t*)"shell");
         return 0;
     }
