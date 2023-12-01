@@ -357,10 +357,10 @@ extern void set_cursor(int x, int y)
 */
 extern void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 {
-	outb(0x3D4, 0x0A);
-	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
-	outb(0x3D4, 0x0B);
-	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+	outb(0x0A, 0x3D4);
+	outb((inb(0x3D5) & 0xC0) | cursor_start, 0x3D5);
+	outb(0x0B, 0x3D4);
+	outb((inb(0x3D5) & 0xE0) | cursor_end, 0x3D5);
 }
 
 /*
@@ -371,7 +371,7 @@ extern void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
 */
 extern void disable_cursor()
 {
-	outb(0x3D4, 0x0A);
-	outb(0x3D5, 0x20);
+	outb(0x0A, 0x3D4);
+	outb(0x20, 0x3D5);
 }
 

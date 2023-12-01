@@ -10,5 +10,6 @@ extern int32_t term_cur_pid[3];
 extern int32_t switch_process();
 
 extern uint8_t base_shells_opened;
+uint8_t prev_tid; 
 
 #endif

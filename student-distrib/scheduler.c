@@ -30,6 +30,8 @@ int32_t switch_process() {
     // save esp and ebp of current process
     register uint32_t s_esp asm("%esp");
     register uint32_t s_ebp asm("%ebp");
+
+    uint8_t prev_tid = active_tid; 
     
     if (base_shells_opened == 0) { // Opening the first base shell. The current process context does not need to be stored (switching from kernel)
         active_pid = 0;
@@ -71,17 +73,27 @@ int32_t switch_process() {
     register uint32_t new_esp = pcb_ptr[active_pid]->esp;
     register uint32_t new_ebp = pcb_ptr[active_pid]->ebp;
 
+    if(prev_tid!=-1){
+        terminals[prev_tid].cursor_x = get_screen_x();
+        terminals[prev_tid].cursor_y = get_screen_y();
+    }
+
+    update_screen_coords(terminals[active_tid].cursor_x, terminals[active_tid].cursor_y);
+    //set_cursor(terminals[active_tid].cursor_x, terminals[active_tid].cursor_y);
 
     if (base_shells_opened <3) {        
        // base_shells_opened++;    
-        
-        terminal_switch(active_pid); // open 2, 1, then 0 (starts on terminal 0)
+        //printf("Starting shell %d\n", active_pid);
+        //terminal_switch(active_pid); // open 2, 1, then 0 (starts on terminal 0)
         send_eoi(0);
-        printf("Starting shell %d\n", active_pid);
+       
         execute((const uint8_t*)"shell");
-        return 0;
     }
 
+    
+    
+// sched_id => active_tid
+// display_id => cur_terminal
     // do context switch
     asm volatile(
         "movl %0, %%esp; \n"            // switch to new esp

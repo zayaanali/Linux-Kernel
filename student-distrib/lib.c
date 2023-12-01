@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "terminal.h"
+#include "scheduler.h"
 
 
 #define VIDEO       0xB8000
@@ -229,7 +230,10 @@ void putc(uint8_t c) {
     }
 
     /* update cursor */
-    set_cursor(screen_x, screen_y);
+    if(cur_terminal==active_tid){
+        set_cursor(screen_x, screen_y);
+    }
+    
 
 } 
 

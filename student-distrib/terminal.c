@@ -93,7 +93,6 @@ int32_t terminal_switch(int new_term_idx) {
     //map virt vid mem to physical vid mem being viewed
     remap_vidmem_visible();
 
-
     /* Copy video mem from current terminal to memory (saving current video mem) */
     memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
         
@@ -108,7 +107,7 @@ int32_t terminal_switch(int new_term_idx) {
 
     /* Set new current terminal index */
     cur_terminal = new_term_idx;
-
+    //printf("Starting shell %d\n", new_term_idx);
     // restore virt vid mem to point to correct video page depending on what's viewed
     remap_vidmem_service();
 
@@ -140,7 +139,7 @@ int remap_vidmem_vis_test() {
 }
 
 void remap_vidmem_service_test(int tid) {
-        if(tid == cur_terminal){
+    if(tid == cur_terminal){
         page_table[184].page_base_address = 184;
     }else{
         page_table[184].page_base_address = 184 + 1 + tid;
