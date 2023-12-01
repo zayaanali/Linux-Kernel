@@ -97,33 +97,32 @@ int32_t halt(uint8_t status) {
     
     int i;
     
-    // /* Get the current pcb */
-    pcb_entry_t* cur_pcb = pcb_ptr[active_pid];
-    
     /* Some useful vars */
     int term_id = pcb_ptr[active_pid]->t_id;
     int parent_pid = pcb_ptr[active_pid]->parent_pid;
-
-    /* Close relevant FDs */
-    for(i=0; i<8; i++)
-        cur_pcb->fd_array[i].in_use = 0;
-
-    /* mark process as not current, set highest current process for terminal */
-    pcb_ptr[active_pid]->current = 0;
-    term_cur_pid[term_id] = parent_pid;
-
-    /* set PCB as not in use, set parent as current */
-    cur_pcb->pid_in_use = 0;
-
-    /* Set new active_pid, set parent as current highest process */
-    active_pid = parent_pid;
-    pcb_ptr[active_pid]->current = 1;
+    int old_pid = active_pid; 
 
     /* If current PID is base shell, then do nothing (base shell cannot be exited) */
     if (active_pid >= 0 && active_pid <=2) { 
         printf("Cannot halt base shell!");
         return 0;
     }
+
+    /* Close relevant FDs */
+    for(i=0; i<8; i++)
+        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
+
+    /* mark process as not current, set highest current process for terminal */
+    pcb_ptr[active_pid]->current = 0;
+    term_cur_pid[term_id] = parent_pid;
+
+    /* set PCB as not in use, set parent as current */
+    pcb_ptr[active_pid]->pid_in_use = 0;
+
+    /* Set new active_pid, set parent as current highest process */
+    active_pid = parent_pid;
+    pcb_ptr[active_pid]->current = 1;
+
 
     /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -151,8 +150,8 @@ int32_t halt(uint8_t status) {
     tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
 
     /* restore stack */
-    register uint32_t s_esp = cur_pcb->esp_exec;
-    register uint32_t s_ebp = cur_pcb->ebp_exec; 
+    register uint32_t s_esp = pcb_ptr[old_pid]->esp_exec;
+    register uint32_t s_ebp = pcb_ptr[old_pid]->ebp_exec; 
 
     restore_flags(flags);
     /* Context Switch */
@@ -254,6 +253,7 @@ int32_t execute(const uint8_t* command) {
             terminal_switch(0);
     }
    
+   active_tid = cur_terminal; 
     // cur_pid++;  
 
     /* Add PID page */
@@ -310,7 +310,7 @@ int32_t execute(const uint8_t* command) {
         pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
     /* Save EBP/ESP and Copy PCB to memory */
-    memcpy((void*)pcb_ptr[active_pid], (const void*)pcb_ptr[active_pid], sizeof(pcb_entry_t));
+    //memcpy((void*)pcb_ptr[active_pid], (const void*)pcb_ptr[active_pid], sizeof(pcb_entry_t));
 
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
