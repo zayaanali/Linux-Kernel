@@ -250,8 +250,6 @@ int32_t execute(const uint8_t* command) {
         active_pid = base_shells_opened;
         pcb_ptr[active_pid]->pid_in_use=1;
         base_shells_opened++;
-        if (base_shells_opened==3) // switch back to terminal 0
-            terminal_switch(0);
     }
    
     // cur_pid++;  
