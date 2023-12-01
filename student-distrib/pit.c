@@ -33,9 +33,12 @@ void pit_init(){
     
 }
 void pit_int_handler(){
-    //send_eoi(0);
-    //terminal_write(1, "timer", 5);
+    send_eoi(0);
+    cli();
+    
     switch_process();
+    
+    sti();
 }
 void init_pit_idt(){
     

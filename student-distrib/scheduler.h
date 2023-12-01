@@ -5,6 +5,7 @@
 
 extern int32_t active_pid;
 extern int32_t active_tid;
+extern int32_t term_cur_pid[3];
 
 extern int32_t switch_process();
 

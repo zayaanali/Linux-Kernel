@@ -122,6 +122,7 @@ int32_t halt(uint8_t status) {
     active_pid = cur_pcb->parent_pid;
     cur_pcb->current = 0; 
     //cur_pcb->pid = cur_pid;
+    
 
     /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -224,29 +225,29 @@ int32_t execute(const uint8_t* command) {
         if (ELF[i] != read_buffer[i])
             { printf("execute: Not an executable \n"); return -1; }
     }
-
-    /* Check not at max processes */
-    // if (cur_pid >= 5)
-    //     { printf("execute: Six processes already open \n"); return -1; }
     
-    /* Set parent pid, mark parent as not current */  
-    parent_pid = active_pid; 
+    /* Set parent pid */  
+    parent_pid = term_cur_pid[cur_terminal]; 
 
-    // find next available pid
-   // if(active_pid!=0 && active_pid!=1 && active_pid!=2){
+    /* Find/set active PID */
     if(base_shells_opened==3){
-        for(i=0; i<(MAX_PROCESSES+1); i++){
-            if(i==MAX_PROCESSES){
+        /* If all base shells have been opened, iterate through processes to one not in use */
+        for(i=0; i<=MAX_PROCESSES; i++){
+            /* reached max processes */
+            if(i==MAX_PROCESSES)
                 { printf("execute: Six processes already open \n"); return -1; }
-            }
 
-            if(pcb_ptr[i]->pid_in_use==0){
-                active_pid = i;
+            /* check if process in use, if not then set as active_pid, set in use */
+            if (pcb_ptr[i]->pid_in_use==0) {
+                active_pid = i; 
                 pcb_ptr[active_pid]->pid_in_use=1;
+                term_cur_pid[cur_terminal] = active_pid; // set new highest process for cur terminal
+                break;
             }
         }
-    }else{
-        // opening shell
+    } else { /* Base shells have not all been opened, open base shells */
+        active_pid = base_shells_opened;
+        pcb_ptr[active_pid]->pid_in_use=1;
         base_shells_opened++;
     }
    
@@ -280,13 +281,9 @@ int32_t execute(const uint8_t* command) {
 
     /* Set up PCB entry */
     // pcb_entry_t* pcb_addr = pcb_ptr[active_pid]; 
-    // pcb_entry_t pcb;
-    // pcb.pid = active_pid;
-    // pcb.parent_esp0 = tss.esp0;
-    // pcb.current = 1;
+    
     pcb_ptr[active_pid]->parent_esp0 = tss.esp0;
     pcb_ptr[active_pid]->current = 1;
-
 
     if (active_pid >= 3){ // process 3 and above have a parent process
         pcb_ptr[active_pid]->parent_pid = parent_pid;
@@ -310,9 +307,7 @@ int32_t execute(const uint8_t* command) {
         pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
     /* Save EBP/ESP and Copy PCB to memory */
-
-    
-    //memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
+    memcpy((void*)pcb_ptr[active_pid], (const void*)pcb_ptr[active_pid], sizeof(pcb_entry_t));
 
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
