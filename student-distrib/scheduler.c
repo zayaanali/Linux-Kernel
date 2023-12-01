@@ -47,10 +47,11 @@ int32_t switch_process() {
         //return 0;
         pcb_ptr[active_pid]->esp = (uint32_t)s_esp;
         pcb_ptr[active_pid]->ebp = (uint32_t)s_ebp; 
-
+        save_cursors(active_tid);
         // update active_pid and active_tid
         active_pid =  find_next_pid(active_pid);
         active_tid = pcb_ptr[active_pid]->t_id;
+        restore_cursors(active_tid);
     }
 
     
