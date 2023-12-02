@@ -32,6 +32,29 @@ int32_t terminal_open(const uint8_t* filename) {
     return 0;
 }
 
+int32_t terminal_open_exec(const uint8_t* filename, int32_t pid) {
+
+    // create stdin entry in file array
+    if(pcb_ptr[pid]->fd_array[0].in_use==1){
+        printf("stdin already exists \n");
+        return -1;
+    }
+
+    pcb_ptr[pid]->fd_array[0].file_op_tbl_ptr = &term_funcs; 
+    pcb_ptr[pid]->fd_array[0].in_use=1; 
+
+    // create stdout entry in file array
+    if(pcb_ptr[pid]->fd_array[1].in_use==1){
+        printf("stdout already exists");
+        return -1; 
+    }
+
+    pcb_ptr[pid]->fd_array[1].file_op_tbl_ptr =&term_funcs;
+    pcb_ptr[pid]->fd_array[1].in_use=1; 
+
+    return 0;
+}
+
 int32_t terminal_close(int32_t fd) {
     return remove_from_file_array(fd); 
 }

@@ -188,9 +188,9 @@ int32_t execute(const uint8_t* command) {
     uint32_t flags;
 
     //wait for process being viewed to be serviced
-    while(active_tid!=cur_terminal){
-        ;
-    }
+    // while(active_tid!=cur_terminal){
+    //     ;
+    // }
 
     cli_and_save(flags);
    
@@ -202,6 +202,7 @@ int32_t execute(const uint8_t* command) {
     dentry_t new_dentry;
     int32_t parent_pid;
 
+    int32_t new_pid;
 
 
     /* Init args array to NULL char */
@@ -250,14 +251,15 @@ int32_t execute(const uint8_t* command) {
 
             /* check if process in use, if not then set as active_pid, set in use */
             if (pcb_ptr[i]->pid_in_use==0) {
-                active_pid = i; 
-                pcb_ptr[active_pid]->pid_in_use=1;
-                term_cur_pid[cur_terminal] = active_pid; // set new highest process for cur terminal
+                new_pid = i; 
+                pcb_ptr[new_pid]->pid_in_use=1;
+                term_cur_pid[cur_terminal] = new_pid; // set new highest process for cur terminal
                 break;
             }
         }
     } else { /* Base shells have not all been opened, open base shells */
         active_pid = base_shells_opened;
+        new_pid = base_shells_opened;
         pcb_ptr[active_pid]->pid_in_use=1;
         base_shells_opened++;
         if (base_shells_opened==3) // switch back to terminal 0
@@ -265,28 +267,32 @@ int32_t execute(const uint8_t* command) {
     }
    
     // add pid to scheduler
-    pcb_ptr[active_pid]->current = 1;
+    pcb_ptr[new_pid]->current = 1;
 
-    if (active_pid >= 3){ // process 3 and above have a parent process
-        pcb_ptr[active_pid]->parent_pid = parent_pid;
+    if(cur_terminal==active_tid){
+        active_pid = new_pid; 
+    }
+
+    if (new_pid >= 3){ // process 3 and above have a parent process
+        pcb_ptr[new_pid]->parent_pid = parent_pid;
         pcb_ptr[parent_pid]->current = 0; 
-        pcb_ptr[active_pid]->t_id = pcb_ptr[parent_pid]->t_id;
+        pcb_ptr[new_pid]->t_id = pcb_ptr[parent_pid]->t_id;
     } 
     else{ // process 0, 1, 2 (base shells) have no parent process
-        pcb_ptr[active_pid]->parent_pid = -1;
-        pcb_ptr[active_pid]->t_id = active_pid; 
-        pcb_ptr[active_pid]->current = 1;
+        pcb_ptr[new_pid]->parent_pid = -1;
+        pcb_ptr[new_pid]->t_id = new_pid; 
+        pcb_ptr[new_pid]->current = 1;
     } 
 
     /* Copy arguments to PCB args value */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
-       pcb_ptr[active_pid]->args[i] = args[i];
+       pcb_ptr[new_pid]->args[i] = args[i];
     }
 
 
     //initialize file array entries to not in use
     for(i=0; i<8; i++)
-        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
+        pcb_ptr[new_pid]->fd_array[i].in_use = 0;
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -301,13 +307,19 @@ int32_t execute(const uint8_t* command) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (new_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
 
     /* Load Memory with Program Image -- Use virtual address of 128 MB */
     uint8_t* p_img = (uint8_t*)((0x08048000)); // 128MB + offset of 0x48000
+
+    if(cur_terminal!=active_tid){
+        // remap 128 MB to point to program it was at
+        page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); 
+        flush_tlb();
+    }
 
     read_data(new_dentry.inode_id, 0, p_img, 36000); // 36000 is well over the max size of file (in bytes)
 
@@ -316,10 +328,8 @@ int32_t execute(const uint8_t* command) {
     
 
 
-
     /* Set up stdin and stdout */
-    terminal_open((const uint8_t*)"");
-
+    terminal_open_exec((const uint8_t*)"",  new_pid);
 
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     register uint32_t ret;
@@ -327,12 +337,12 @@ int32_t execute(const uint8_t* command) {
     /* Save EBP/ESP*/
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    pcb_ptr[active_pid]->esp_exec = s_esp;
-    pcb_ptr[active_pid]->ebp_exec = s_ebp;
+    pcb_ptr[new_pid]->esp_exec = s_esp;
+    pcb_ptr[new_pid]->ebp_exec = s_ebp;
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
+    tss.esp0 = (EIGHT_MB - (new_pid)*EIGHT_KB);
     
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
