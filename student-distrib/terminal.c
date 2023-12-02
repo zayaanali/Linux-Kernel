@@ -113,7 +113,7 @@ int32_t terminal_switch(int new_term_idx) {
     remap_vidmem_service();
 
     restore_flags(flags);
-    sti();
+    //sti();
 
     return 0;
 }

@@ -155,7 +155,7 @@ int32_t halt(uint8_t status) {
     register uint32_t s_ebp = pcb_ptr[old_pid]->ebp_exec; 
 
     restore_flags(flags);
-    sti();
+    //sti();
     /* Context Switch */
     asm volatile(
         "movl %0, %%esp; \n"                 // restore esp
@@ -336,7 +336,7 @@ int32_t execute(const uint8_t* command) {
     
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
-    sti();
+    //sti();
 
     /* Context Switch */
     asm volatile(
