@@ -63,7 +63,7 @@ typedef struct pcb_entry{
 
     /* Parent Data */
     int32_t parent_pid;
-    uint32_t parent_esp0;
+    //uint32_t parent_esp0;
 
     // thread id. matches 0 indexed terminal this process is on
     uint8_t t_id; 

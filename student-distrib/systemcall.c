@@ -121,6 +121,7 @@ int32_t halt(uint8_t status) {
 
     /* Set new active_pid, set parent as current highest process */
     active_pid = parent_pid;
+    active_tid = term_id;
     pcb_ptr[active_pid]->current = 1;
 
 
@@ -154,6 +155,7 @@ int32_t halt(uint8_t status) {
     register uint32_t s_ebp = pcb_ptr[old_pid]->ebp_exec; 
 
     restore_flags(flags);
+    //sti();
     /* Context Switch */
     asm volatile(
         "movl %0, %%esp; \n"                 // restore esp
@@ -184,6 +186,12 @@ int32_t execute(const uint8_t* command) {
     uint8_t args[128];
     
     uint32_t flags;
+
+    //wait for process being viewed to be serviced
+    while(active_tid!=cur_terminal){
+        ;
+    }
+
     cli_and_save(flags);
    
     uint8_t filename[32] = "";
@@ -193,6 +201,8 @@ int32_t execute(const uint8_t* command) {
     uint32_t entry_point;
     dentry_t new_dentry;
     int32_t parent_pid;
+
+
 
     /* Init args array to NULL char */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
@@ -226,6 +236,7 @@ int32_t execute(const uint8_t* command) {
             { printf("execute: Not an executable \n"); return -1; }
     }
     
+
     /* Set parent pid */  
     parent_pid = term_cur_pid[cur_terminal]; 
 
@@ -253,8 +264,29 @@ int32_t execute(const uint8_t* command) {
             terminal_switch(0);
     }
    
-   active_tid = cur_terminal; 
-    // cur_pid++;  
+    // add pid to scheduler
+    pcb_ptr[active_pid]->current = 1;
+
+    if (active_pid >= 3){ // process 3 and above have a parent process
+        pcb_ptr[active_pid]->parent_pid = parent_pid;
+        pcb_ptr[parent_pid]->current = 0; 
+        pcb_ptr[active_pid]->t_id = pcb_ptr[parent_pid]->t_id;
+    } 
+    else{ // process 0, 1, 2 (base shells) have no parent process
+        pcb_ptr[active_pid]->parent_pid = -1;
+        pcb_ptr[active_pid]->t_id = active_pid; 
+        pcb_ptr[active_pid]->current = 1;
+    } 
+
+    /* Copy arguments to PCB args value */
+    for (i=0; i<MAX_BUFFER_SIZE; i++) {
+       pcb_ptr[active_pid]->args[i] = args[i];
+    }
+
+
+    //initialize file array entries to not in use
+    for(i=0; i<8; i++)
+        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -281,36 +313,9 @@ int32_t execute(const uint8_t* command) {
 
     /* Read entry point from program file */
     read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
-
-    /* Set up PCB entry */
-    // pcb_entry_t* pcb_addr = pcb_ptr[active_pid]; 
     
-    pcb_ptr[active_pid]->parent_esp0 = tss.esp0;
-    pcb_ptr[active_pid]->current = 1;
-
-    if (active_pid >= 3){ // process 3 and above have a parent process
-        pcb_ptr[active_pid]->parent_pid = parent_pid;
-        pcb_ptr[parent_pid]->current = 0; 
-        pcb_ptr[active_pid]->t_id = pcb_ptr[parent_pid]->t_id;
-    } 
-    else{ // process 0, 1, 2 (base shells) have no parent process
-        pcb_ptr[active_pid]->parent_pid = -1;
-        pcb_ptr[active_pid]->t_id = active_pid; 
-        pcb_ptr[active_pid]->current = 1;
-    } 
-
-    /* Copy arguments to PCB args value */
-    for (i=0; i<MAX_BUFFER_SIZE; i++) {
-       pcb_ptr[active_pid]->args[i] = args[i];
-    }
 
 
-    //initialize file array entries to not in use
-    for(i=0; i<8; i++)
-        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
-
-    /* Save EBP/ESP and Copy PCB to memory */
-    //memcpy((void*)pcb_ptr[active_pid], (const void*)pcb_ptr[active_pid], sizeof(pcb_entry_t));
 
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
@@ -319,6 +324,7 @@ int32_t execute(const uint8_t* command) {
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     register uint32_t ret;
     
+    /* Save EBP/ESP*/
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
     pcb_ptr[active_pid]->esp_exec = s_esp;
@@ -330,6 +336,7 @@ int32_t execute(const uint8_t* command) {
     
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
+    //sti();
 
     /* Context Switch */
     asm volatile(

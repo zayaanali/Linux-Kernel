@@ -11,8 +11,8 @@
 /* Current PID for each terminal (what is the highest process for each terminal) */
 int32_t term_cur_pid[3] = {0,1,2};
 
-int32_t active_pid = -1; 
-int32_t active_tid = -1;
+volatile int32_t active_pid = -1; 
+volatile int32_t active_tid = -1;
 
 int32_t find_next_pid(int32_t p);
 //static uint8_t base_shells_opened = 0;

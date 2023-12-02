@@ -3,8 +3,8 @@
 
 #include "lib.h"
 
-extern int32_t active_pid;
-extern int32_t active_tid;
+extern volatile int32_t active_pid;
+extern volatile int32_t active_tid;
 extern int32_t term_cur_pid[3];
 
 extern int32_t switch_process();
