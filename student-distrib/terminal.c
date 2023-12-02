@@ -90,31 +90,25 @@ int32_t terminal_switch(int new_term_idx) {
     uint32_t flags;
     cli_and_save(flags);
 
-    //map virt vid mem to physical vid mem being viewed
-    remap_vidmem_visible();
-
-
-    /* Copy video mem from current terminal to memory (saving current video mem) */
-    memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
-        
-    /* Save the cursor location */
-    terminals[cur_terminal].cursor_x = get_screen_x();
-    terminals[cur_terminal].cursor_y = get_screen_y();
-
-    /* Copy new video terminal mem */
-    memcpy((void*)video_mem, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
-    update_screen_coords(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
+    /* Check if new terminal is the same as the terminal that is currently being viewed (if so do nothing)*/
+    if (new_term_idx == cur_terminal)
+        { restore_flags(flags); return 0; }
+    
+    /* Set screenX/Y to point to the one for the new structure. Set new cursor */
+    update_screen_ptr(&terminals[new_term_idx].cursor_x, &terminals[new_term_idx].cursor_y);
     set_cursor(terminals[new_term_idx].cursor_x, terminals[new_term_idx].cursor_y);
 
-    /* Set new current terminal index */
+    /* Save old terminal video mem */
+    remap_vidmem(cur_terminal);
+    memcpy((void*)TERMINAL_VIDMEM_PTR[cur_terminal], (void*)video_mem, FOUR_KB);
+    
+    /* Set new terminal video mem */
+    memcpy((void*)video_mem, (void*)TERMINAL_VIDMEM_PTR[new_term_idx], FOUR_KB);
+    remap_vidmem(new_term_idx);
+
     cur_terminal = new_term_idx;
 
-    // restore virt vid mem to point to correct video page depending on what's viewed
-    remap_vidmem_service();
-
     restore_flags(flags);
-    //sti();
-
     return 0;
 }
 
@@ -135,16 +129,19 @@ void remap_vidmem_visible() {
     flush_tlb();
 }
 
-int remap_vidmem_vis_test() {
-    page_table[184].page_base_address = 184;
-    return active_tid;
-}
-
-void remap_vidmem_service_test(int tid) {
-        if(tid == cur_terminal){
+void remap_vidmem(int new_term) {
+    
+    /* Set screenX/Y ptr to point to new terminal cursorx/y */
+    update_screen_ptr(&terminals[new_term].cursor_x, &terminals[new_term].cursor_y);
+    
+    /* is the new terminal the currently viewed terminal */
+    if (new_term == cur_terminal) {
+        // if so, remap vidmem to currently viewing video memory
         page_table[184].page_base_address = 184;
-    }else{
-        page_table[184].page_base_address = 184 + 1 + tid;
+    } else {
+        // if not, remap vidmem to the vidmem of the new terminal
+        page_table[184].page_base_address = 184 + 1 + new_term;
     }
+    
+    flush_tlb();
 }
-

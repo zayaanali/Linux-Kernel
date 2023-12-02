@@ -184,16 +184,11 @@ uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
     uint8_t args[128];
-    
     uint32_t flags;
-
-    //wait for process being viewed to be serviced
-    while(active_tid!=cur_terminal){
-        ;
-    }
 
     cli_and_save(flags);
    
+    /* more vars */
     uint8_t filename[32] = "";
     int space_found=0;
     int i, j;
@@ -201,8 +196,6 @@ int32_t execute(const uint8_t* command) {
     uint32_t entry_point;
     dentry_t new_dentry;
     int32_t parent_pid;
-
-
 
     /* Init args array to NULL char */
     for (i=0; i<MAX_BUFFER_SIZE; i++) {
@@ -222,7 +215,6 @@ int32_t execute(const uint8_t* command) {
         }
     }
     
-
     /* get inode if valid file to use for read data */
     if(read_dentry_by_name(filename, &new_dentry) == -1)
         { printf("execute: File doesn't exist \n"); return -1; }
@@ -236,7 +228,6 @@ int32_t execute(const uint8_t* command) {
             { printf("execute: Not an executable \n"); return -1; }
     }
     
-
     /* Set parent pid */  
     parent_pid = term_cur_pid[cur_terminal]; 
 
@@ -260,8 +251,9 @@ int32_t execute(const uint8_t* command) {
         active_pid = base_shells_opened;
         pcb_ptr[active_pid]->pid_in_use=1;
         base_shells_opened++;
-        if (base_shells_opened==3) // switch back to terminal 0
-            terminal_switch(0);
+        term_cur_pid[cur_terminal] = active_pid; // set new highest process for cur terminal
+        if (base_shells_opened==3) // set the current terminal back to terminal 0 (when all terminals finished opening)
+            cur_terminal = 0;
     }
    
     // add pid to scheduler
@@ -314,9 +306,6 @@ int32_t execute(const uint8_t* command) {
     /* Read entry point from program file */
     read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
     
-
-
-
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
 
@@ -327,8 +316,10 @@ int32_t execute(const uint8_t* command) {
     /* Save EBP/ESP*/
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    pcb_ptr[active_pid]->esp_exec = s_esp;
-    pcb_ptr[active_pid]->ebp_exec = s_ebp;
+    if (parent_pid != -1) {
+        pcb_ptr[parent_pid]->esp_exec = s_esp;
+        pcb_ptr[parent_pid]->ebp_exec = s_ebp;
+    }
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
@@ -337,6 +328,7 @@ int32_t execute(const uint8_t* command) {
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
     //sti();
+
 
     /* Context Switch */
     asm volatile(

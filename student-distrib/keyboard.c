@@ -7,6 +7,7 @@
 #include "x86_desc.h"
 #include "systemcall.h"
 #include "terminal.h"
+#include "scheduler.h"
 
 
 #define KEYBOARD_IRQ 1
@@ -120,44 +121,44 @@ extern void keyboard_handler() {
     uint32_t ignore;
 
     /* Remap the video memory to print to the visible terminal */
-    remap_vidmem_visible();
+    remap_vidmem(cur_terminal);
     
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
     if (check_modifiers(scan_key))
-        { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ);  return; }
+        { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key (scancodes greater than 0x57 are not processed) */
     if (scan_key > 0x57) // invalid scan_key
-        { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; }
+        { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab (0x0F is tab scan code)*/
     if (scan_key == 0x0F) {
         for (i=0; i<TAB_SIZE; i++)
             { putc(' '); buf_push(' ');  }
-        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
+        remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     } 
     
     /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
         if (terminals[cur_terminal].buf_ptr==0)
-            { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; }
+            { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; }
         
         buf_pop();
         putc('\b');
-        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
+        remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions (0x26/0x2E are l/c scan codes) */
     if (ctrl_pressed) {
         if (scan_key == 0x26) // CTRL + L
-            { clear(); remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return; } 
+            { clear(); remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; } 
         else if (scan_key == 0x2E) // CTRL + C
-            { remap_vidmem_service(); halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
+            { remap_vidmem(active_tid); halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
         else // do nothing
-            { remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;}
+            { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;}
     }
 
     /* ALT Functions (print nothing) */
@@ -169,7 +170,7 @@ extern void keyboard_handler() {
         else if (scan_key == 0x3d)
             terminal_switch(2);
         
-        remap_vidmem_service(); send_eoi(KEYBOARD_IRQ); return;
+       remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     }    
 
     /* Set key to be printed */    
@@ -199,7 +200,7 @@ extern void keyboard_handler() {
     buf_push(out); putc(out);
 
     /* Remap the video memory to print to the currently servicing terminal*/
-    remap_vidmem_service();
+    remap_vidmem(active_tid);
 
     /* End of Interrupt */
     send_eoi(KEYBOARD_IRQ);

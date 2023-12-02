@@ -10,8 +10,14 @@
 #define NUM_ROWS    25
 #define ATTRIB      0x7
 
-static int screen_x;
-static int screen_y;
+
+
+static int *screen_x;
+static int *screen_y;
+
+
+
+
 static char* video_mem = (char *)VIDEO;
 int scroll_y_count = 0;
 
@@ -26,28 +32,34 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
     scroll_y_count=0;
-    screen_x=0;
-    screen_y=0;
-    set_cursor(screen_x, screen_y);
+    *screen_x=0;
+    *screen_y=0;
+    set_cursor(*screen_x, *screen_y);
 
 }
 
 /* update_screen_coords;
  * Inputs: new_screen_x, new_screen_y. 
  * Return Value: none
- * Function: called from external functions to update screen_x and screen_y */
+ * Function: called from external functions to update screen_x and *screen_y */
 void update_screen_coords(int new_screen_x, int new_screen_y){
+
+    *screen_x = new_screen_x;
+    *screen_y = new_screen_y; 
+}
+
+void update_screen_ptr(int *new_screen_x, int *new_screen_y){
 
     screen_x = new_screen_x;
     screen_y = new_screen_y; 
 }
 
 int get_screen_x(){
-    return screen_x;
+    return *screen_x;
 }
 
 int get_screen_y(){
-    return screen_y; 
+    return *screen_y; 
 }
 
 /* Standard printf().
@@ -197,39 +209,39 @@ int newline_flag = 0;
 
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
+        (*screen_y)++;
+        *screen_x = 0;
         newline_flag = 1;
     } else if (c == '\b') { // backspace
-        if (screen_x > 0) {
-            screen_x--;
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        } else if (screen_x==0 && scroll_y_count>0) {
+        if (*screen_x > 0) {
+            (*screen_x)--;
+            *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1)) = ' ';
+            *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1) + 1) = ATTRIB;
+        } else if (*screen_x==0 && scroll_y_count>0) {
             scroll_y_count--;
-            screen_x = NUM_COLS-1;
-            screen_y--;
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-            *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+            *screen_x = NUM_COLS-1;
+            (*screen_y)--;
+            *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1)) = ' ';
+            *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1) + 1) = ATTRIB;
         }
     } else { // Write a character
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        if (screen_x == NUM_COLS) // if reach end of line, go to next line
-            { screen_x = 0; screen_y++; scroll_y_count++; }
+        *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * (*screen_y) + (*screen_x)) << 1) + 1) = ATTRIB;
+        (*screen_x)++;
+        if (*screen_x == NUM_COLS) // if reach end of line, go to next line
+            { *screen_x = 0; (*screen_y)++; scroll_y_count++; }
         
-        if (screen_y == NUM_ROWS) // if reach end of screen, scroll
+        if (*screen_y == NUM_ROWS) // if reach end of screen, scroll
             scroll();
     }
 
     /* scrolling */
-    if(screen_y >= NUM_ROWS){
+    if(*screen_y >= NUM_ROWS){
         scroll();
     }
 
     /* update cursor */
-    set_cursor(screen_x, screen_y);
+    set_cursor(*screen_x, *screen_y);
 
 } 
 
@@ -260,8 +272,8 @@ extern void scroll(void) {
     }
 
     /* set position to bottom row */
-    screen_y = NUM_ROWS - 1; 
-    screen_x = 0;
+    *screen_y = NUM_ROWS - 1; 
+    *screen_x = 0;
 
 }
 
