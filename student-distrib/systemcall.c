@@ -350,6 +350,7 @@ int32_t execute(const uint8_t* command) {
 
     /* if an exception occurs*/
     if(exception_flag == 1){
+        exception_flag =0;
         return 256;
     } 
     /* return program call*/
@@ -521,7 +522,13 @@ int32_t vidmap(uint8_t** screen_start){
     video_page_table[0].page_cache_disable = 0;      
     video_page_table[0].read_write = 1;
     video_page_table[0].user_supervisor = 1;
-    video_page_table[0].page_base_address = (video_page_addr) >> 12;
+
+    if(active_tid == cur_terminal){
+        video_page_table[0].page_base_address = (video_page_addr) >> 12;
+    }else{
+        video_page_table[0].page_base_address = (TERMINAL_VIDMEM_PTR[active_tid]) >> 12;
+    }
+ 
 
     /* Flush TLB */
     flush_tlb();

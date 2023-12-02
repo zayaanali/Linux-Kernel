@@ -42,7 +42,9 @@ int32_t terminal_close(int32_t fd) {
  *   Function: Reads specified number of bytes from line buffer when return is pressed, and then prints to screen */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     int num_bytes_read;
-    
+    int i; 
+
+
     /* Cast the void* pointer to char* (pointer to head of array) */
     char *char_buf = (char*)buf;
         
@@ -51,7 +53,12 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
 
     /* Set last character as newline */
     char_buf[num_bytes_read] = '\n';
-    
+
+    if(strncmp(char_buf, "exit\n",5)==0 && term_cur_pid[cur_terminal]<3){
+        printf("cannot exit base shell \n");
+        return 0; 
+    }
+  
     /* Clear the keyboard buffer */
     clear_line_buffer();
 
@@ -138,10 +145,13 @@ void remap_vidmem(int new_term) {
     if (new_term == cur_terminal) {
         // if so, remap vidmem to currently viewing video memory
         page_table[184].page_base_address = 184;
+        video_page_table[0].page_base_address = (VIDEO) >> 12;
     } else {
         // if not, remap vidmem to the vidmem of the new terminal
         page_table[184].page_base_address = 184 + 1 + new_term;
+        video_page_table[0].page_base_address = (TERMINAL_VIDMEM_PTR[active_tid]) >> 12;
     }
+
     
     flush_tlb();
 }

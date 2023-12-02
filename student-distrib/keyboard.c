@@ -285,8 +285,8 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
 
     /* Wait for enter keypress */
-    terminals[cur_terminal].enter_pressed = 0;
-    while (terminals[cur_terminal].enter_pressed ==0);
+    terminals[active_tid].enter_pressed = 0;
+    while (terminals[active_tid].enter_pressed ==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
     for (i=0; i < num_bytes; i++) {
