@@ -147,7 +147,7 @@ void remap_vidmem(int new_term) {
     } else {
         // if not, remap vidmem to the vidmem of the new terminal
         page_table[184].page_base_address = 184 + 1 + new_term;
-        video_page_table[0].page_base_address = (TERMINAL_VIDMEM_PTR[active_tid]) >> 12;
+        video_page_table[0].page_base_address = (TERMINAL_VIDMEM_PTR[new_term]) >> 12;
     }
 
     

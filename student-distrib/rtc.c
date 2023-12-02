@@ -19,8 +19,6 @@ extern void rtc_link();
  *    Function: Initialize RTC */
 
 void rtc_init(){
-
-    //cli();			                // disable interrupts .. this function called within clearing of interrupts
     outb(RTC_B, RTC_CMD_PORT);		// select register B, and disable NMI
     char prev = inb(RTC_DATA_PORT);	// read the current value of register B
     outb(RTC_B, RTC_CMD_PORT);		// set the index again (a read will reset the index to register D)
@@ -44,10 +42,7 @@ void rtc_init(){
     rtc_set_freq(1024);
    
 
-   // enable_irq(RTC_IRQ);
-   
-
-    // sti();
+    enable_irq(RTC_IRQ);
 }
 
 /* frequency_to_rate
@@ -103,7 +98,7 @@ int32_t rtc_open(const uint8_t* filename){
     /*Set Virtual Frequency to 2HZ*/
     V_FREQ_NUM = (1024 / 2);
 
-    enable_irq(RTC_IRQ);
+    //enable_irq(RTC_IRQ);
 
     return insert_into_file_array(&rtc_funcs, -1);      // inode not relevant for rtc, send invalid value
 }
