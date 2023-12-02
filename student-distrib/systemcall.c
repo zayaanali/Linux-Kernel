@@ -271,6 +271,9 @@ int32_t execute(const uint8_t* command) {
 
     if(cur_terminal==active_tid){
         active_pid = new_pid; 
+    }else{
+        pcb_ptr[new_pid]->esp = (EIGHT_MB - (new_pid)*EIGHT_KB);
+        //pcb_ptr[new_pid]->ebp = (EIGHT_MB - (new_pid)*EIGHT_KB);
     }
 
     if (new_pid >= 3){ // process 3 and above have a parent process
