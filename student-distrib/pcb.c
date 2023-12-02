@@ -80,7 +80,7 @@ uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
     }
 
     // no available file array entry
-    printf("ERR in insert_into_file_array: no room to open this file \n");
+    //printf("ERR in insert_into_file_array: no room to open this file \n");
     return -1; 
 }
 

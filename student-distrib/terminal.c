@@ -42,8 +42,6 @@ int32_t terminal_close(int32_t fd) {
  *   Function: Reads specified number of bytes from line buffer when return is pressed, and then prints to screen */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes) {
     int num_bytes_read;
-    int i; 
-
 
     /* Cast the void* pointer to char* (pointer to head of array) */
     char *char_buf = (char*)buf;
