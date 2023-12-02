@@ -316,10 +316,9 @@ int32_t execute(const uint8_t* command) {
     /* Save EBP/ESP*/
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    if (parent_pid != -1) {
-        pcb_ptr[parent_pid]->esp = s_esp;
-        pcb_ptr[parent_pid]->ebp = s_ebp;
-    }
+    pcb_ptr[active_pid]->esp_exec = s_esp;
+    pcb_ptr[active_pid]->ebp_exec = s_ebp;
+
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
