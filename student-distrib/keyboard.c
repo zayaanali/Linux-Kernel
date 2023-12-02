@@ -27,7 +27,7 @@ volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_enabled;
 volatile int ctrl_pressed;
-volatile int enter_pressed;
+// volatile int enter_pressed;
 volatile int alt_pressed;
 
 
@@ -102,7 +102,11 @@ extern void keyboard_init() {
     shift_pressed = 0;
     caps_enabled = 0;
     ctrl_pressed = 0;
-    enter_pressed = 0;
+    int i;
+    for (i=0; i<NUM_TERMINALS; i++)
+        terminals[i].enter_pressed = 0;
+    
+    // enter_pressed = 0;
     alt_pressed = 0;
     terminals[cur_terminal].buf_ptr = 0;
 
@@ -231,9 +235,9 @@ int check_modifiers(uint8_t scan_key) {
         case 0x9D: // lcontrol released
             ctrl_pressed = 0; return 1;
         case 0x1C: // enter pressed
-            enter_pressed = 1; return 0;
+            terminals[cur_terminal].enter_pressed = 1; return 0;
         case 0x9C: // enter released
-            enter_pressed = 0; return 0;
+            terminals[cur_terminal].enter_pressed = 0; return 0;
         case 0x38: // alt pressed
             alt_pressed = 1; return 1;
         case 0xB8: // alt released
@@ -281,8 +285,8 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
 
     /* Wait for enter keypress */
-    enter_pressed=0;
-    while (enter_pressed==0);
+    terminals[cur_terminal].enter_pressed = 0;
+    while (terminals[cur_terminal].enter_pressed ==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
     for (i=0; i < num_bytes; i++) {

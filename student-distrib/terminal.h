@@ -22,6 +22,7 @@ int32_t terminal_switch();
 typedef struct terminal {
     char keyboard_buffer[MAX_BUFFER_SIZE];
     int buf_ptr;
+    volatile int enter_pressed;
 
     int cursor_x, cursor_y;
 
