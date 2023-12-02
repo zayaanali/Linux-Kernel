@@ -4,6 +4,7 @@
 #include "filedir.h"
 #include "terminal.h"
 #include "systemcall.h"
+#include "scheduler.h"
 
 #define FILE_ARRAY_SIZE 8
 
@@ -48,6 +49,7 @@ void pcb_init(){
         // process 0 pcb starts 8kb above 8mb(kernel bottom), each following pcb starts 8kb above the last
         pcb_ptr[i] = (pcb_entry_t*)(EIGHT_MB - (i+1)*EIGHT_KB);
         pcb_ptr[i]->current = 0;
+        pcb_ptr[i]->pid_in_use = 0;
     }
 }
 
@@ -64,13 +66,13 @@ uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
 
     // find available file array entry
     for(k=2; k<FILE_ARRAY_SIZE; k++){
-        if(pcb_ptr[cur_pid]->fd_array[k].in_use !=1){
+        if(pcb_ptr[active_pid]->fd_array[k].in_use !=1){
             // create file array entry here
-            pcb_ptr[cur_pid]->fd_array[k].in_use = 1;
-            pcb_ptr[cur_pid]->fd_array[k].file_pos = 0; 
-            pcb_ptr[cur_pid]->fd_array[k].file_op_tbl_ptr = file_funcs_ptr;
+            pcb_ptr[active_pid]->fd_array[k].in_use = 1;
+            pcb_ptr[active_pid]->fd_array[k].file_pos = 0; 
+            pcb_ptr[active_pid]->fd_array[k].file_op_tbl_ptr = file_funcs_ptr;
             if(inode>=0 && inode<=63){
-                pcb_ptr[cur_pid]->fd_array[k].inode = inode; 
+                pcb_ptr[active_pid]->fd_array[k].inode = inode; 
             }
 
             return k;   // return fd
@@ -78,7 +80,7 @@ uint32_t insert_into_file_array(file_op_func_t* file_funcs_ptr, uint32_t inode){
     }
 
     // no available file array entry
-    printf("ERR in insert_into_file_array: no room to open this file \n");
+    //printf("ERR in insert_into_file_array: no room to open this file \n");
     return -1; 
 }
 
@@ -94,11 +96,11 @@ uint32_t remove_from_file_array(int32_t fd){
         return -1; 
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         printf("ERR cannot remove file array entry at fd: %d .File array entry already removed \n", fd);
         return -1; 
     }
 
-   pcb_ptr[cur_pid]->fd_array[fd].in_use = 0;
+   pcb_ptr[active_pid]->fd_array[fd].in_use = 0;
     return 0;
 }

@@ -37,7 +37,7 @@ void page_init() {
     
     /* Initalize page table 0 */
     for (i = 0; i < NUM_PAGES; i++) {
-        if(i>=184 || i<=187){
+        if(i>=184 && i<=187){
             page_table[i].present = 1;
             page_table[i].page_cache_disable = 0;       // pcd should be 0 for video memory pages
         }else{

@@ -14,6 +14,7 @@
 #include "terminal.h"
 #include "x86_desc.h"
 #include "excepts.h"
+#include "scheduler.h"
 
 /* This link function is defined externally, in system_s.S. This function will call the defined .c systemcall_handler below */
 extern void systemcall_link(); 
@@ -96,27 +97,33 @@ int32_t halt(uint8_t status) {
     
     int i;
     
-    /* Get the current and parent pcb */
-    pcb_entry_t* cur_pcb = (pcb_entry_t*) (EIGHT_MB - (cur_pid+1)*EIGHT_KB);
+    /* Some useful vars */
+    int term_id = pcb_ptr[active_pid]->t_id;
+    int parent_pid = pcb_ptr[active_pid]->parent_pid;
+    int old_pid = active_pid; 
+
+    /* If current PID is base shell, then do nothing (base shell cannot be exited) */
+    if (active_pid >= 0 && active_pid <=2) { 
+        printf("Cannot halt base shell!");
+        return 0;
+    }
 
     /* Close relevant FDs */
     for(i=0; i<8; i++)
-        cur_pcb->fd_array[i].in_use = 0; 
+        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
-    /* mark process as not current */
-    cur_pcb->current = 0;
+    /* mark process as not current, set highest current process for terminal */
+    pcb_ptr[active_pid]->current = 0;
+    term_cur_pid[term_id] = parent_pid;
 
-    /* If current PID is base shell, then relaunch shell */
-    if (cur_pid >= 0 && cur_pid <=2) { 
-        // CHANGE
-        cur_pid --; // cur_pid will be incremented in execute
-        execute((const uint8_t*)"shell"); 
-    }
-    
-    /* Update cur pid to parent, mark parent as current*/
-    cur_pid = cur_pcb->parent_pid;
-    cur_pcb->current = 1; 
-    //cur_pcb->pid = cur_pid;
+    /* set PCB as not in use, set parent as current */
+    pcb_ptr[active_pid]->pid_in_use = 0;
+
+    /* Set new active_pid, set parent as current highest process */
+    active_pid = parent_pid;
+    active_tid = term_id;
+    pcb_ptr[active_pid]->current = 1;
+
 
     /* restore PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -131,7 +138,7 @@ int32_t halt(uint8_t status) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* mark vidmem page as not present*/
     video_page_table[0].present = 0;
@@ -141,13 +148,14 @@ int32_t halt(uint8_t status) {
 
     /* Restore TSS */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+    tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
 
     /* restore stack */
-    register uint32_t s_esp = cur_pcb->esp;
-    register uint32_t s_ebp = cur_pcb->ebp; 
+    register uint32_t s_esp = pcb_ptr[old_pid]->esp_exec;
+    register uint32_t s_ebp = pcb_ptr[old_pid]->ebp_exec; 
 
     restore_flags(flags);
+    //sti();
     /* Context Switch */
     asm volatile(
         "movl %0, %%esp; \n"                 // restore esp
@@ -176,17 +184,17 @@ uint8_t ELF[] = {0177, 'E', 'L', 'F'};
 
 int32_t execute(const uint8_t* command) {
     uint8_t args[128];
-    
     uint32_t flags;
+
     cli_and_save(flags);
    
+    /* more vars */
     uint8_t filename[32] = "";
     int space_found=0;
     int i, j;
     uint8_t read_buffer[4];
     uint32_t entry_point;
     dentry_t new_dentry;
-    int32_t caller_pid; 
     int32_t parent_pid;
 
     /* Init args array to NULL char */
@@ -207,7 +215,6 @@ int32_t execute(const uint8_t* command) {
         }
     }
     
-
     /* get inode if valid file to use for read data */
     if(read_dentry_by_name(filename, &new_dentry) == -1)
         { printf("execute: File doesn't exist \n"); return -1; }
@@ -220,21 +227,58 @@ int32_t execute(const uint8_t* command) {
         if (ELF[i] != read_buffer[i])
             { printf("execute: Not an executable \n"); return -1; }
     }
-
-    /* Check not at max processes */
-    if (cur_pid >= 5)
-        { printf("execute: Six processes already open \n"); return -1; }
     
-    /* Set parent pid, mark parent as not current */  
-    caller_pid = cur_pid; 
-    cur_pid++;  
-    if (cur_pid >= 3){ // process 3 and above have a parent process
-        parent_pid = caller_pid;
+    /* Set parent pid */  
+    parent_pid = term_cur_pid[cur_terminal]; 
+
+    /* Find/set active PID */
+    if(base_shells_opened==3){
+        /* If all base shells have been opened, iterate through processes to one not in use */
+        for(i=0; i<=MAX_PROCESSES; i++){
+            /* reached max processes */
+            if(i==MAX_PROCESSES)
+                { printf("execute: Six processes already open \n"); return -1; }
+
+            /* check if process in use, if not then set as active_pid, set in use */
+            if (pcb_ptr[i]->pid_in_use==0) {
+                active_pid = i; 
+                pcb_ptr[active_pid]->pid_in_use=1;
+                term_cur_pid[cur_terminal] = active_pid; // set new highest process for cur terminal
+                break;
+            }
+        }
+    } else { /* Base shells have not all been opened, open base shells */
+        active_pid = base_shells_opened;
+        pcb_ptr[active_pid]->pid_in_use=1;
+        base_shells_opened++;
+        term_cur_pid[cur_terminal] = active_pid; // set new highest process for cur terminal
+        if (base_shells_opened==3) // set the current terminal back to terminal 0 (when all terminals finished opening)
+            cur_terminal = 0;
+    }
+   
+    // add pid to scheduler
+    pcb_ptr[active_pid]->current = 1;
+
+    if (active_pid >= 3){ // process 3 and above have a parent process
+        pcb_ptr[active_pid]->parent_pid = parent_pid;
         pcb_ptr[parent_pid]->current = 0; 
+        pcb_ptr[active_pid]->t_id = pcb_ptr[parent_pid]->t_id;
     } 
     else{ // process 0, 1, 2 (base shells) have no parent process
-        parent_pid = -1;
+        pcb_ptr[active_pid]->parent_pid = -1;
+        pcb_ptr[active_pid]->t_id = active_pid; 
+        pcb_ptr[active_pid]->current = 1;
     } 
+
+    /* Copy arguments to PCB args value */
+    for (i=0; i<MAX_BUFFER_SIZE; i++) {
+       pcb_ptr[active_pid]->args[i] = args[i];
+    }
+
+
+    //initialize file array entries to not in use
+    for(i=0; i<8; i++)
+        pcb_ptr[active_pid]->fd_array[i].in_use = 0;
 
     /* Add PID page */
     page_dir[32].page_dir_entry_4mb_t.present = 1;
@@ -249,7 +293,7 @@ int32_t execute(const uint8_t* command) {
     page_dir[32].page_dir_entry_4mb_t.avail = 0;
     page_dir[32].page_dir_entry_4mb_t.PAT = 0;
     page_dir[32].page_dir_entry_4mb_t.reserved = 0;
-    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (cur_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
+    page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
 
     /* Flush TLB */
     flush_tlb();
@@ -261,32 +305,7 @@ int32_t execute(const uint8_t* command) {
 
     /* Read entry point from program file */
     read_data(new_dentry.inode_id, 24, (uint8_t*) &entry_point, 4); // 24 is the offset of the entry point in the file, read 4 bytes
-
-    /* Set up PCB entry */
-    pcb_entry_t* pcb_addr = pcb_ptr[cur_pid]; 
-    pcb_entry_t pcb;
-    pcb.pid = cur_pid;
-    // pcb.t_id = cur_terminal; don't think this is correct
-    pcb.parent_pid = parent_pid;
-    pcb.parent_esp0 = tss.esp0;
-    pcb.current = 1;
-    pcb.t_id = cur_terminal;
-
-    /* Copy arguments to PCB args value */
-    for (i=0; i<MAX_BUFFER_SIZE; i++) {
-        pcb.args[i] = args[i];
-    }
-
-
-    //initialize file array entries to not in use
-    for(i=0; i<8; i++)
-        pcb.fd_array[i].in_use = 0;
-
-    /* Save EBP/ESP and Copy PCB to memory */
-
     
-    memcpy((void*)pcb_addr, (const void*)&pcb, sizeof(pcb_entry_t));
-
     /* Set up stdin and stdout */
     terminal_open((const uint8_t*)"");
 
@@ -294,17 +313,21 @@ int32_t execute(const uint8_t* command) {
     uint32_t user_esp = KERNEL_BASE + FOUR_MB - 4;
     register uint32_t ret;
     
+    /* Save EBP/ESP*/
     register uint32_t s_esp asm("%esp"); 
     register uint32_t s_ebp asm("%ebp"); //reg values volatile?
-    pcb_ptr[cur_pid]->esp = s_esp;
-    pcb_ptr[cur_pid]->ebp = s_ebp;
+    pcb_ptr[active_pid]->esp_exec = s_esp;
+    pcb_ptr[active_pid]->ebp_exec = s_ebp;
+
 
     /* Set TSS entries */
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = (EIGHT_MB - (cur_pid)*EIGHT_KB);
+    tss.esp0 = (EIGHT_MB - (active_pid)*EIGHT_KB);
     
     /* Enable interrupts (interrupt switch) */
     restore_flags(flags);
+    //sti();
+
 
     /* Context Switch */
     asm volatile(
@@ -327,6 +350,7 @@ int32_t execute(const uint8_t* command) {
 
     /* if an exception occurs*/
     if(exception_flag == 1){
+        exception_flag =0;
         return 256;
     } 
     /* return program call*/
@@ -352,12 +376,12 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
         return -1; 
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in read: trying to read from fd %d which is not in use \n", fd);
         return -1; 
     }
 
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->read_func(fd, buf, nbytes);
 
 }
 
@@ -380,12 +404,12 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in write: trying to write to fd %d which is not in use \n", fd);
         return -1; 
     }
 
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->write_func(fd, buf, nbytes);
 }
 
 
@@ -432,13 +456,13 @@ int32_t close(int32_t fd){
         return -1; 
     }
 
-    if(pcb_ptr[cur_pid]->fd_array[fd].in_use!=1){
+    if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
        // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
     }
 
     // call close func -- should remove from fd array
-    return pcb_ptr[cur_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
+    return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
 }
 
 
@@ -456,7 +480,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
         { printf("Invalid Argument to getargs"); return -1; }
     
     /* Get the current PCB */
-    pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[cur_pid];
+    pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[active_pid];
 
     /*If the arguments and a terminal NULL (0-byte) 
     do not fit in the buffer, simply return -1*/
@@ -498,7 +522,13 @@ int32_t vidmap(uint8_t** screen_start){
     video_page_table[0].page_cache_disable = 0;      
     video_page_table[0].read_write = 1;
     video_page_table[0].user_supervisor = 1;
-    video_page_table[0].page_base_address = (video_page_addr) >> 12;
+
+    if(active_tid == cur_terminal){
+        video_page_table[0].page_base_address = (video_page_addr) >> 12;
+    }else{
+        video_page_table[0].page_base_address = (TERMINAL_VIDMEM_PTR[active_tid]) >> 12;
+    }
+ 
 
     /* Flush TLB */
     flush_tlb();

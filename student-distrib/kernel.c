@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "filesystem.h"
+#include "scheduler.h"
 
 #include "excepts.h"
 #include "rtc.h"
@@ -174,8 +175,6 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     i8259_init();
 
-    enable_irq(0);
-
     /* Init the RTC*/
     rtc_init();
 
@@ -187,6 +186,12 @@ void entry(unsigned long magic, unsigned long addr) {
      
     /* init pcb structs */
     pcb_init();
+
+    enable_irq(0);
+
+    
+
+    
     
 
 

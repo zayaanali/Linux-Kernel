@@ -47,34 +47,32 @@ typedef struct file_arr_entry_t{
 }file_arr_entry_t;
 
 typedef struct pcb_entry{
-    /* parent registers*/
-    // uint32_t p_eip;
-    // uint32_t p_esp;
-    // uint32_t p_ebp;
-
     /* current regs*/
-    // uint32_t eip;
     uint32_t esp;
     uint32_t ebp;
 
+    uint32_t esp_exec;
+    uint32_t ebp_exec;
+
     /* Current Task Info */
-    uint32_t pid;
     file_arr_entry_t fd_array[MAX_FD_ENTRIES];
-    uint32_t state;
-    uint32_t priority;
+
 
     /* current args */
     unsigned char args[MAX_BUFFER_SIZE];
 
     /* Parent Data */
     int32_t parent_pid;
-    uint32_t parent_esp0;
+    //uint32_t parent_esp0;
 
     // thread id. matches 0 indexed terminal this process is on
     uint8_t t_id; 
 
     // flag to track if this process is current process of it's thread
     uint8_t current;
+
+    // flag to track if this pcb currently being used
+    uint8_t pid_in_use;
 
 
 }pcb_entry_t;

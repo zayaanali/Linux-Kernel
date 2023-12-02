@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "pcb.h"
 #include "systemcall.h"
+#include "scheduler.h"
 
 #define DIR_SIZE 64
 #define FNAME_SIZE 32
@@ -61,8 +62,8 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     uint32_t bytes_read = 0; 
 
     // Initialize variables for reading data
-    uint32_t dir_fname_offset = pcb_ptr[cur_pid]->fd_array[fd].file_pos % FNAME_SIZE;              // offset into file name of current directory entry
-    uint32_t dir_index = pcb_ptr[cur_pid]->fd_array[fd].file_pos / FNAME_SIZE;
+    uint32_t dir_fname_offset = pcb_ptr[active_pid]->fd_array[fd].file_pos % FNAME_SIZE;              // offset into file name of current directory entry
+    uint32_t dir_index = pcb_ptr[active_pid]->fd_array[fd].file_pos / FNAME_SIZE;
 
     while((bytes_read < nbytes) && (dir_index < boot_block->num_dir_entries)){
 
@@ -84,7 +85,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     }
 
     // update file position
-    pcb_ptr[cur_pid]->fd_array[fd].file_pos +=bytes_read; 
+    pcb_ptr[active_pid]->fd_array[fd].file_pos +=bytes_read; 
 
     ((uint8_t*)buf)[bytes_read] = '\0';
 

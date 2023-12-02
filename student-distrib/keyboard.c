@@ -7,6 +7,7 @@
 #include "x86_desc.h"
 #include "systemcall.h"
 #include "terminal.h"
+#include "scheduler.h"
 
 
 #define KEYBOARD_IRQ 1
@@ -26,7 +27,7 @@ volatile int key_pressed;
 volatile int shift_pressed;
 volatile int caps_enabled;
 volatile int ctrl_pressed;
-volatile int enter_pressed;
+// volatile int enter_pressed;
 volatile int alt_pressed;
 
 
@@ -101,9 +102,13 @@ extern void keyboard_init() {
     shift_pressed = 0;
     caps_enabled = 0;
     ctrl_pressed = 0;
-    enter_pressed = 0;
+    int i;
+    for (i=0; i<NUM_TERMINALS; i++)
+        terminals[i].enter_pressed = 0;
+    
+    // enter_pressed = 0;
     alt_pressed = 0;
-    buf_ptr = 0;
+    terminals[cur_terminal].buf_ptr = 0;
 
     /* Enable keyboard interrupt line */
     enable_irq(KEYBOARD_IRQ);
@@ -118,43 +123,46 @@ extern void keyboard_handler() {
     char out;
     int i;
     uint32_t ignore;
+
+    /* Remap the video memory to print to the visible terminal */
+    remap_vidmem(cur_terminal);
     
     /* Get keyboard input */
     uint8_t scan_key = inb(KEYBOARD_DATA_PORT);
 
     /* Check if modifier is pressed. If so update modifier flag and return */
     if (check_modifiers(scan_key))
-        { send_eoi(KEYBOARD_IRQ);  return; }
+        { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ);  return; }
  
     /* Check if invalid scan key (scancodes greater than 0x57 are not processed) */
     if (scan_key > 0x57) // invalid scan_key
-        { send_eoi(KEYBOARD_IRQ); return; }
+        { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; }
             
     /* Check for tab (0x0F is tab scan code)*/
     if (scan_key == 0x0F) {
         for (i=0; i<TAB_SIZE; i++)
-            { putc(' '); buf_push(' '); }
-        send_eoi(KEYBOARD_IRQ); return;
+            { putc(' '); buf_push(' ');  }
+        remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     } 
     
     /* Backspace (0x0E is backspace scan code)*/
     if (scan_key == 0x0E) {
-        if (buf_ptr==0)
-            { send_eoi(KEYBOARD_IRQ); return; }
+        if (terminals[cur_terminal].buf_ptr==0)
+            { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; }
         
         buf_pop();
         putc('\b');
-        send_eoi(KEYBOARD_IRQ); return;
+        remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     }
     
     /* CTRL functions (0x26/0x2E are l/c scan codes) */
     if (ctrl_pressed) {
         if (scan_key == 0x26) // CTRL + L
-            { clear(); send_eoi(KEYBOARD_IRQ); return; } 
+            { clear(); remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return; } 
         else if (scan_key == 0x2E) // CTRL + C
-            { halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
+            { remap_vidmem(active_tid); halt(ignore); send_eoi(KEYBOARD_IRQ); return; }
         else // do nothing
-            { send_eoi(KEYBOARD_IRQ); return;}
+            { remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;}
     }
 
     /* ALT Functions (print nothing) */
@@ -166,7 +174,7 @@ extern void keyboard_handler() {
         else if (scan_key == 0x3d)
             terminal_switch(2);
         
-        send_eoi(KEYBOARD_IRQ); return;
+       remap_vidmem(active_tid); send_eoi(KEYBOARD_IRQ); return;
     }    
 
     /* Set key to be printed */    
@@ -191,9 +199,12 @@ extern void keyboard_handler() {
             out = key_map[scan_key];            
     
     }
-
+    
     /* Push character to line buffer and print to screen */
     buf_push(out); putc(out);
+
+    /* Remap the video memory to print to the currently servicing terminal*/
+    remap_vidmem(active_tid);
 
     /* End of Interrupt */
     send_eoi(KEYBOARD_IRQ);
@@ -224,9 +235,9 @@ int check_modifiers(uint8_t scan_key) {
         case 0x9D: // lcontrol released
             ctrl_pressed = 0; return 1;
         case 0x1C: // enter pressed
-            enter_pressed = 1; return 0;
+            terminals[cur_terminal].enter_pressed = 1; return 0;
         case 0x9C: // enter released
-            enter_pressed = 0; return 0;
+            terminals[cur_terminal].enter_pressed = 0; return 0;
         case 0x38: // alt pressed
             alt_pressed = 1; return 1;
         case 0xB8: // alt released
@@ -262,7 +273,7 @@ extern void clear_line_buffer() {
     int i;
     /* Set all elements of line buffer to null*/
     for (i=0; i < MAX_BUFFER_SIZE; i++) {
-        line_buffer[i] = '\0';
+        terminals[cur_terminal].keyboard_buffer[i] = '\0';
     }
 }
 
@@ -272,19 +283,19 @@ extern void clear_line_buffer() {
  *   Function: when enter is pressed, copy line buffer into terminal buffer (the specified number of bytes)  */
 extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
     int i, num_bytes_read = 0;
-    
+
     /* Wait for enter keypress */
-    enter_pressed=0;
-    while (enter_pressed==0);
+    terminals[active_tid].enter_pressed = 0;
+    while (terminals[active_tid].enter_pressed ==0);
     
     /* Copy keyboard buffer into passed pointer. Protect read into line buffer */
     for (i=0; i < num_bytes; i++) {
         /* Check if reached newline (end of string). If so then clear line buffer and return */
-        if (line_buffer[i] == '\n') 
-            { clear_line_buffer(); buf_ptr=0; return num_bytes_read; }
+        if (terminals[cur_terminal].keyboard_buffer[i] == '\n') 
+            { clear_line_buffer(); terminals[cur_terminal].buf_ptr=0; return num_bytes_read; }
         
         /* Copy from line buffer to terminal buffer */
-        terminal_buffer[i] = line_buffer[i];
+        terminal_buffer[i] = terminals[cur_terminal].keyboard_buffer[i];
         
         /* Increment number of bytes read */
         num_bytes_read++;
@@ -292,7 +303,7 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
 
     /* Clear the line buffer */
     clear_line_buffer();
-    buf_ptr=0;
+    terminals[cur_terminal].buf_ptr=0;
     
     /* Return number of bytes read */
     return num_bytes_read;
@@ -303,8 +314,13 @@ extern int read_line_buffer(char terminal_buffer[], int num_bytes) {
  *   Return Value: none
  *   Function: pushes a single character onto line buffer and appends newline to end (if there is enough space) */
 void buf_push(char val) {
-    if (buf_ptr+1 < MAX_BUFFER_SIZE)
-        { line_buffer[buf_ptr]= val; buf_ptr++; line_buffer[buf_ptr] = '\n'; }
+    int cur_buf_ptr = terminals[cur_terminal].buf_ptr;
+
+    if (cur_buf_ptr+1 < MAX_BUFFER_SIZE) {
+        terminals[cur_terminal].keyboard_buffer[cur_buf_ptr] = val;
+        terminals[cur_terminal].buf_ptr++;
+        terminals[cur_terminal].keyboard_buffer[ terminals[cur_terminal].buf_ptr ] = '\n';
+    }
 }
 
 /* buf_pop
@@ -312,8 +328,11 @@ void buf_push(char val) {
  *   Return Value: none
  *   Function: removes single character from line buffer (if able to), keeps the newline at the end of buffer */
 void buf_pop() {
-    if (buf_ptr-1 > -1)
-        { line_buffer[buf_ptr]='\n'; buf_ptr--; }
+    int cur_buf_ptr = terminals[cur_terminal].buf_ptr;
+    if (cur_buf_ptr-1 > -1) {
+        terminals[cur_terminal].keyboard_buffer[cur_buf_ptr]='\n'; 
+        terminals[cur_terminal].buf_ptr--;
+    }
 }
 
 /*
