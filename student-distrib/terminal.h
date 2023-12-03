@@ -23,12 +23,12 @@ typedef struct terminal {
     char keyboard_buffer[MAX_BUFFER_SIZE];
     int buf_ptr;
     volatile int enter_pressed;
+    int cursor_x, cursor_y;
+
+    /*for RTC virtualization*/
     volatile int INT_FLAG;
     volatile int INT_COUNT;
     volatile int V_FREQ_NUM;
-
-    int cursor_x, cursor_y;
-
 } terminal_t;
 
 

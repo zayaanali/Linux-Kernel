@@ -6,11 +6,8 @@
 #include "terminal.h"
 #include "scheduler.h"
 
-//volatile uint32_t INT_FLAG;
-//volatile uint32_t INT_COUNT;
-
-//volatile uint32_t V_FREQ_NUM;
-
+// to ensure only 1 process enables/disables irq line for RTC
+uint32_t RTC_EN_FLAG =0; 
 
 extern void rtc_link(); 
 
@@ -22,7 +19,6 @@ extern void rtc_link();
 
 void rtc_init(){
 
-    //cli();			                // disable interrupts .. this function called within clearing of interrupts
     outb(RTC_B, RTC_CMD_PORT);		// select register B, and disable NMI
     char prev = inb(RTC_DATA_PORT);	// read the current value of register B
     outb(RTC_B, RTC_CMD_PORT);		// set the index again (a read will reset the index to register D)
@@ -44,12 +40,7 @@ void rtc_init(){
     SET_IDT_ENTRY(idt[40], rtc_link);
 
     rtc_set_freq(1024);
-   
 
-   // enable_irq(RTC_IRQ);
-   
-
-    // sti();
 }
 
 /* frequency_to_rate
@@ -105,7 +96,10 @@ int32_t rtc_open(const uint8_t* filename){
     /*Set Virtual Frequency to 2HZ*/
     terminals[active_tid].V_FREQ_NUM = (1024 / 2);
 
-    enable_irq(RTC_IRQ);
+    if(RTC_EN_FLAG==0){
+        enable_irq(RTC_IRQ);
+        RTC_EN_FLAG=1; 
+    }
 
     return insert_into_file_array(&rtc_funcs, -1);      // inode not relevant for rtc, send invalid value
 }
@@ -117,7 +111,11 @@ int32_t rtc_open(const uint8_t* filename){
  *    Function: "close" rtc by removing its file array entry  */
 int32_t rtc_close(int32_t fd){
 
-    disable_irq(RTC_IRQ);
+    if(RTC_EN_FLAG==1){
+        disable_irq(RTC_IRQ);
+        RTC_EN_FLAG=0;
+    }
+   
 
     return remove_from_file_array(fd); 
 }
