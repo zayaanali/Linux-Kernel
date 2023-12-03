@@ -3,11 +3,13 @@
 #include "i8259.h"
 #include "lib.h"
 #include "pcb.h"
+#include "terminal.h"
+#include "scheduler.h"
 
-volatile uint32_t INT_FLAG;
-volatile uint32_t INT_COUNT;
+//volatile uint32_t INT_FLAG;
+//volatile uint32_t INT_COUNT;
 
-volatile uint32_t V_FREQ_NUM;
+//volatile uint32_t V_FREQ_NUM;
 
 
 extern void rtc_link(); 
@@ -101,7 +103,7 @@ int32_t rtc_open(const uint8_t* filename){
     // rtc_set_freq(2);
 
     /*Set Virtual Frequency to 2HZ*/
-    V_FREQ_NUM = (1024 / 2);
+    terminals[active_tid].V_FREQ_NUM = (1024 / 2);
 
     enable_irq(RTC_IRQ);
 
@@ -126,11 +128,11 @@ int32_t rtc_close(int32_t fd){
  *   Return Value: 0 when read
  *    Function: reads from RTC by waiting for interrupt  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-    INT_FLAG = 0;
-    while(INT_FLAG == 0){
+    terminals[active_tid].INT_FLAG = 0;
+    while(terminals[active_tid].INT_FLAG == 0){
         ;
     }
-    INT_FLAG = 0; 
+    terminals[active_tid].INT_FLAG = 0; 
     return 0;
 }
 
@@ -151,7 +153,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
     // rtc_set_freq(buf_freq);
-    V_FREQ_NUM = (1024 / buf_freq);
+    terminals[active_tid].V_FREQ_NUM = (1024 / buf_freq);
     return 0;
 }
 
@@ -160,11 +162,11 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
  *   Return Value: none
  *    Function: what to do during RTC interrupts */
 void rtc_handler(){
-    if(INT_COUNT > V_FREQ_NUM){
-        INT_FLAG = 1;
-        INT_COUNT = 0;
+    if(terminals[active_tid].INT_COUNT > terminals[active_tid].V_FREQ_NUM){
+        terminals[active_tid].INT_FLAG = 1;
+        terminals[active_tid].INT_COUNT = 0;
     }
-    INT_COUNT++;
+    terminals[active_tid].INT_COUNT++; //
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
     // test_interrupts(); 
