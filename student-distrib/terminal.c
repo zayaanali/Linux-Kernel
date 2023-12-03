@@ -144,6 +144,7 @@ void remap_vidmem(int new_term) {
         // if so, remap vidmem to currently viewing video memory
         page_table[184].page_base_address = 184;
         video_page_table[0].page_base_address = (VIDEO) >> 12;
+        set_cursor(terminals[new_term].cursor_x, terminals[new_term].cursor_y);
     } else {
         // if not, remap vidmem to the vidmem of the new terminal
         page_table[184].page_base_address = 184 + 1 + new_term;
