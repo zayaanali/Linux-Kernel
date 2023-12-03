@@ -457,12 +457,10 @@ int32_t close(int32_t fd){
         return -1; 
     }
 
-    cli();
     if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
        // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
     }
-    sti();
 
     // call close func -- should remove from fd array
     return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
@@ -510,7 +508,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
  *   Function: Maps video memory into user space at adress 132MB after prog img page
 */
 int32_t vidmap(uint8_t** screen_start){
-    cli();
+   
     
     /* check for valid ptr or if screen_start in 4MB user page at 128MB */
     if(screen_start == NULL || (int)screen_start > ONETHIRTYTWO_MB || (int)screen_start < KERNEL_BASE){
@@ -546,7 +544,6 @@ int32_t vidmap(uint8_t** screen_start){
     /*set screen_start location in mem*/
     *screen_start = (uint8_t*)ONETHIRTYTWO_MB;
 
-    sti();
     return 0;
 }
 

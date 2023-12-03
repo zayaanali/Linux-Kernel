@@ -16,15 +16,17 @@ int cur_terminal = 0;
  *   Function: "Opens" terminal by adding stdin and stdout to file array */
 int32_t terminal_open(const uint8_t* filename) {
 
-    cli();
+   
     // create stdin entry in file array at index 0
     if(pcb_ptr[active_pid]->fd_array[0].in_use==1){
         printf("stdin already exists \n");
         return -1;
     }
 
+    cli();
     pcb_ptr[active_pid]->fd_array[0].file_op_tbl_ptr = &term_funcs; 
     pcb_ptr[active_pid]->fd_array[0].in_use=1; 
+    sti();
 
     // create stdout entry in file array at index 1
     if(pcb_ptr[active_pid]->fd_array[1].in_use==1){
@@ -32,9 +34,9 @@ int32_t terminal_open(const uint8_t* filename) {
         return -1; 
     }
 
+    cli();
     pcb_ptr[active_pid]->fd_array[1].file_op_tbl_ptr =&term_funcs;
     pcb_ptr[active_pid]->fd_array[1].in_use=1; 
-
     sti();
 
     return 0;
