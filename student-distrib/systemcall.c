@@ -481,13 +481,16 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
     
     /* Get the current PCB */
     pcb_entry_t * cur_pcb = (pcb_entry_t*) pcb_ptr[active_pid];
+    
+    uint32_t len = strlen((const int8_t *)cur_pcb->args);
 
     /*If the arguments and a terminal NULL (0-byte) 
-    do not fit in the buffer, simply return -1*/
-    if(strlen((const int8_t *)cur_pcb->args) + 1 > nbytes){
+    do not fit in the buffer, or buffer is null, simply return -1*/
+    if((len + 1) > nbytes || len==0){
         return -1;
     }
 
+    
     strncpy((void *)buf, (void *)cur_pcb->args, nbytes);
     
     return 0;
