@@ -6,11 +6,8 @@
 #include "terminal.h"
 #include "scheduler.h"
 
-//volatile uint32_t INT_FLAG;
-//volatile uint32_t INT_COUNT;
-
-//volatile uint32_t V_FREQ_NUM;
-
+// to ensure only 1 process enables/disables irq line for RTC
+uint32_t RTC_EN_FLAG =0; 
 
 extern void rtc_link(); 
 
