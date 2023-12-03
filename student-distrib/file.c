@@ -62,10 +62,12 @@ int32_t file_read(int32_t fd, void* buf, int32_t nbytes){
 
     int32_t bytes_read;   
 
+    cli();
     bytes_read = read_data(pcb_ptr[active_pid]->fd_array[fd].inode, pcb_ptr[active_pid]->fd_array[fd].file_pos, buf, nbytes);       // read data into buf, return number of bytes read
 
     // update file position
     pcb_ptr[active_pid]->fd_array[fd].file_pos +=bytes_read; 
-
+    sti(); 
+    
     return bytes_read; 
 }

@@ -98,6 +98,8 @@ uint32_t remove_from_file_array(int32_t fd){
         return -1; 
     }
 
+    cli();
    pcb_ptr[active_pid]->fd_array[fd].in_use = 0;
+   sti();
     return 0;
 }

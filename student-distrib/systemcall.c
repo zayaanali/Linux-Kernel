@@ -404,6 +404,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
 
+
     if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
         //printf("ERR in write: trying to write to fd %d which is not in use \n", fd);
         return -1; 
@@ -456,13 +457,16 @@ int32_t close(int32_t fd){
         return -1; 
     }
 
+    cli();
     if(pcb_ptr[active_pid]->fd_array[fd].in_use!=1){
        // printf("ERR in close: trying to perform close on fd that's not in use \n");
         return -1; 
     }
+    sti();
 
     // call close func -- should remove from fd array
     return pcb_ptr[active_pid]->fd_array[fd].file_op_tbl_ptr->close_func(fd);
+
 }
 
 
@@ -475,6 +479,7 @@ int32_t close(int32_t fd){
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
     
+    cli();
     /* Check buffer is valid */
     if (buf==NULL || nbytes<0)
         { printf("Invalid Argument to getargs"); return -1; }
@@ -492,6 +497,8 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 
     
     strncpy((void *)buf, (void *)cur_pcb->args, nbytes);
+
+    sti();
     
     return 0;
 }

@@ -61,6 +61,8 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
     dentry_t dentry[1]; 
     uint32_t bytes_read = 0; 
 
+    cli();
+
     // Initialize variables for reading data
     uint32_t dir_fname_offset = pcb_ptr[active_pid]->fd_array[fd].file_pos % FNAME_SIZE;              // offset into file name of current directory entry
     uint32_t dir_index = pcb_ptr[active_pid]->fd_array[fd].file_pos / FNAME_SIZE;
@@ -86,6 +88,8 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
 
     // update file position
     pcb_ptr[active_pid]->fd_array[fd].file_pos +=bytes_read; 
+
+    sti();
 
     ((uint8_t*)buf)[bytes_read] = '\0';
 
