@@ -2,7 +2,7 @@
 #define _PIT_H
 
 #include "lib.h"
-
+#define PIT_IRQ 0
 
 
 void pit_init();

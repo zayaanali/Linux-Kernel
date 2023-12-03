@@ -109,10 +109,6 @@ extern void keyboard_init() {
     // enter_pressed = 0;
     alt_pressed = 0;
     terminals[cur_terminal].buf_ptr = 0;
-
-    /* Enable keyboard interrupt line */
-    enable_irq(KEYBOARD_IRQ);
-
 }
 
 /* keyboard_handler

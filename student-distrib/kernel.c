@@ -166,8 +166,14 @@ void entry(unsigned long magic, unsigned long addr) {
     /* add system call entry to idt */
     init_syscall_idt();
 
-    /* enable pit interrupts */
+     /* enable pit interrupts */
     pit_init();
+
+    /* Init the RTC*/
+    rtc_init();
+
+    /* Init the keyboard */
+    keyboard_init();
 
     /* load idtr */
     lidt(idt_desc_ptr);
@@ -175,25 +181,17 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Init the PIC */
     i8259_init();
 
-    /* Init the RTC*/
-    rtc_init();
-
     /* Initialize paging */
     page_init();
     
-    /* Init the keyboard */
-    keyboard_init();
+
      
     /* init pcb structs */
     pcb_init();
 
-    enable_irq(0);
-
-    
-
-    
-    
-
+    enable_irq(RTC_IRQ);
+    enable_irq(KEYBOARD_IRQ);
+    enable_irq(PIT_IRQ);
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

@@ -11,6 +11,7 @@
 #define MAX_BUFFER_SIZE 128
 #define TERM_WIDTH 80
 #define TERM_HEIGHT 25
+#define KEYBOARD_IRQ 1
 
 extern void keyboard_init();
 extern void keyboard_handler();
