@@ -22,7 +22,7 @@ extern void rtc_link();
 
 void rtc_init(){
 
-    //cli();			                // disable interrupts .. this function called within clearing of interrupts
+    // cli();			                // disable interrupts .. this function called within clearing of interrupts
     outb(RTC_B, RTC_CMD_PORT);		// select register B, and disable NMI
     char prev = inb(RTC_DATA_PORT);	// read the current value of register B
     outb(RTC_B, RTC_CMD_PORT);		// set the index again (a read will reset the index to register D)
@@ -43,10 +43,10 @@ void rtc_init(){
     // link idt entry to rtc liner function
     SET_IDT_ENTRY(idt[40], rtc_link);
 
-    rtc_set_freq(1024);
+    rtc_set_freq(8192);
    
 
-   // enable_irq(RTC_IRQ);
+    enable_irq(RTC_IRQ);
    
 
     // sti();
@@ -70,8 +70,8 @@ uint8_t freq_to_rate(uint16_t freq) {
         rate++;
         base >>= 1;
 
-        if (rate > 13) {
-            return 13;
+        if (rate > 15) {
+            return 15;
         }
     }
 
@@ -103,9 +103,9 @@ int32_t rtc_open(const uint8_t* filename){
     // rtc_set_freq(2);
 
     /*Set Virtual Frequency to 2HZ*/
-    terminals[active_tid].V_FREQ_NUM = (1024 / 2);
+    terminals[active_tid].V_FREQ_NUM = (8192 / 2);
 
-    enable_irq(RTC_IRQ);
+    // enable_irq(RTC_IRQ);
 
     return insert_into_file_array(&rtc_funcs, -1);      // inode not relevant for rtc, send invalid value
 }
@@ -117,7 +117,7 @@ int32_t rtc_open(const uint8_t* filename){
  *    Function: "close" rtc by removing its file array entry  */
 int32_t rtc_close(int32_t fd){
 
-    disable_irq(RTC_IRQ);
+    // disable_irq(RTC_IRQ);
 
     return remove_from_file_array(fd); 
 }
@@ -153,7 +153,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
         return -1;
     }
     // rtc_set_freq(buf_freq);
-    terminals[active_tid].V_FREQ_NUM = (1024 / buf_freq);
+    terminals[active_tid].V_FREQ_NUM = (8192 / buf_freq);
     return 0;
 }
 
@@ -162,15 +162,30 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
  *   Return Value: none
  *    Function: what to do during RTC interrupts */
 void rtc_handler(){
-    if(terminals[active_tid].INT_COUNT > terminals[active_tid].V_FREQ_NUM){
-        terminals[active_tid].INT_FLAG = 1;
-        terminals[active_tid].INT_COUNT = 0;
+    cli();
+    if(terminals[0].INT_COUNT > terminals[0].V_FREQ_NUM){
+        terminals[0].INT_FLAG = 1;
+        terminals[0].INT_COUNT = 0;
     }
-    terminals[active_tid].INT_COUNT++; //
+    terminals[0].INT_COUNT++; //
+
+    if(terminals[1].INT_COUNT > terminals[1].V_FREQ_NUM){
+        terminals[1].INT_FLAG = 1;
+        terminals[1].INT_COUNT = 0;
+    }
+    terminals[1].INT_COUNT++; //
+
+    if(terminals[2].INT_COUNT > terminals[2].V_FREQ_NUM){
+        terminals[2].INT_FLAG = 1;
+        terminals[2].INT_COUNT = 0;
+    }
+    terminals[2].INT_COUNT++; //
+
     outb(RTC_C, RTC_CMD_PORT);
     inb(RTC_DATA_PORT);
     // test_interrupts(); 
     send_eoi(RTC_IRQ);
+    sti();
 
     
 }
