@@ -18,7 +18,7 @@
 #include "scheduler.h"
 
 
-#define FREQ 10
+#define FREQ 20
 #define LOWER_BYTE_MASK 0xFF
 #define UPPER_BYTE_SHIFT 8
 #define PIT_COMMAND_PORT 0x43

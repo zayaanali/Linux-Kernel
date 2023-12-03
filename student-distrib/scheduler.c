@@ -13,9 +13,6 @@ int32_t term_cur_pid[3] = {-1,-1,-1};
 
 volatile int32_t active_pid = -1; 
 volatile int32_t active_tid = -1;
-
-int32_t find_next_pid(int32_t p);
-//static uint8_t base_shells_opened = 0;
 uint8_t base_shells_opened = 0;
 
 
@@ -23,11 +20,11 @@ uint8_t base_shells_opened = 0;
 
 /* switch_process
  *   Inputs: none
- *   Return Value: none
+ *   Return Value: none. "return" used to switch into next process
  *   Function: switches to next process in round-robin fashion when pit interrrupt occurs */
 int32_t switch_process() {
     /* Get next terminal */
-    int next_term = (active_tid+1)%3;
+    int next_term = (active_tid+1)%NUM_TERMINALS;
     remap_vidmem(next_term);
     
     /* Save EBP/ESP of the current process */
@@ -63,7 +60,7 @@ int32_t switch_process() {
         
     }
 
-    // change page base address and flush tlb
+    // change PID page base address
     page_dir[32].page_dir_entry_4mb_t.page_base_address = ((EIGHT_MB + (active_pid*FOUR_MB)) >> 22); // align the page_table address to 4MB boundary
     flush_tlb();
 
@@ -88,27 +85,3 @@ int32_t switch_process() {
     send_eoi(0);
     return 0;
 }
-
-/* find_next_pid
- *   Inputs: pid of currently active process
- *   Return Value: pid scheduler should switch to
- *   Function: helper function that starts at cur_pid, walks through pcb structs to find next active process to run */
-int32_t find_next_pid(int32_t p){
-
-    uint32_t pid = (p+1)%6; 
-    int i;
-    pcb_entry_t* pcb = pcb_ptr[pid];
-
-    for(i=0; i<6; i++){
-        if(pcb->current){
-            return pid;
-        }else{
-            pid = (pid+1)%6;
-            pcb = pcb_ptr[pid];
-        }
-    }
-
-    // if can't find another active process to switch to, err
-    return -1;
-}
-

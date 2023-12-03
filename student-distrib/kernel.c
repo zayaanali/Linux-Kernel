@@ -166,7 +166,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* add system call entry to idt */
     init_syscall_idt();
 
-     /* enable pit interrupts */
+    /* enable pit interrupts */
     pit_init();
 
     /* load idtr */
